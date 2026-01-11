@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 — Collaboration (Plan 3 complete, visual presence done)
+**Current focus:** Phase 6 complete — Ready for Phase 7: Check/Reveal
 
 ## Current Position
 
-Phase: 6 of 8 (Collaboration)
-Plan: 3 of TBD in current phase
-Status: Plan 3 complete
-Last activity: 2026-01-11 — Completed 06-03-PLAN.md (Visual Presence)
+Phase: 6 of 8 (Collaboration) - COMPLETE
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-01-11 — Completed 06-04-PLAN.md (Timeline Collision & Join Flow)
 
 Progress: █████████░ 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 15 min
-- Total execution time: 3.38 hours
+- Total execution time: 3.73 hours
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: █████████░ 90%
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
 | 5. P2P Networking | 2 | 40 min | 20 min |
-| 6. Collaboration | 3 | 39 min | 13 min |
+| 6. Collaboration | 4 | 60 min | 15 min |
 
 **Recent Trend:**
-- Last 5 plans: 25, 15, 18, 9, 12 min
-- Trend: Phase 6 progressing well, visual presence complete
+- Last 5 plans: 15, 18, 9, 12, 21 min
+- Trend: Phase 6 complete, all collaboration features working
 
 ## Accumulated Context
 
@@ -94,6 +94,10 @@ Recent decisions affecting current work:
 | 06-03 | 25% opacity for collaborator highlights | Subtle indication, doesn't distract |
 | 06-03 | Local selection priority over collaborator | User's own word always most visible |
 | 06-03 | Cache getSnapshot with deep comparison | Prevents useSyncExternalStore infinite loop |
+| 06-04 | localStorage for timeline:puzzleId mapping | Sync access needed for collision check |
+| 06-04 | IndexedDB databases() API for progress detection | Check existence without loading full doc |
+| 06-04 | Yjs automatic merge on room connect | CRDT handles merge, no manual intervention |
+| 06-04 | Start Fresh = delete IndexedDB | Cleanest fresh state before joining |
 
 ### Roadmap Evolution
 
@@ -110,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 06-03-PLAN.md - Visual Presence
+Stopped at: Completed 06-04-PLAN.md - Timeline Collision & Join Flow (Phase 6 complete)
 Resume file: None
