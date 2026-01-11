@@ -5,10 +5,12 @@
  * - Creating/destroying PuzzleStore instances on puzzleId change
  * - Syncing Y.Map changes to React state via observers
  * - Exposing entry manipulation methods
+ * - Optional P2P sync via WebRTC when roomId is provided
  */
 
 import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
+import { createP2PSession, type P2PSession } from '../crdt/webrtcProvider';
 
 interface UseCrdtPuzzleReturn {
   /** Current entries map (React state mirror of Y.Map) */
@@ -21,27 +23,37 @@ interface UseCrdtPuzzleReturn {
   clearEntry: (row: number, col: number) => void;
   /** Get a cell entry */
   getEntry: (row: number, col: number) => string | undefined;
+  /** Room ID for P2P session (undefined if not in P2P mode) */
+  roomId: string | undefined;
 }
 
 // Empty map constant for initial state
 const EMPTY_MAP = new Map<string, string>();
 
 /**
- * Hook for managing CRDT-backed puzzle entries.
+ * Hook for managing CRDT-backed puzzle entries with optional P2P sync.
  *
  * Creates a new PuzzleStore for each puzzleId, waits for IndexedDB to sync,
  * then mirrors Y.Map changes to React state via observers.
  *
+ * When roomId is provided, creates a P2P session for collaborative solving.
+ * The P2P session is created AFTER IndexedDB loads to prevent empty state sync.
+ *
  * @param puzzleId - Unique identifier for the puzzle
- * @returns Object containing entries, ready state, and entry manipulation methods
+ * @param roomId - Optional room ID for P2P collaboration
+ * @returns Object containing entries, ready state, roomId, and entry manipulation methods
  *
  * @example
  * ```typescript
+ * // Local only (no P2P)
  * const { entries, ready, setEntry, clearEntry } = useCrdtPuzzle('nyt-2024-01-15');
+ *
+ * // With P2P sync
+ * const { entries, ready, roomId, setEntry } = useCrdtPuzzle('nyt-2024-01-15', 'my-room');
  *
  * if (!ready) return <div>Loading...</div>;
  *
- * // Set a value
+ * // Set a value - syncs to peers if roomId provided
  * setEntry(3, 7, 'A');
  *
  * // Read values
@@ -51,9 +63,10 @@ const EMPTY_MAP = new Map<string, string>();
  * clearEntry(3, 7);
  * ```
  */
-export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
+export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleReturn {
   // Store reference for access in callbacks and external store
   const storeRef = useRef<PuzzleStore | null>(null);
+  const sessionRef = useRef<P2PSession | null>(null);
   const readyRef = useRef(false);
   const snapshotRef = useRef<Map<string, string>>(EMPTY_MAP);
   const subscribersRef = useRef(new Set<() => void>());
@@ -100,8 +113,8 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
       notifySubscribers();
     };
 
-    // Wait for IndexedDB sync, then set up observer
-    store.ready.then(() => {
+    // Wait for IndexedDB sync, then set up observer and optionally P2P
+    store.ready.then(async () => {
       // Only proceed if this store is still current (not stale from rapid switches)
       if (storeRef.current !== store) {
         store.destroy();
@@ -115,13 +128,30 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
       store.entries.observe(observer);
       observerAttached = true;
 
+      // Create P2P session if roomId is provided (AFTER IndexedDB ready)
+      if (roomId) {
+        const session = await createP2PSession(store, roomId);
+        // Check again that store is still current after async operation
+        if (storeRef.current === store) {
+          sessionRef.current = session;
+        } else {
+          // Store changed while we were creating session, clean up
+          session.destroy();
+        }
+      }
+
       // Mark as ready
       readyRef.current = true;
       notifySubscribers();
     });
 
-    // Cleanup on unmount or puzzleId change
+    // Cleanup on unmount or puzzleId/roomId change
     return () => {
+      // Destroy P2P session first (before store)
+      if (sessionRef.current) {
+        sessionRef.current.destroy();
+        sessionRef.current = null;
+      }
       // Only unobserve if observer was attached
       if (observerAttached) {
         store.entries.unobserve(observer);
@@ -129,7 +159,7 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
       store.destroy();
       storeRef.current = null;
     };
-  }, [puzzleId, notifySubscribers]);
+  }, [puzzleId, roomId, notifySubscribers]);
 
   // Entry manipulation methods
   const setEntry = useCallback((row: number, col: number, value: string) => {
@@ -159,5 +189,6 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
     setEntry,
     clearEntry,
     getEntry,
+    roomId,
   };
 }
