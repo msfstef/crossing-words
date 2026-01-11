@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 3 — Puzzle Import (Complete)
+**Current focus:** Phase 3.1 — Puzzle Downloader (In Progress)
 
 ## Current Position
 
-Phase: 3 of 8 (Puzzle Import)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 03-02-PLAN.md
+Phase: 3.1 of 8 (Puzzle Downloader)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-11 — Completed 3.1-01-PLAN.md
 
-Progress: █████░░░░░ 50%
+Progress: █████░░░░░ 54%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 11 min
-- Total execution time: 1.08 hours
+- Total execution time: 1.31 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: █████░░░░░ 50%
 | 1. Foundation | 1 | 10 min | 10 min |
 | 2. Puzzle Core | 3 | 35 min | 12 min |
 | 3. Puzzle Import | 2 | 20 min | 10 min |
+| 3.1 Puzzle Downloader | 1 | 14 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 8, 5, 22, 4, 16 min
-- Trend: Variable (bug fix during verification added time)
+- Last 5 plans: 5, 22, 4, 16, 14 min
+- Trend: Stable, external deployments add time
 
 ## Accumulated Context
 
@@ -62,6 +63,13 @@ Recent decisions affecting current work:
 | 03-02 | Hidden file input pattern | Styled button, invisible native input |
 | 03-02 | Error auto-dismiss 5s | Non-blocking UX, manual close option too |
 | 03-02 | Key prop for puzzle reset | Forces usePuzzleState to reinitialize |
+| 3.1-01 | Cloudflare Workers for CORS proxy | Free tier, global edge, no maintenance |
+| 3.1-01 | POST /puzzle with JSON body API | Source/date separation, easy to extend |
+| 3.1-01 | 10s upstream timeout | Prevent hanging requests |
+
+### Roadmap Evolution
+
+- Phase 3.1 inserted after Phase 3: Automatic downloader from remote sources with picker for source and day (INSERTED)
 
 ### Deferred Issues
 
@@ -74,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed Phase 3 (Puzzle Import)
+Stopped at: Completed 3.1-01-PLAN.md (Cloudflare Worker Proxy)
 Resume file: None
