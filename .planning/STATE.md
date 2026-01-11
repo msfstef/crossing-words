@@ -5,34 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 2 — Puzzle Core
+**Current focus:** Phase 2 — Puzzle Core (Complete)
 
 ## Current Position
 
 Phase: 2 of 8 (Puzzle Core)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-11 — Completed 02-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-11 — Completed 02-03-PLAN.md
 
-Progress: ███░░░░░░░ 27%
+Progress: ████░░░░░░ 37%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 8 min
-- Total execution time: 0.38 hours
+- Total plans completed: 4
+- Average duration: 11 min
+- Total execution time: 0.75 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 1 | 10 min | 10 min |
-| 2. Puzzle Core | 2 | 13 min | 6.5 min |
+| 2. Puzzle Core | 3 | 35 min | 12 min |
 
 **Recent Trend:**
-- Last 5 plans: 10, 8, 5 min
-- Trend: ↓ improving
+- Last 5 plans: 10, 8, 5, 22 min
+- Trend: — (UAT fixes extended 02-03)
 
 ## Accumulated Context
 
@@ -53,6 +53,9 @@ Recent decisions affecting current work:
 | 02-02 | Document-level keydown listener | Immediate keyboard input |
 | 02-02 | Auto-advance stays at word end | Natural crossword behavior |
 | 02-02 | Backspace dual behavior | Clear or move back based on cell state |
+| 02-03 | Auto-advance skips cells without clue | Only land on cells with clue in direction |
+| 02-03 | Direction toggle only if alternate valid | Prevents showing empty clue bar |
+| 02-03 | Row/column wrap on advance | Natural flow when reaching end |
 
 ### Deferred Issues
 
@@ -65,5 +68,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 02-02-PLAN.md
+Stopped at: Completed Phase 2 (02-03-PLAN.md)
 Resume file: None
