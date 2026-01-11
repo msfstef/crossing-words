@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import type { Awareness } from 'y-protocols/awareness';
 import type { Puzzle, Clue } from '../types/puzzle';
 import { useCrdtPuzzle } from './useCrdtPuzzle';
 import type { ConnectionState } from '../crdt/webrtcProvider';
@@ -19,6 +20,8 @@ interface PuzzleStateHook {
   currentClue: CurrentClue | null;
   ready: boolean;
   connectionState: ConnectionState;
+  /** Yjs Awareness for presence tracking (null when not in P2P mode) */
+  awareness: Awareness | null;
 }
 
 /**
@@ -38,9 +41,25 @@ export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string
     setEntry,
     clearEntry,
     connectionState,
+    awareness,
   } = useCrdtPuzzle(puzzleId, roomId);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
+
+  // Sync cursor position to awareness when selection or direction changes
+  useEffect(() => {
+    if (!awareness) return;
+
+    if (selectedCell) {
+      awareness.setLocalStateField('cursor', {
+        row: selectedCell.row,
+        col: selectedCell.col,
+        direction,
+      });
+    } else {
+      awareness.setLocalStateField('cursor', null);
+    }
+  }, [awareness, selectedCell, direction]);
 
   /**
    * Find the clue that contains the selected cell in the given direction
@@ -386,5 +405,6 @@ export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string
     currentClue: wordAndClue?.clue ?? null,
     ready,
     connectionState,
+    awareness,
   };
 }

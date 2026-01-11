@@ -75,6 +75,7 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
   const readyRef = useRef(false);
   const snapshotRef = useRef<Map<string, string>>(EMPTY_MAP);
   const connectionStateRef = useRef<ConnectionState>('disconnected');
+  const awarenessRef = useRef<Awareness | null>(null);
   const subscribersRef = useRef(new Set<() => void>());
 
   // Subscribe function for useSyncExternalStore
@@ -94,11 +95,13 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
   const getSnapshot = useCallback(() => snapshotRef.current, []);
   const getReadySnapshot = useCallback(() => readyRef.current, []);
   const getConnectionStateSnapshot = useCallback(() => connectionStateRef.current, []);
+  const getAwarenessSnapshot = useCallback(() => awarenessRef.current, []);
 
-  // Use useSyncExternalStore for entries, ready state, and connection state
+  // Use useSyncExternalStore for entries, ready state, connection state, and awareness
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const ready = useSyncExternalStore(subscribe, getReadySnapshot, getReadySnapshot);
   const connectionState = useSyncExternalStore(subscribe, getConnectionStateSnapshot, getConnectionStateSnapshot);
+  const awareness = useSyncExternalStore(subscribe, getAwarenessSnapshot, getAwarenessSnapshot);
 
   // Lifecycle management: create/destroy store on puzzleId change
   useEffect(() => {
@@ -107,6 +110,7 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
     snapshotRef.current = EMPTY_MAP;
     // Set initial connection state: 'connecting' if roomId provided, 'disconnected' otherwise
     connectionStateRef.current = roomId ? 'connecting' : 'disconnected';
+    awarenessRef.current = null;
     notifySubscribers();
 
     // Track connection state unsubscribe function for cleanup
@@ -147,11 +151,13 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
         // Check again that store is still current after async operation
         if (storeRef.current === store) {
           sessionRef.current = session;
+          awarenessRef.current = session.awareness;
           // Subscribe to connection state changes
           connectionUnsubscribe = session.onConnectionChange((state) => {
             connectionStateRef.current = state;
             notifySubscribers();
           });
+          notifySubscribers(); // Notify about awareness change
         } else {
           // Store changed while we were creating session, clean up
           session.destroy();
@@ -175,6 +181,7 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
         sessionRef.current.destroy();
         sessionRef.current = null;
       }
+      awarenessRef.current = null;
       // Only unobserve if observer was attached
       if (observerAttached) {
         store.entries.unobserve(observer);
@@ -205,9 +212,6 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
     const key = `${row},${col}`;
     return entries.get(key);
   }, [entries]);
-
-  // Get awareness from session (null when not in P2P mode)
-  const awareness = sessionRef.current?.awareness ?? null;
 
   return {
     entries,
