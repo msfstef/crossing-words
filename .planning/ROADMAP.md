@@ -17,7 +17,7 @@ None
 - [x] **Phase 1: Foundation** - PWA setup, project structure, build tooling
 - [x] **Phase 2: Puzzle Core** - Grid rendering, keyboard navigation, clue display
 - [x] **Phase 3: Puzzle Import** - Support for .puz, .ipuz, .jpz formats
-- [ ] **Phase 3.1: Puzzle Downloader** - Automatic downloader from remote sources with picker for source and day (INSERTED)
+- [x] **Phase 3.1: Puzzle Downloader** - Automatic downloader from remote sources with picker for source and day (INSERTED)
 - [ ] **Phase 4: CRDT State** - Conflict-free state management with Yjs/Automerge
 - [ ] **Phase 5: P2P Networking** - WebRTC connections, signaling, TURN fallback
 - [ ] **Phase 6: Collaboration** - Presence, session sharing, timeline system
@@ -94,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 1. Foundation | 1/1 | Complete | 2026-01-11 |
 | 2. Puzzle Core | 3/3 | Complete | 2026-01-11 |
 | 3. Puzzle Import | 2/2 | Complete | 2026-01-11 |
-| 3.1 Puzzle Downloader | 1/2 | In progress | - |
+| 3.1 Puzzle Downloader | 2/2 | Complete | 2026-01-11 |
 | 4. CRDT State | 0/TBD | Not started | - |
 | 5. P2P Networking | 0/TBD | Not started | - |
 | 6. Collaboration | 0/TBD | Not started | - |
