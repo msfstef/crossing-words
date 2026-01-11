@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { CrosswordGrid } from './components/CrosswordGrid';
+import { ClueBar } from './components/ClueBar';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { samplePuzzle } from './lib/samplePuzzle';
 import './App.css';
@@ -10,6 +11,7 @@ function App() {
     selectedCell,
     direction,
     currentWord,
+    currentClue,
     handleCellClick,
     handleKeyDown,
   } = usePuzzleState(samplePuzzle);
@@ -46,6 +48,8 @@ function App() {
           currentWord={currentWord}
           onCellClick={handleCellClick}
         />
+
+        <ClueBar clue={currentClue} />
       </main>
     </div>
   );

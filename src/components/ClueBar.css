@@ -1,0 +1,37 @@
+.clue-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(100%, 400px);
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  background-color: #252538;
+  border-radius: 4px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.clue-bar--empty {
+  justify-content: center;
+}
+
+.clue-bar__placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.clue-bar__number {
+  font-weight: 700;
+  color: #4a9eff;
+}
+
+.clue-bar__direction {
+  font-weight: 600;
+  color: #a0a0b0;
+  text-transform: capitalize;
+}
+
+.clue-bar__text {
+  color: #e0e0e0;
+}
