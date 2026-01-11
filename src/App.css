@@ -21,6 +21,21 @@
   font-size: 1rem;
 }
 
+/* Puzzle import controls */
+.puzzle-import {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.puzzle-import__separator {
+  color: #666;
+  font-size: 0.875rem;
+}
+
 .puzzle-container {
   display: flex;
   flex-direction: column;

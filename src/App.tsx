@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { FilePicker } from './components/FilePicker';
+import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { samplePuzzle } from './lib/samplePuzzle';
 import type { Puzzle } from './types/puzzle';
@@ -62,7 +63,17 @@ function App() {
       <header className="app-header">
         <h1>Crossing Words</h1>
         <p className="tagline">Collaborative crossword puzzles</p>
-        <FilePicker onPuzzleLoaded={handlePuzzleLoaded} onError={handleError} />
+        <div className="puzzle-import">
+          <FilePicker
+            onPuzzleLoaded={handlePuzzleLoaded}
+            onError={handleError}
+          />
+          <span className="puzzle-import__separator">or</span>
+          <PuzzleDownloader
+            onPuzzleLoaded={handlePuzzleLoaded}
+            onError={handleError}
+          />
+        </div>
       </header>
 
       {error && (
