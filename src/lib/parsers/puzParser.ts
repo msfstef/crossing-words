@@ -54,6 +54,21 @@ function convertToPuzzle(json: ReturnType<typeof xdToJSON>): Puzzle {
     throw new Error('Invalid puzzle dimensions');
   }
 
+  // Build a map of (row,col) -> clueNumber from clue positions
+  // xd-crossword-tools position format: index = row, col = column
+  const clueNumberMap = new Map<string, number>();
+  for (const clue of json.clues.across) {
+    const key = `${clue.position.index},${clue.position.col}`;
+    clueNumberMap.set(key, clue.number);
+  }
+  for (const clue of json.clues.down) {
+    const key = `${clue.position.index},${clue.position.col}`;
+    // Only set if not already set by across (they share the same number)
+    if (!clueNumberMap.has(key)) {
+      clueNumberMap.set(key, clue.number);
+    }
+  }
+
   // Build the grid
   const grid: Cell[][] = [];
   for (let row = 0; row < height; row++) {
@@ -62,25 +77,16 @@ function convertToPuzzle(json: ReturnType<typeof xdToJSON>): Puzzle {
       const tile = json.tiles[row][col];
       const isBlack = tile.type === 'blank';
       let letter: string | null = null;
-      let clueNumber: number | undefined = undefined;
 
       if (tile.type === 'letter') {
         letter = tile.letter;
-        // Check if this cell has a clue number
-        if (tile.clues?.across !== undefined) {
-          clueNumber = tile.clues.across;
-        } else if (tile.clues?.down !== undefined) {
-          clueNumber = tile.clues.down;
-        }
       } else if (tile.type === 'rebus') {
         // For rebus tiles, use the first letter as the solution
         letter = tile.word.charAt(0) || null;
-        if (tile.clues?.across !== undefined) {
-          clueNumber = tile.clues.across;
-        } else if (tile.clues?.down !== undefined) {
-          clueNumber = tile.clues.down;
-        }
       }
+
+      // Look up clue number from the map we built
+      const clueNumber = clueNumberMap.get(`${row},${col}`);
 
       rowCells.push({
         row,
@@ -93,13 +99,13 @@ function convertToPuzzle(json: ReturnType<typeof xdToJSON>): Puzzle {
     grid.push(rowCells);
   }
 
-  // Convert clues
+  // Convert clues - position.index is row, position.col is column
   const acrossClues: Clue[] = json.clues.across.map((clue) => ({
     number: clue.number,
     direction: 'across' as const,
     text: clue.body,
-    row: clue.position.col, // xd-crossword-tools uses col for row index
-    col: clue.position.index,
+    row: clue.position.index,
+    col: clue.position.col,
     length: clue.tiles.length,
   }));
 
@@ -107,8 +113,8 @@ function convertToPuzzle(json: ReturnType<typeof xdToJSON>): Puzzle {
     number: clue.number,
     direction: 'down' as const,
     text: clue.body,
-    row: clue.position.col, // xd-crossword-tools uses col for row index
-    col: clue.position.index,
+    row: clue.position.index,
+    col: clue.position.col,
     length: clue.tiles.length,
   }));
 
