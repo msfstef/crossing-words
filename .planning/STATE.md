@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 
 Phase: 1 of 8 (Foundation)
 Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 01-01-PLAN.md
+Status: Phase complete (UAT fixes applied)
+Last activity: 2026-01-11 — Completed 01-01-FIX.md
 
 Progress: █░░░░░░░░░ 12.5%
 
@@ -44,6 +44,8 @@ Recent decisions affecting current work:
 |-------|----------|-----------|
 | 01 | Dark theme (#1a1a2e) as default | Matches PWA manifest, consistent branding |
 | 01 | SVG placeholder icons | Scalable, real icons deferred to Phase 8 |
+| 01-FIX | Relative icon paths in manifest | Avoids path resolution issues |
+| 01-FIX | Added maskable icon variants | Better PWA installability |
 
 ### Deferred Issues
 
@@ -56,5 +58,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 01-01-PLAN.md (Phase 1 complete)
+Stopped at: Completed 01-01-FIX.md (UAT issues resolved)
 Resume file: None
