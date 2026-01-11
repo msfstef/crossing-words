@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 2 — Puzzle Core
 
 ## Current Position
 
-Phase: 1 of 8 (Foundation)
-Plan: 1 of 1 in current phase
-Status: Phase complete (UAT fixes applied)
-Last activity: 2026-01-11 — Completed 01-01-FIX.md
+Phase: 2 of 8 (Puzzle Core)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-11 — Completed 02-01-PLAN.md
 
-Progress: █░░░░░░░░░ 12.5%
+Progress: ██░░░░░░░░ 18%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 10 min
-- Total execution time: 0.17 hours
+- Total plans completed: 2
+- Average duration: 9 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 1 | 10 min | 10 min |
+| 2. Puzzle Core | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 10 min
+- Last 5 plans: 10, 8 min
 - Trend: —
 
 ## Accumulated Context
@@ -46,6 +47,9 @@ Recent decisions affecting current work:
 | 01 | SVG placeholder icons | Scalable, real icons deferred to Phase 8 |
 | 01-FIX | Relative icon paths in manifest | Avoids path resolution issues |
 | 01-FIX | Added maskable icon variants | Better PWA installability |
+| 02-01 | Map<string,string> with 'row,col' key | Efficient userEntries lookup |
+| 02-01 | Store solution in Cell.letter | Enables future check/reveal |
+| 02-01 | CSS Grid with aspect-ratio: 1 | Square cells, responsive layout |
 
 ### Deferred Issues
 
@@ -58,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 01-01-FIX.md (UAT issues resolved)
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

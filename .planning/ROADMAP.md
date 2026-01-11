@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-01-11 |
-| 2. Puzzle Core | 0/TBD | Not started | - |
+| 2. Puzzle Core | 1/3 | In progress | - |
 | 3. Puzzle Import | 0/TBD | Not started | - |
 | 4. CRDT State | 0/TBD | Not started | - |
 | 5. P2P Networking | 0/TBD | Not started | - |
