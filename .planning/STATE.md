@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 3 — Puzzle Import (In progress)
+**Current focus:** Phase 3 — Puzzle Import (Complete)
 
 ## Current Position
 
 Phase: 3 of 8 (Puzzle Import)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-11 — Completed 03-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-11 — Completed 03-02-PLAN.md
 
-Progress: ████░░░░░░ 45%
+Progress: █████░░░░░ 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 10 min
-- Total execution time: 0.82 hours
+- Total plans completed: 6
+- Average duration: 11 min
+- Total execution time: 1.08 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: ████░░░░░░ 45%
 |-------|-------|-------|----------|
 | 1. Foundation | 1 | 10 min | 10 min |
 | 2. Puzzle Core | 3 | 35 min | 12 min |
-| 3. Puzzle Import | 1 | 4 min | 4 min |
+| 3. Puzzle Import | 2 | 20 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 10, 8, 5, 22, 4 min
-- Trend: Fast (simple parser wiring)
+- Last 5 plans: 8, 5, 22, 4, 16 min
+- Trend: Variable (bug fix during verification added time)
 
 ## Accumulated Context
 
@@ -59,6 +59,9 @@ Recent decisions affecting current work:
 | 02-03 | Row/column wrap on advance | Natural flow when reaching end |
 | 03-01 | Use xd-crossword-tools for puz/jpz | Don't hand-roll binary/XML parsing |
 | 03-01 | Parse ipuz directly | Native JSON format, no library needed |
+| 03-02 | Hidden file input pattern | Styled button, invisible native input |
+| 03-02 | Error auto-dismiss 5s | Non-blocking UX, manual close option too |
+| 03-02 | Key prop for puzzle reset | Forces usePuzzleState to reinitialize |
 
 ### Deferred Issues
 
@@ -71,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 03-01-PLAN.md (format parsers)
+Stopped at: Completed Phase 3 (Puzzle Import)
 Resume file: None
