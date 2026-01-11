@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { samplePuzzle } from './lib/samplePuzzle';
+import { loadCurrentPuzzle, saveCurrentPuzzle } from './lib/puzzleStorage';
 import type { Puzzle } from './types/puzzle';
 import './App.css';
 
@@ -19,11 +20,19 @@ function getPuzzleId(puzzle: Puzzle): string {
 }
 
 function App() {
-  const [puzzle, setPuzzle] = useState<Puzzle>(samplePuzzle);
+  // Start with null to indicate loading state, then load saved or sample puzzle
+  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Load saved puzzle on startup
+  useEffect(() => {
+    loadCurrentPuzzle().then((savedPuzzle) => {
+      setPuzzle(savedPuzzle ?? samplePuzzle);
+    });
+  }, []);
+
   // Generate stable puzzle ID for CRDT storage
-  const puzzleId = getPuzzleId(puzzle);
+  const puzzleId = puzzle ? getPuzzleId(puzzle) : '';
 
   const {
     userEntries,
@@ -34,12 +43,16 @@ function App() {
     handleCellClick,
     handleKeyDown,
     ready,
-  } = usePuzzleState(puzzle, puzzleId);
+  } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading');
 
-  const handlePuzzleLoaded = (newPuzzle: Puzzle) => {
+  const handlePuzzleLoaded = useCallback((newPuzzle: Puzzle) => {
     setPuzzle(newPuzzle);
     setError(null);
-  };
+    // Persist the puzzle to IndexedDB
+    saveCurrentPuzzle(newPuzzle).catch((err) => {
+      console.error('Failed to save puzzle:', err);
+    });
+  }, []);
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
@@ -104,24 +117,30 @@ function App() {
         </div>
       )}
 
-      <main className="puzzle-container" key={puzzle.title}>
-        <h2 className="puzzle-title">{puzzle.title}</h2>
-        {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
-
-        {!ready ? (
-          <div className="puzzle-loading">Loading puzzle state...</div>
+      <main className="puzzle-container" key={puzzle?.title ?? 'loading'}>
+        {!puzzle ? (
+          <div className="puzzle-loading">Loading...</div>
         ) : (
           <>
-            <CrosswordGrid
-              puzzle={puzzle}
-              userEntries={userEntries}
-              selectedCell={selectedCell}
-              direction={direction}
-              currentWord={currentWord}
-              onCellClick={handleCellClick}
-            />
+            <h2 className="puzzle-title">{puzzle.title}</h2>
+            {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
 
-            <ClueBar clue={currentClue} />
+            {!ready ? (
+              <div className="puzzle-loading">Loading puzzle state...</div>
+            ) : (
+              <>
+                <CrosswordGrid
+                  puzzle={puzzle}
+                  userEntries={userEntries}
+                  selectedCell={selectedCell}
+                  direction={direction}
+                  currentWord={currentWord}
+                  onCellClick={handleCellClick}
+                />
+
+                <ClueBar clue={currentClue} />
+              </>
+            )}
           </>
         )}
       </main>
