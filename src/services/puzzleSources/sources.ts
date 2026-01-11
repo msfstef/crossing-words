@@ -24,8 +24,8 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     availableDays: 'daily',
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
-      // Andrews McMeel syndication URL (same pattern as proxy uses)
-      return `https://syndication.andrewsmcmeel.com/uupuz/${dateStr}/uclick/fc/fcx${dateStr}.puz`;
+      // Martin Herbach's .puz archive (reliable source for Universal crossword)
+      return `https://herbach.dnsalias.com/uc/uc${dateStr}.puz`;
     },
   },
   // Additional sources can be added here

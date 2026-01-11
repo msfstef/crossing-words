@@ -18,7 +18,8 @@ const SOURCES: Record<string, SourceConfig> = {
       const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
       const dd = String(date.getUTCDate()).padStart(2, '0');
       const dateStr = `${yy}${mm}${dd}`;
-      return `https://syndication.andrewsmcmeel.com/uupuz/${dateStr}/uclick/fc/fcx${dateStr}.puz`;
+      // Martin Herbach's .puz archive (reliable source for Universal crossword)
+      return `https://herbach.dnsalias.com/uc/uc${dateStr}.puz`;
     },
   },
 };
