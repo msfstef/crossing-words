@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 4 — CRDT State (In progress)
+**Current focus:** Phase 4 — CRDT State (Complete)
 
 ## Current Position
 
 Phase: 4 of 8 (CRDT State)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-11 — Completed 04-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-11 — Completed 04-02-PLAN.md
 
-Progress: ███████░░░ 69%
+Progress: ███████░░░ 71%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 12 min
-- Total execution time: 1.71 hours
+- Total plans completed: 10
+- Average duration: 13 min
+- Total execution time: 2.06 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: ███████░░░ 69%
 | 2. Puzzle Core | 3 | 35 min | 12 min |
 | 3. Puzzle Import | 2 | 20 min | 10 min |
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
-| 4. CRDT State | 1 | 6 min | 6 min |
+| 4. CRDT State | 2 | 27 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 4, 16, 14, 18, 6 min
-- Trend: Fast plan, minimal deviation
+- Last 5 plans: 16, 14, 18, 6, 21 min
+- Trend: Phase 4 complete with deviations handled
 
 ## Accumulated Context
 
@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 | 04-01 | Flat Y.Map with 'row,col' keys | Matches existing userEntries pattern |
 | 04-01 | One Y.Doc per puzzle | Isolated persistence and clean provider attachment |
 | 04-01 | Ready promise pattern | Prevents reading empty state before IndexedDB loads |
+| 04-02 | useSyncExternalStore for Yjs sync | Proper React 18 pattern, avoids setState-in-effect lint warnings |
+| 04-02 | puzzleId from sanitized title | Simple, deterministic, unique per puzzle |
+| 04-02 | Separate puzzle storage (not in CRDT) | Independent persistence, simpler versioning |
 
 ### Roadmap Evolution
 
@@ -89,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 04-01-PLAN.md (Yjs Infrastructure)
+Stopped at: Completed 04-02-PLAN.md (React Integration) - Phase 4 complete
 Resume file: None
