@@ -62,6 +62,7 @@ function App() {
     handleCellClick,
     handleKeyDown,
     ready,
+    connectionState,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
 
   const handlePuzzleLoaded = useCallback((newPuzzle: Puzzle) => {
@@ -121,6 +122,21 @@ function App() {
           />
         </div>
       </header>
+
+      {/* Connection indicator - only show in P2P mode */}
+      {roomId && (
+        <div
+          className={`connection-indicator connection-indicator--${connectionState}`}
+          data-connection-state={connectionState}
+        >
+          <span className="connection-indicator__dot" />
+          <span className="connection-indicator__label">
+            {connectionState === 'connecting' && 'Connecting...'}
+            {connectionState === 'connected' && 'Connected'}
+            {connectionState === 'disconnected' && 'Offline'}
+          </span>
+        </div>
+      )}
 
       {error && (
         <div className="error-banner">

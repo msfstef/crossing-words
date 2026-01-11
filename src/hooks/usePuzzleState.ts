@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Puzzle, Clue } from '../types/puzzle';
 import { useCrdtPuzzle } from './useCrdtPuzzle';
+import type { ConnectionState } from '../crdt/webrtcProvider';
 
 interface CurrentClue {
   number: number;
@@ -17,6 +18,7 @@ interface PuzzleStateHook {
   currentWord: { row: number; col: number }[] | null;
   currentClue: CurrentClue | null;
   ready: boolean;
+  connectionState: ConnectionState;
 }
 
 /**
@@ -35,6 +37,7 @@ export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string
     ready,
     setEntry,
     clearEntry,
+    connectionState,
   } = useCrdtPuzzle(puzzleId, roomId);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
@@ -382,5 +385,6 @@ export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string
     currentWord: wordAndClue?.cells ?? null,
     currentClue: wordAndClue?.clue ?? null,
     ready,
+    connectionState,
   };
 }

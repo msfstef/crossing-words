@@ -103,3 +103,52 @@
   color: #888;
   font-size: 0.875rem;
 }
+
+/* Connection indicator */
+.connection-indicator {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+  z-index: 100;
+}
+
+.connection-indicator__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.connection-indicator__label {
+  color: #ccc;
+}
+
+/* Connection state colors */
+.connection-indicator--connected .connection-indicator__dot {
+  background-color: #4ade80; /* green */
+}
+
+.connection-indicator--connecting .connection-indicator__dot {
+  background-color: #facc15; /* yellow */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-indicator--disconnected .connection-indicator__dot {
+  background-color: #f87171; /* red */
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
