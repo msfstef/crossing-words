@@ -169,37 +169,65 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
   );
 
   /**
-   * Find the first non-black cell in a row (for wrapping)
+   * Find the first cell in a row that has a clue in the given direction
    */
-  const findFirstCellInRow = useCallback(
-    (row: number): { row: number; col: number } | null => {
+  const findFirstCellInRowWithClue = useCallback(
+    (row: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let col = 0; col < puzzle.width; col++) {
-        if (!puzzle.grid[row][col].isBlack) {
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle]
+    [puzzle, findClueForCell]
   );
 
   /**
-   * Find the first non-black cell in a column (for wrapping)
+   * Find the first cell in a column that has a clue in the given direction
    */
-  const findFirstCellInCol = useCallback(
-    (col: number): { row: number; col: number } | null => {
+  const findFirstCellInColWithClue = useCallback(
+    (col: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let row = 0; row < puzzle.height; row++) {
-        if (!puzzle.grid[row][col].isBlack) {
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle]
+    [puzzle, findClueForCell]
+  );
+
+  /**
+   * Find next cell that has a clue in the current direction
+   */
+  const findNextCellWithClue = useCallback(
+    (
+      fromRow: number,
+      fromCol: number,
+      deltaRow: number,
+      deltaCol: number,
+      dir: 'across' | 'down'
+    ): { row: number; col: number } | null => {
+      let row = fromRow + deltaRow;
+      let col = fromCol + deltaCol;
+
+      while (row >= 0 && row < puzzle.height && col >= 0 && col < puzzle.width) {
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
+          return { row, col };
+        }
+        row += deltaRow;
+        col += deltaCol;
+      }
+
+      return null;
+    },
+    [puzzle, findClueForCell]
   );
 
   /**
    * Move to the next cell in the current direction after entering a letter
+   * Only moves to cells that have a clue in the current direction
    * Wraps to next row/column when reaching the end
    */
   const autoAdvance = useCallback(
@@ -207,49 +235,51 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
       const deltaRow = direction === 'down' ? 1 : 0;
       const deltaCol = direction === 'across' ? 1 : 0;
 
-      const nextCell = findNextCell(fromRow, fromCol, deltaRow, deltaCol);
+      // First try to find next cell in same row/column with a clue
+      const nextCell = findNextCellWithClue(fromRow, fromCol, deltaRow, deltaCol, direction);
       if (nextCell) {
         setSelectedCell(nextCell);
+        return;
+      }
+
+      // At end of row/column - wrap to next row/column
+      if (direction === 'across') {
+        // Try next rows until we find one with a cell that has an across clue
+        for (let nextRow = fromRow + 1; nextRow < puzzle.height; nextRow++) {
+          const cell = findFirstCellInRowWithClue(nextRow, 'across');
+          if (cell) {
+            setSelectedCell(cell);
+            return;
+          }
+        }
+        // If no more rows, wrap to first row
+        for (let nextRow = 0; nextRow <= fromRow; nextRow++) {
+          const cell = findFirstCellInRowWithClue(nextRow, 'across');
+          if (cell) {
+            setSelectedCell(cell);
+            return;
+          }
+        }
       } else {
-        // At end of row/column - wrap to next row/column
-        if (direction === 'across') {
-          // Try next rows until we find one with a non-black cell
-          for (let nextRow = fromRow + 1; nextRow < puzzle.height; nextRow++) {
-            const cell = findFirstCellInRow(nextRow);
-            if (cell) {
-              setSelectedCell(cell);
-              return;
-            }
+        // Try next columns until we find one with a cell that has a down clue
+        for (let nextCol = fromCol + 1; nextCol < puzzle.width; nextCol++) {
+          const cell = findFirstCellInColWithClue(nextCol, 'down');
+          if (cell) {
+            setSelectedCell(cell);
+            return;
           }
-          // If no more rows, wrap to first row
-          for (let nextRow = 0; nextRow <= fromRow; nextRow++) {
-            const cell = findFirstCellInRow(nextRow);
-            if (cell) {
-              setSelectedCell(cell);
-              return;
-            }
-          }
-        } else {
-          // Try next columns until we find one with a non-black cell
-          for (let nextCol = fromCol + 1; nextCol < puzzle.width; nextCol++) {
-            const cell = findFirstCellInCol(nextCol);
-            if (cell) {
-              setSelectedCell(cell);
-              return;
-            }
-          }
-          // If no more columns, wrap to first column
-          for (let nextCol = 0; nextCol <= fromCol; nextCol++) {
-            const cell = findFirstCellInCol(nextCol);
-            if (cell) {
-              setSelectedCell(cell);
-              return;
-            }
+        }
+        // If no more columns, wrap to first column
+        for (let nextCol = 0; nextCol <= fromCol; nextCol++) {
+          const cell = findFirstCellInColWithClue(nextCol, 'down');
+          if (cell) {
+            setSelectedCell(cell);
+            return;
           }
         }
       }
     },
-    [direction, findNextCell, findFirstCellInRow, findFirstCellInCol, puzzle]
+    [direction, findNextCellWithClue, findFirstCellInRowWithClue, findFirstCellInColWithClue, puzzle]
   );
 
   /**
