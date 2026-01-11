@@ -3,9 +3,17 @@ import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
+import { ShareDialog } from './components/ShareDialog';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { loadCurrentPuzzle, saveCurrentPuzzle } from './lib/puzzleStorage';
+import {
+  parseShareUrl,
+  parseLegacyRoomUrl,
+  generateTimelineId,
+  buildShareUrl,
+  updateUrlHash,
+} from './collaboration/sessionUrl';
 import type { Puzzle } from './types/puzzle';
 import './App.css';
 
@@ -20,19 +28,44 @@ function getPuzzleId(puzzle: Puzzle): string {
 }
 
 /**
- * Parse roomId from URL hash (e.g., #room=abc123)
+ * Parse session info from URL hash.
+ * Supports new format: #puzzle=X&timeline=Y
+ * Falls back to legacy format: #room=X
  */
-function getRoomIdFromHash(): string | undefined {
-  const hash = window.location.hash;
-  const match = hash.match(/room=([^&]+)/);
-  return match ? match[1] : undefined;
+function getSessionFromHash(): { puzzleIdFromUrl?: string; timelineId?: string } {
+  // Try new format first
+  const shareUrl = parseShareUrl();
+  if (shareUrl) {
+    return {
+      puzzleIdFromUrl: shareUrl.puzzleId,
+      timelineId: shareUrl.timelineId,
+    };
+  }
+
+  // Fall back to legacy format
+  const legacyRoomId = parseLegacyRoomUrl();
+  if (legacyRoomId) {
+    return {
+      timelineId: legacyRoomId,
+    };
+  }
+
+  return {};
 }
 
 function App() {
   // Start with null to indicate loading state, then load saved or sample puzzle
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [roomId, setRoomId] = useState<string | undefined>(getRoomIdFromHash);
+
+  // Session state: timeline ID for P2P collaboration
+  const [timelineId, setTimelineId] = useState<string | undefined>(
+    () => getSessionFromHash().timelineId
+  );
+
+  // Share dialog state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
 
   // Load saved puzzle on startup
   useEffect(() => {
@@ -41,10 +74,11 @@ function App() {
     });
   }, []);
 
-  // Listen for hash changes to update roomId
+  // Listen for hash changes to update session state
   useEffect(() => {
     const handleHashChange = () => {
-      setRoomId(getRoomIdFromHash());
+      const session = getSessionFromHash();
+      setTimelineId(session.timelineId);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -52,6 +86,10 @@ function App() {
 
   // Generate stable puzzle ID for CRDT storage
   const puzzleId = puzzle ? getPuzzleId(puzzle) : '';
+
+  // Derive roomId for P2P: combine puzzleId and timelineId for unique room
+  // Only create P2P session when timelineId is present
+  const roomId = puzzleId && timelineId ? `${puzzleId}:${timelineId}` : undefined;
 
   const {
     userEntries,
@@ -64,6 +102,28 @@ function App() {
     ready,
     connectionState,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
+
+  /**
+   * Handle Share button click.
+   * Generates timeline ID if needed and opens the share dialog.
+   */
+  const handleShare = useCallback(() => {
+    if (!puzzle || !puzzleId) return;
+
+    // Generate timeline ID if we don't have one yet
+    let currentTimelineId = timelineId;
+    if (!currentTimelineId) {
+      currentTimelineId = generateTimelineId();
+      setTimelineId(currentTimelineId);
+      // Update URL hash so current user is also in the room
+      updateUrlHash(puzzleId, currentTimelineId);
+    }
+
+    // Build share URL and open dialog
+    const url = buildShareUrl(puzzleId, currentTimelineId);
+    setShareUrl(url);
+    setShowShareDialog(true);
+  }, [puzzle, puzzleId, timelineId]);
 
   const handlePuzzleLoaded = useCallback((newPuzzle: Puzzle) => {
     setPuzzle(newPuzzle);
@@ -121,6 +181,18 @@ function App() {
             onError={handleError}
           />
         </div>
+
+        {/* Share button - visible when puzzle is loaded */}
+        {puzzle && (
+          <button
+            type="button"
+            className="share-button"
+            onClick={handleShare}
+            aria-label="Share puzzle"
+          >
+            Share
+          </button>
+        )}
       </header>
 
       {/* Connection indicator - only show in P2P mode */}
@@ -179,6 +251,14 @@ function App() {
           </>
         )}
       </main>
+
+      {/* Share dialog */}
+      <ShareDialog
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        shareUrl={shareUrl}
+        puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
+      />
     </div>
   );
 }

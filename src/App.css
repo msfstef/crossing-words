@@ -36,6 +36,39 @@
   font-size: 0.875rem;
 }
 
+/* Share button */
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #e94560;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    transform 80ms ease;
+}
+
+.share-button:hover {
+  background-color: #d63855;
+}
+
+.share-button:active {
+  transform: scale(0.98);
+  background-color: #c4304a;
+}
+
+.share-button:focus {
+  outline: 2px solid #e94560;
+  outline-offset: 2px;
+}
+
 .puzzle-container {
   display: flex;
   flex-direction: column;
