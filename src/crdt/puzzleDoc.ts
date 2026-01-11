@@ -27,11 +27,7 @@ export type EntriesMap = Y.Map<string>;
  */
 export function createPuzzleDoc(puzzleId: string): Y.Doc {
   const doc = new Y.Doc();
-
-  // Store puzzleId as metadata for debugging purposes
-  doc.clientID; // Access clientID to ensure doc is initialized
   console.debug(`[puzzleDoc] Created Y.Doc for puzzle: ${puzzleId}`);
-
   return doc;
 }
 
