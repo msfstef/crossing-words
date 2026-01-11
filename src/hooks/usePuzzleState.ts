@@ -121,22 +121,6 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
   );
 
   /**
-   * Move back to the previous cell in the current direction
-   */
-  const moveBack = useCallback(
-    (fromRow: number, fromCol: number): void => {
-      const deltaRow = direction === 'down' ? -1 : 0;
-      const deltaCol = direction === 'across' ? -1 : 0;
-
-      const prevCell = findNextCell(fromRow, fromCol, deltaRow, deltaCol);
-      if (prevCell) {
-        setSelectedCell(prevCell);
-      }
-    },
-    [direction, findNextCell]
-  );
-
-  /**
    * Handle keyboard events for navigation and letter input
    */
   const handleKeyDown = useCallback(

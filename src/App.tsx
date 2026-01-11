@@ -1,24 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import { CrosswordGrid } from './components/CrosswordGrid';
+import { usePuzzleState } from './hooks/usePuzzleState';
 import { samplePuzzle } from './lib/samplePuzzle';
 import './App.css';
 
 function App() {
-  const [userEntries] = useState<Map<string, string>>(() => new Map());
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
-  const [direction, setDirection] = useState<'across' | 'down'>('across');
+  const {
+    userEntries,
+    selectedCell,
+    direction,
+    handleCellClick,
+    handleKeyDown,
+  } = usePuzzleState(samplePuzzle);
 
-  const handleCellClick = useCallback(
-    (row: number, col: number) => {
-      // If clicking the same cell, toggle direction
-      if (selectedCell?.row === row && selectedCell?.col === col) {
-        setDirection((prev) => (prev === 'across' ? 'down' : 'across'));
-      } else {
-        setSelectedCell({ row, col });
-      }
-    },
-    [selectedCell]
-  );
+  // Add keyboard event listener to document
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      handleKeyDown(event);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [handleKeyDown]);
 
   return (
     <div className="app-shell">
