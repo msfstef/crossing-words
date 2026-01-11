@@ -90,6 +90,9 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
     const store = createPuzzleStore(puzzleId);
     storeRef.current = store;
 
+    // Track whether observer was attached (for safe cleanup)
+    let observerAttached = false;
+
     // Observer to sync Y.Map changes to React state
     const observer = () => {
       // Convert Y.Map to regular Map for React
@@ -110,6 +113,7 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
 
       // Set up observer for future changes
       store.entries.observe(observer);
+      observerAttached = true;
 
       // Mark as ready
       readyRef.current = true;
@@ -118,8 +122,10 @@ export function useCrdtPuzzle(puzzleId: string): UseCrdtPuzzleReturn {
 
     // Cleanup on unmount or puzzleId change
     return () => {
-      // Remove observer before destroying
-      store.entries.unobserve(observer);
+      // Only unobserve if observer was attached
+      if (observerAttached) {
+        store.entries.unobserve(observer);
+      }
       store.destroy();
       storeRef.current = null;
     };
