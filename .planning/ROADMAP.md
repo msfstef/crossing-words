@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 2. Puzzle Core | 3/3 | Complete | 2026-01-11 |
 | 3. Puzzle Import | 2/2 | Complete | 2026-01-11 |
 | 3.1 Puzzle Downloader | 2/2 | Complete | 2026-01-11 |
-| 4. CRDT State | 0/TBD | Not started | - |
+| 4. CRDT State | 1/2 | In progress | - |
 | 5. P2P Networking | 0/TBD | Not started | - |
 | 6. Collaboration | 0/TBD | Not started | - |
 | 7. Check/Reveal | 0/TBD | Not started | - |

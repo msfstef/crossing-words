@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 3.1 — Puzzle Downloader (Complete)
+**Current focus:** Phase 4 — CRDT State (In progress)
 
 ## Current Position
 
-Phase: 3.1 of 8 (Puzzle Downloader)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 3.1-02-PLAN.md
+Phase: 4 of 8 (CRDT State)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-11 — Completed 04-01-PLAN.md
 
-Progress: ██████░░░░ 62%
+Progress: ███████░░░ 69%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 12 min
-- Total execution time: 1.61 hours
+- Total execution time: 1.71 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: ██████░░░░ 62%
 | 2. Puzzle Core | 3 | 35 min | 12 min |
 | 3. Puzzle Import | 2 | 20 min | 10 min |
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
+| 4. CRDT State | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 22, 4, 16, 14, 18 min
-- Trend: Stable, bug fixes during verification add time
+- Last 5 plans: 4, 16, 14, 18, 6 min
+- Trend: Fast plan, minimal deviation
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 | 3.1-02 | Direct-first fetch with proxy fallback | Reduces proxy load, lower latency when CORS allowed |
 | 3.1-02 | herbach.dnsalias.com for Universal | Official andrewsmcmeel.com 404s, community archive reliable |
 | 3.1-02 | Source registry with getDirectUrl | Per-source URL construction flexibility |
+| 04-01 | Flat Y.Map with 'row,col' keys | Matches existing userEntries pattern |
+| 04-01 | One Y.Doc per puzzle | Isolated persistence and clean provider attachment |
+| 04-01 | Ready promise pattern | Prevents reading empty state before IndexedDB loads |
 
 ### Roadmap Evolution
 
@@ -85,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 3.1-02-PLAN.md (Source Service and Downloader UI)
+Stopped at: Completed 04-01-PLAN.md (Yjs Infrastructure)
 Resume file: None
