@@ -12,7 +12,7 @@
 
 const TIMELINE_STORAGE_PREFIX = 'timeline:';
 const Y_INDEXEDDB_PREFIX = 'puzzle-';
-const Y_INDEXEDDB_DB_NAME_SUFFIX = '-y-indexeddb';
+// Note: y-indexeddb uses just the storage key as the database name, no suffix
 
 /**
  * Gets the localStorage key for a puzzle's timeline mapping.
@@ -111,8 +111,8 @@ function openIndexedDB(dbName: string): Promise<IDBDatabase | null> {
  */
 export async function hasLocalProgress(puzzleId: string): Promise<boolean> {
   try {
-    // y-indexeddb creates databases named `${storageKey}-y-indexeddb`
-    const dbName = `${Y_INDEXEDDB_PREFIX}${puzzleId}${Y_INDEXEDDB_DB_NAME_SUFFIX}`;
+    // y-indexeddb creates databases using the storage key directly
+    const dbName = `${Y_INDEXEDDB_PREFIX}${puzzleId}`;
 
     // Check if the database exists by trying to open it
     // Note: indexedDB.databases() is not available in all browsers

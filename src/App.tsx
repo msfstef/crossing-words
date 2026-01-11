@@ -6,6 +6,7 @@ import { CollaboratorAvatars } from './components/CollaboratorAvatars';
 import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { ShareDialog } from './components/ShareDialog';
+import { JoinDialog } from './components/JoinDialog';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { samplePuzzle } from './lib/samplePuzzle';
@@ -16,7 +17,15 @@ import {
   generateTimelineId,
   buildShareUrl,
   updateUrlHash,
+  clearUrlHash,
 } from './collaboration/sessionUrl';
+import {
+  getCurrentTimeline,
+  hasLocalProgress,
+  saveTimelineMapping,
+  getLocalEntryCount,
+} from './collaboration/timelineStorage';
+import { createPuzzleStore } from './crdt/puzzleStore';
 import type { Puzzle } from './types/puzzle';
 import './App.css';
 
@@ -62,13 +71,28 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   // Session state: timeline ID for P2P collaboration
-  const [timelineId, setTimelineId] = useState<string | undefined>(
-    () => getSessionFromHash().timelineId
+  // Initially undefined - will be set after checking for conflicts with URL timeline
+  const [timelineId, setTimelineId] = useState<string | undefined>(undefined);
+
+  // Track the timeline ID from URL that needs conflict checking
+  const [pendingUrlTimeline, setPendingUrlTimeline] = useState<string | null>(
+    () => getSessionFromHash().timelineId ?? null
   );
 
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+
+  // Join dialog state for merge/start-fresh choice
+  const [joinDialogState, setJoinDialogState] = useState<{
+    isOpen: boolean;
+    pendingTimelineId: string | null;
+    localEntryCount: number;
+  }>({
+    isOpen: false,
+    pendingTimelineId: null,
+    localEntryCount: 0,
+  });
 
   // Load saved puzzle on startup
   useEffect(() => {
@@ -77,18 +101,140 @@ function App() {
     });
   }, []);
 
-  // Listen for hash changes to update session state
+  // Generate stable puzzle ID for CRDT storage
+  const puzzleId = puzzle ? getPuzzleId(puzzle) : '';
+
+  // Listen for hash changes to detect shared timeline from URL
   useEffect(() => {
     const handleHashChange = () => {
       const session = getSessionFromHash();
-      setTimelineId(session.timelineId);
+      const newTimeline = session.timelineId ?? null;
+
+      // If timeline is already active or being processed, skip
+      if (newTimeline === timelineId || newTimeline === pendingUrlTimeline) {
+        return;
+      }
+
+      // Set pending timeline - will be processed by the effect below
+      if (newTimeline) {
+        setPendingUrlTimeline(newTimeline);
+      }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [timelineId, pendingUrlTimeline]);
 
-  // Generate stable puzzle ID for CRDT storage
-  const puzzleId = puzzle ? getPuzzleId(puzzle) : '';
+  // Process pending URL timeline when puzzle is loaded
+  // This checks for conflicts and shows dialog if needed
+  useEffect(() => {
+    // Skip if no pending timeline, no puzzle, or already active
+    if (!pendingUrlTimeline || !puzzleId || pendingUrlTimeline === timelineId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const processJoin = async () => {
+      // Check if user has existing progress for this puzzle
+      const localTimeline = getCurrentTimeline(puzzleId);
+      const hasProgress = await hasLocalProgress(puzzleId);
+
+      if (cancelled) return;
+
+      // If user has local progress AND it's a different timeline, show dialog
+      if (hasProgress && localTimeline !== pendingUrlTimeline) {
+        const entryCount = await getLocalEntryCount(puzzleId);
+        if (cancelled) return;
+
+        setJoinDialogState({
+          isOpen: true,
+          pendingTimelineId: pendingUrlTimeline,
+          localEntryCount: entryCount,
+        });
+        // Don't clear pending yet - will be cleared when user makes a choice
+      } else {
+        // No conflict - just join the shared timeline
+        setTimelineId(pendingUrlTimeline);
+        await saveTimelineMapping(puzzleId, pendingUrlTimeline);
+        // Clear pending after successful join
+        setPendingUrlTimeline(null);
+      }
+    };
+
+    processJoin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingUrlTimeline, puzzleId, timelineId]);
+
+  /**
+   * Handle merge choice from JoinDialog.
+   * Connect to shared room with local state intact - Yjs merges automatically.
+   */
+  const handleJoinMerge = useCallback(async () => {
+    const { pendingTimelineId } = joinDialogState;
+    if (!pendingTimelineId || !puzzleId) return;
+
+    // Just switch to the shared timeline - Yjs CRDT will merge states
+    // when both docs connect to the same room
+    setTimelineId(pendingTimelineId);
+    await saveTimelineMapping(puzzleId, pendingTimelineId);
+    updateUrlHash(puzzleId, pendingTimelineId);
+
+    // Clear dialog and pending URL state
+    setPendingUrlTimeline(null);
+    setJoinDialogState({
+      isOpen: false,
+      pendingTimelineId: null,
+      localEntryCount: 0,
+    });
+  }, [joinDialogState, puzzleId]);
+
+  /**
+   * Handle start-fresh choice from JoinDialog.
+   * Clear local state before connecting to shared session.
+   */
+  const handleJoinStartFresh = useCallback(async () => {
+    const { pendingTimelineId } = joinDialogState;
+    if (!pendingTimelineId || !puzzleId) return;
+
+    // Clear local data by creating a temporary store and clearing it
+    const tempStore = createPuzzleStore(puzzleId);
+    await tempStore.ready;
+    await tempStore.clearData();
+    tempStore.destroy();
+
+    // Now switch to the shared timeline with fresh state
+    setTimelineId(pendingTimelineId);
+    await saveTimelineMapping(puzzleId, pendingTimelineId);
+    updateUrlHash(puzzleId, pendingTimelineId);
+
+    // Clear dialog and pending URL state
+    setPendingUrlTimeline(null);
+    setJoinDialogState({
+      isOpen: false,
+      pendingTimelineId: null,
+      localEntryCount: 0,
+    });
+  }, [joinDialogState, puzzleId]);
+
+  /**
+   * Handle cancel choice from JoinDialog.
+   * Stay on local timeline, remove shared timeline from URL.
+   */
+  const handleJoinCancel = useCallback(() => {
+    // Clear the URL hash to remove the shared timeline
+    clearUrlHash();
+
+    // Clear dialog and pending URL state
+    setPendingUrlTimeline(null);
+    setJoinDialogState({
+      isOpen: false,
+      pendingTimelineId: null,
+      localEntryCount: 0,
+    });
+  }, []);
 
   // Derive roomId for P2P: combine puzzleId and timelineId for unique room
   // Only create P2P session when timelineId is present
@@ -274,6 +420,16 @@ function App() {
         onClose={() => setShowShareDialog(false)}
         shareUrl={shareUrl}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
+      />
+
+      {/* Join dialog for merge/start-fresh choice */}
+      <JoinDialog
+        isOpen={joinDialogState.isOpen}
+        puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
+        localEntryCount={joinDialogState.localEntryCount}
+        onMerge={handleJoinMerge}
+        onStartFresh={handleJoinStartFresh}
+        onCancel={handleJoinCancel}
       />
 
       {/* Toast notifications */}
