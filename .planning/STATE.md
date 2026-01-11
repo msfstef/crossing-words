@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 2 — Puzzle Core (Complete)
+**Current focus:** Phase 3 — Puzzle Import (In progress)
 
 ## Current Position
 
-Phase: 2 of 8 (Puzzle Core)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 02-03-PLAN.md
+Phase: 3 of 8 (Puzzle Import)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-11 — Completed 03-01-PLAN.md
 
-Progress: ████░░░░░░ 37%
+Progress: ████░░░░░░ 45%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 11 min
-- Total execution time: 0.75 hours
+- Total plans completed: 5
+- Average duration: 10 min
+- Total execution time: 0.82 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: ████░░░░░░ 37%
 |-------|-------|-------|----------|
 | 1. Foundation | 1 | 10 min | 10 min |
 | 2. Puzzle Core | 3 | 35 min | 12 min |
+| 3. Puzzle Import | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 10, 8, 5, 22 min
-- Trend: — (UAT fixes extended 02-03)
+- Last 5 plans: 10, 8, 5, 22, 4 min
+- Trend: Fast (simple parser wiring)
 
 ## Accumulated Context
 
@@ -56,6 +57,8 @@ Recent decisions affecting current work:
 | 02-03 | Auto-advance skips cells without clue | Only land on cells with clue in direction |
 | 02-03 | Direction toggle only if alternate valid | Prevents showing empty clue bar |
 | 02-03 | Row/column wrap on advance | Natural flow when reaching end |
+| 03-01 | Use xd-crossword-tools for puz/jpz | Don't hand-roll binary/XML parsing |
+| 03-01 | Parse ipuz directly | Native JSON format, no library needed |
 
 ### Deferred Issues
 
@@ -68,5 +71,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed Phase 2 (02-03-PLAN.md)
+Stopped at: Completed 03-01-PLAN.md (format parsers)
 Resume file: None
