@@ -1,6 +1,7 @@
 name = "crossing-words-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
+account_id = "fed2683481f4e710185cbeaac94262e2"
 
 [vars]
 ALLOWED_ORIGINS = "*"
