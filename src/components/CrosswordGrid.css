@@ -1,0 +1,61 @@
+.crossword-grid {
+  display: grid;
+  gap: 2px;
+  width: min(100%, 400px);
+  max-width: 400px;
+  aspect-ratio: 1;
+  background-color: #333;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.crossword-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid #444;
+  user-select: none;
+}
+
+.crossword-cell.white {
+  background-color: #2a2a3e;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.crossword-cell.white:hover {
+  background-color: #3a3a4e;
+}
+
+.crossword-cell.black {
+  background-color: #1a1a1a;
+  cursor: default;
+}
+
+.crossword-cell.selected {
+  border: 2px solid #4a9eff;
+  background-color: #3a4a6e;
+}
+
+.crossword-cell.in-word {
+  background-color: #2a3a5e;
+}
+
+.clue-number {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: #888;
+  line-height: 1;
+}
+
+.cell-letter {
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #e0e0e0;
+}
