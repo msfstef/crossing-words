@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { ShareDialog } from './components/ShareDialog';
 import { usePuzzleState } from './hooks/usePuzzleState';
+import { useCollaborators } from './collaboration/useCollaborators';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { loadCurrentPuzzle, saveCurrentPuzzle } from './lib/puzzleStorage';
 import {
@@ -101,7 +103,11 @@ function App() {
     handleKeyDown,
     ready,
     connectionState,
+    awareness,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
+
+  // Track collaborators and show join/leave toasts (toasts handled inside hook)
+  useCollaborators(awareness);
 
   /**
    * Handle Share button click.
@@ -259,6 +265,9 @@ function App() {
         shareUrl={shareUrl}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
       />
+
+      {/* Toast notifications */}
+      <Toaster position="bottom-center" theme="dark" />
     </div>
   );
 }
