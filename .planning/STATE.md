@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 — Collaboration (Ready to start)
+**Current focus:** Phase 6 — Collaboration (Plan 1 complete, ready for Plan 2)
 
 ## Current Position
 
-Phase: 5 of 8 (P2P Networking)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 05-02-PLAN.md (Phase 5 complete)
+Phase: 6 of 8 (Collaboration)
+Plan: 1 of TBD in current phase
+Status: Plan 1 complete
+Last activity: 2026-01-11 — Completed 06-01-PLAN.md (Awareness and presence foundation)
 
-Progress: █████████░ 85%
+Progress: █████████░ 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 15 min
-- Total execution time: 2.73 hours
+- Total execution time: 3.03 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: █████████░ 85%
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
 | 5. P2P Networking | 2 | 40 min | 20 min |
+| 6. Collaboration | 1 | 18 min | 18 min |
 
 **Recent Trend:**
-- Last 5 plans: 18, 6, 21, 25, 15 min
-- Trend: Phase 5 complete, P2P networking foundation ready
+- Last 5 plans: 6, 21, 25, 15, 18 min
+- Trend: Phase 6 started, awareness foundation complete
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 | 05-01 | roomId parsed from URL hash | Simple sharing mechanism |
 | 05-02 | ConnectionState via subscription pattern | Flexible UI binding, useSyncExternalStore |
 | 05-02 | Connection indicator in top-right | Minimal, doesn't distract from puzzle |
+| 06-01 | 12 distinct colors pre-generated | Visual differentiation for collaborators |
+| 06-01 | Nickname: Adjective + Animal | Simple, playful, no external dependency |
+| 06-01 | useSyncExternalStore for awareness | Avoids ref access during render lint error |
 
 ### Roadmap Evolution
 
@@ -99,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 05-02-PLAN.md - Phase 5 complete
+Stopped at: Completed 06-01-PLAN.md - Awareness and presence foundation
 Resume file: None
