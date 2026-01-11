@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Puzzle, Clue } from '../types/puzzle';
+import { useCrdtPuzzle } from './useCrdtPuzzle';
 
 interface CurrentClue {
   number: number;
@@ -15,14 +16,22 @@ interface PuzzleStateHook {
   handleKeyDown: (event: KeyboardEvent) => void;
   currentWord: { row: number; col: number }[] | null;
   currentClue: CurrentClue | null;
+  ready: boolean;
 }
 
 /**
  * Custom hook for managing puzzle solving state
  * Handles cell selection, direction toggle, letter input, and navigation
+ * Uses CRDT-backed entries for persistence and future multiplayer sync
  */
-export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
-  const [userEntries, setUserEntries] = useState<Map<string, string>>(() => new Map());
+export function usePuzzleState(puzzle: Puzzle, puzzleId: string): PuzzleStateHook {
+  // Use CRDT-backed entries instead of local useState
+  const {
+    entries: userEntries,
+    ready,
+    setEntry,
+    clearEntry,
+  } = useCrdtPuzzle(puzzleId);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
 
@@ -294,13 +303,9 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
       // Handle letter keys (A-Z)
       if (/^[a-zA-Z]$/.test(key)) {
         event.preventDefault();
-        const cellKey = `${selectedCell.row},${selectedCell.col}`;
 
-        setUserEntries((prev) => {
-          const newEntries = new Map(prev);
-          newEntries.set(cellKey, key.toUpperCase());
-          return newEntries;
-        });
+        // Use CRDT-backed setEntry
+        setEntry(selectedCell.row, selectedCell.col, key.toUpperCase());
 
         // Auto-advance to next cell
         autoAdvance(selectedCell.row, selectedCell.col);
@@ -314,12 +319,8 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
         const currentEntry = userEntries.get(cellKey);
 
         if (currentEntry) {
-          // If current cell has a letter, just clear it
-          setUserEntries((prev) => {
-            const newEntries = new Map(prev);
-            newEntries.delete(cellKey);
-            return newEntries;
-          });
+          // If current cell has a letter, just clear it (CRDT-backed)
+          clearEntry(selectedCell.row, selectedCell.col);
         } else {
           // If current cell is empty, move back and clear that cell
           const deltaRow = direction === 'down' ? -1 : 0;
@@ -328,12 +329,8 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
 
           if (prevCell) {
             setSelectedCell(prevCell);
-            const prevCellKey = `${prevCell.row},${prevCell.col}`;
-            setUserEntries((prev) => {
-              const newEntries = new Map(prev);
-              newEntries.delete(prevCellKey);
-              return newEntries;
-            });
+            // Clear previous cell (CRDT-backed)
+            clearEntry(prevCell.row, prevCell.col);
           }
         }
         return;
@@ -366,7 +363,7 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
         setSelectedCell(nextCell);
       }
     },
-    [selectedCell, userEntries, direction, autoAdvance, findNextCell]
+    [selectedCell, userEntries, direction, autoAdvance, findNextCell, setEntry, clearEntry]
   );
 
   // Compute current word and clue
@@ -380,5 +377,6 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
     handleKeyDown,
     currentWord: wordAndClue?.cells ?? null,
     currentClue: wordAndClue?.clue ?? null,
+    ready,
   };
 }
