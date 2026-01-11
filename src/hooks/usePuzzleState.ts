@@ -1,5 +1,11 @@
 import { useState, useCallback } from 'react';
-import type { Puzzle } from '../types/puzzle';
+import type { Puzzle, Clue } from '../types/puzzle';
+
+interface CurrentClue {
+  number: number;
+  direction: 'across' | 'down';
+  text: string;
+}
 
 interface PuzzleStateHook {
   userEntries: Map<string, string>;
@@ -7,7 +13,8 @@ interface PuzzleStateHook {
   direction: 'across' | 'down';
   handleCellClick: (row: number, col: number) => void;
   handleKeyDown: (event: KeyboardEvent) => void;
-  currentWord: { cells: { row: number; col: number }[] } | null;
+  currentWord: { row: number; col: number }[] | null;
+  currentClue: CurrentClue | null;
 }
 
 /**
@@ -20,43 +27,78 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
   const [direction, setDirection] = useState<'across' | 'down'>('across');
 
   /**
-   * Get the cells that make up the current word based on selected cell and direction
+   * Find the clue that contains the selected cell in the given direction
    */
-  const getCurrentWord = useCallback((): { cells: { row: number; col: number }[] } | null => {
+  const findClueForCell = useCallback(
+    (
+      row: number,
+      col: number,
+      dir: 'across' | 'down'
+    ): Clue | null => {
+      const clues = dir === 'across' ? puzzle.clues.across : puzzle.clues.down;
+
+      for (const clue of clues) {
+        if (dir === 'across') {
+          // Check if cell is in this across clue: same row, within column range
+          if (
+            row === clue.row &&
+            col >= clue.col &&
+            col < clue.col + clue.length
+          ) {
+            return clue;
+          }
+        } else {
+          // Check if cell is in this down clue: same column, within row range
+          if (
+            col === clue.col &&
+            row >= clue.row &&
+            row < clue.row + clue.length
+          ) {
+            return clue;
+          }
+        }
+      }
+
+      return null;
+    },
+    [puzzle]
+  );
+
+  /**
+   * Get the cells that make up the current word and the associated clue
+   */
+  const getCurrentWordAndClue = useCallback((): {
+    cells: { row: number; col: number }[];
+    clue: CurrentClue;
+  } | null => {
     if (!selectedCell) return null;
 
+    // Find the clue for the selected cell
+    const clue = findClueForCell(selectedCell.row, selectedCell.col, direction);
+    if (!clue) return null;
+
+    // Build array of cells from the clue
     const cells: { row: number; col: number }[] = [];
 
     if (direction === 'across') {
-      // Find start of word
-      let startCol = selectedCell.col;
-      while (startCol > 0 && !puzzle.grid[selectedCell.row][startCol - 1].isBlack) {
-        startCol--;
-      }
-
-      // Find end and collect all cells
-      let col = startCol;
-      while (col < puzzle.width && !puzzle.grid[selectedCell.row][col].isBlack) {
-        cells.push({ row: selectedCell.row, col });
-        col++;
+      for (let i = 0; i < clue.length; i++) {
+        cells.push({ row: clue.row, col: clue.col + i });
       }
     } else {
-      // Find start of word (going up)
-      let startRow = selectedCell.row;
-      while (startRow > 0 && !puzzle.grid[startRow - 1][selectedCell.col].isBlack) {
-        startRow--;
-      }
-
-      // Find end and collect all cells
-      let row = startRow;
-      while (row < puzzle.height && !puzzle.grid[row][selectedCell.col].isBlack) {
-        cells.push({ row, col: selectedCell.col });
-        row++;
+      for (let i = 0; i < clue.length; i++) {
+        cells.push({ row: clue.row + i, col: clue.col });
       }
     }
 
-    return cells.length > 0 ? { cells } : null;
-  }, [puzzle, selectedCell, direction]);
+    return {
+      cells,
+      clue: {
+        number: clue.number,
+        direction: clue.direction,
+        text: clue.text,
+      },
+    };
+  }, [puzzle, selectedCell, direction, findClueForCell]);
 
   /**
    * Handle cell click - select cell or toggle direction if clicking same cell
@@ -207,12 +249,16 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
     [selectedCell, userEntries, direction, autoAdvance, findNextCell]
   );
 
+  // Compute current word and clue
+  const wordAndClue = getCurrentWordAndClue();
+
   return {
     userEntries,
     selectedCell,
     direction,
     handleCellClick,
     handleKeyDown,
-    currentWord: getCurrentWord(),
+    currentWord: wordAndClue?.cells ?? null,
+    currentClue: wordAndClue?.clue ?? null,
   };
 }
