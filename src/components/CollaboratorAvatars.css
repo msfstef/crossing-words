@@ -1,0 +1,30 @@
+.collaborator-avatars {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.collaborator-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1a1a2e;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.collaborator-avatar__initials {
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.collaborator-avatar--overflow {
+  background-color: #555;
+}

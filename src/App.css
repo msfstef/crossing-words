@@ -36,12 +36,20 @@
   font-size: 0.875rem;
 }
 
+/* Header actions row (avatars + share button) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 /* Share button */
 .share-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 1rem;
   padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;

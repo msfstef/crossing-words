@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
+import { CollaboratorAvatars } from './components/CollaboratorAvatars';
 import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { ShareDialog } from './components/ShareDialog';
@@ -107,7 +108,7 @@ function App() {
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
-  useCollaborators(awareness);
+  const collaborators = useCollaborators(awareness);
 
   /**
    * Handle Share button click.
@@ -188,17 +189,25 @@ function App() {
           />
         </div>
 
-        {/* Share button - visible when puzzle is loaded */}
-        {puzzle && (
-          <button
-            type="button"
-            className="share-button"
-            onClick={handleShare}
-            aria-label="Share puzzle"
-          >
-            Share
-          </button>
-        )}
+        {/* Share button and collaboration info */}
+        <div className="header-actions">
+          {/* Collaborator avatars - only show in P2P mode with collaborators */}
+          {timelineId && collaborators.length > 0 && (
+            <CollaboratorAvatars collaborators={collaborators} />
+          )}
+
+          {/* Share button - visible when puzzle is loaded */}
+          {puzzle && (
+            <button
+              type="button"
+              className="share-button"
+              onClick={handleShare}
+              aria-label="Share puzzle"
+            >
+              Share
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Connection indicator - only show in P2P mode */}
