@@ -169,7 +169,38 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
   );
 
   /**
+   * Find the first non-black cell in a row (for wrapping)
+   */
+  const findFirstCellInRow = useCallback(
+    (row: number): { row: number; col: number } | null => {
+      for (let col = 0; col < puzzle.width; col++) {
+        if (!puzzle.grid[row][col].isBlack) {
+          return { row, col };
+        }
+      }
+      return null;
+    },
+    [puzzle]
+  );
+
+  /**
+   * Find the first non-black cell in a column (for wrapping)
+   */
+  const findFirstCellInCol = useCallback(
+    (col: number): { row: number; col: number } | null => {
+      for (let row = 0; row < puzzle.height; row++) {
+        if (!puzzle.grid[row][col].isBlack) {
+          return { row, col };
+        }
+      }
+      return null;
+    },
+    [puzzle]
+  );
+
+  /**
    * Move to the next cell in the current direction after entering a letter
+   * Wraps to next row/column when reaching the end
    */
   const autoAdvance = useCallback(
     (fromRow: number, fromCol: number): void => {
@@ -179,10 +210,46 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
       const nextCell = findNextCell(fromRow, fromCol, deltaRow, deltaCol);
       if (nextCell) {
         setSelectedCell(nextCell);
+      } else {
+        // At end of row/column - wrap to next row/column
+        if (direction === 'across') {
+          // Try next rows until we find one with a non-black cell
+          for (let nextRow = fromRow + 1; nextRow < puzzle.height; nextRow++) {
+            const cell = findFirstCellInRow(nextRow);
+            if (cell) {
+              setSelectedCell(cell);
+              return;
+            }
+          }
+          // If no more rows, wrap to first row
+          for (let nextRow = 0; nextRow <= fromRow; nextRow++) {
+            const cell = findFirstCellInRow(nextRow);
+            if (cell) {
+              setSelectedCell(cell);
+              return;
+            }
+          }
+        } else {
+          // Try next columns until we find one with a non-black cell
+          for (let nextCol = fromCol + 1; nextCol < puzzle.width; nextCol++) {
+            const cell = findFirstCellInCol(nextCol);
+            if (cell) {
+              setSelectedCell(cell);
+              return;
+            }
+          }
+          // If no more columns, wrap to first column
+          for (let nextCol = 0; nextCol <= fromCol; nextCol++) {
+            const cell = findFirstCellInCol(nextCol);
+            if (cell) {
+              setSelectedCell(cell);
+              return;
+            }
+          }
+        }
       }
-      // If no next cell, stay in place
     },
-    [direction, findNextCell]
+    [direction, findNextCell, findFirstCellInRow, findFirstCellInCol, puzzle]
   );
 
   /**
