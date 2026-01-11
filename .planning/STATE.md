@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 — Collaboration (Plan 1 complete, ready for Plan 2)
+**Current focus:** Phase 6 — Collaboration (Plan 2 complete, ready for Plan 3)
 
 ## Current Position
 
 Phase: 6 of 8 (Collaboration)
-Plan: 1 of TBD in current phase
-Status: Plan 1 complete
-Last activity: 2026-01-11 — Completed 06-01-PLAN.md (Awareness and presence foundation)
+Plan: 2 of TBD in current phase
+Status: Plan 2 complete
+Last activity: 2026-01-11 — Completed 06-02-PLAN.md (Session sharing)
 
-Progress: █████████░ 87%
+Progress: █████████░ 88%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 15 min
-- Total execution time: 3.03 hours
+- Total execution time: 3.18 hours
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: █████████░ 87%
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
 | 5. P2P Networking | 2 | 40 min | 20 min |
-| 6. Collaboration | 1 | 18 min | 18 min |
+| 6. Collaboration | 2 | 27 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 6, 21, 25, 15, 18 min
-- Trend: Phase 6 started, awareness foundation complete
+- Last 5 plans: 21, 25, 15, 18, 9 min
+- Trend: Phase 6 progressing, session sharing complete
 
 ## Accumulated Context
 
@@ -87,6 +87,9 @@ Recent decisions affecting current work:
 | 06-01 | 12 distinct colors pre-generated | Visual differentiation for collaborators |
 | 06-01 | Nickname: Adjective + Animal | Simple, playful, no external dependency |
 | 06-01 | useSyncExternalStore for awareness | Avoids ref access during render lint error |
+| 06-02 | URL: #puzzle={id}&timeline={id} | Structured params, supports puzzle+timeline |
+| 06-02 | roomId = puzzleId:timelineId | Unique P2P room per puzzle+timeline combo |
+| 06-02 | Web Share API with clipboard fallback | Native share on mobile, copy on desktop |
 
 ### Roadmap Evolution
 
@@ -103,5 +106,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 06-01-PLAN.md - Awareness and presence foundation
+Stopped at: Completed 06-02-PLAN.md - Session sharing
 Resume file: None
