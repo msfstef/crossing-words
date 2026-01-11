@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 4 — CRDT State (Complete)
+**Current focus:** Phase 5 — P2P Networking (In Progress)
 
 ## Current Position
 
-Phase: 4 of 8 (CRDT State)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 04-02-PLAN.md
+Phase: 5 of 8 (P2P Networking)
+Plan: 1 of TBD in current phase
+Status: Plan 1 complete
+Last activity: 2026-01-11 — Completed 05-01-PLAN.md
 
-Progress: ███████░░░ 71%
+Progress: ████████░░ 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 13 min
-- Total execution time: 2.06 hours
+- Total plans completed: 11
+- Average duration: 14 min
+- Total execution time: 2.48 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: ███████░░░ 71%
 | 3. Puzzle Import | 2 | 20 min | 10 min |
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
+| 5. P2P Networking | 1 | 25 min | 25 min |
 
 **Recent Trend:**
-- Last 5 plans: 16, 14, 18, 6, 21 min
-- Trend: Phase 4 complete with deviations handled
+- Last 5 plans: 14, 18, 6, 21, 25 min
+- Trend: Phase 5 started, P2P foundation established
 
 ## Accumulated Context
 
@@ -76,6 +77,10 @@ Recent decisions affecting current work:
 | 04-02 | useSyncExternalStore for Yjs sync | Proper React 18 pattern, avoids setState-in-effect lint warnings |
 | 04-02 | puzzleId from sanitized title | Simple, deterministic, unique per puzzle |
 | 04-02 | Separate puzzle storage (not in CRDT) | Independent persistence, simpler versioning |
+| 05-01 | Local signaling server in dev mode | Public signaling servers unreliable |
+| 05-01 | Session created after IndexedDB ready | Prevents empty state sync |
+| 05-01 | P2P session destroyed before store | Proper cleanup order |
+| 05-01 | roomId parsed from URL hash | Simple sharing mechanism |
 
 ### Roadmap Evolution
 
@@ -92,5 +97,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 04-02-PLAN.md (React Integration) - Phase 4 complete
+Stopped at: Completed 05-01-PLAN.md (y-webrtc Integration) - P2P foundation established
 Resume file: None
