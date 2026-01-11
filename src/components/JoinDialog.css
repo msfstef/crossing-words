@@ -1,0 +1,212 @@
+/* JoinDialog component styles */
+
+.join-dialog {
+  /* Reset browser defaults */
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  /* Center in viewport */
+  margin: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+/* Backdrop styling */
+.join-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.join-dialog__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  background-color: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  min-width: 320px;
+  max-width: 400px;
+}
+
+/* Heading */
+.join-dialog__heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+  text-align: center;
+}
+
+/* Puzzle title */
+.join-dialog__puzzle-title {
+  font-size: 0.875rem;
+  color: #888;
+  margin: 0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Message and question */
+.join-dialog__message {
+  font-size: 0.9375rem;
+  color: #e0e0e0;
+  margin: 0.5rem 0 0 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.join-dialog__question {
+  font-size: 0.875rem;
+  color: #aaa;
+  margin: 0.25rem 0 0.5rem 0;
+  text-align: center;
+}
+
+/* Options container */
+.join-dialog__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* Option button base */
+.join-dialog__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  background-color: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease;
+  text-align: left;
+  width: 100%;
+}
+
+.join-dialog__option:hover {
+  background-color: #3a3a4e;
+  border-color: #555;
+}
+
+.join-dialog__option:active {
+  transform: scale(0.98);
+  background-color: #252538;
+}
+
+.join-dialog__option:focus {
+  outline: 2px solid #e94560;
+  outline-offset: 2px;
+}
+
+/* Option title and description */
+.join-dialog__option-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.join-dialog__option-description {
+  font-size: 0.8125rem;
+  color: #888;
+  line-height: 1.4;
+}
+
+/* Merge option - primary action */
+.join-dialog__option--merge {
+  background-color: #e94560;
+  border-color: #e94560;
+}
+
+.join-dialog__option--merge .join-dialog__option-title {
+  color: #fff;
+}
+
+.join-dialog__option--merge .join-dialog__option-description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.join-dialog__option--merge:hover {
+  background-color: #d63855;
+  border-color: #d63855;
+}
+
+.join-dialog__option--merge:active {
+  background-color: #c4304a;
+}
+
+/* Start Fresh option - secondary */
+.join-dialog__option--fresh {
+  background-color: #2a3a4e;
+  border-color: #3a5a7e;
+}
+
+.join-dialog__option--fresh:hover {
+  background-color: #3a4a5e;
+  border-color: #4a6a8e;
+}
+
+/* Cancel option - tertiary */
+.join-dialog__option--cancel {
+  background-color: transparent;
+  border-color: #444;
+}
+
+.join-dialog__option--cancel .join-dialog__option-title {
+  color: #aaa;
+}
+
+.join-dialog__option--cancel:hover {
+  background-color: #2a2a3e;
+  border-color: #555;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 400px) {
+  .join-dialog__content {
+    padding: 1.5rem 1rem;
+    min-width: unset;
+    width: calc(100vw - 2rem);
+    max-width: 100%;
+  }
+}
+
+/* Animation */
+.join-dialog[open] {
+  animation: join-dialog-appear 150ms ease-out;
+}
+
+.join-dialog[open]::backdrop {
+  animation: join-backdrop-appear 150ms ease-out;
+}
+
+@keyframes join-dialog-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes join-backdrop-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
