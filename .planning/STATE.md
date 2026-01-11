@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 5 — P2P Networking (In Progress)
+**Current focus:** Phase 6 — Collaboration (Ready to start)
 
 ## Current Position
 
 Phase: 5 of 8 (P2P Networking)
-Plan: 1 of TBD in current phase
-Status: Plan 1 complete
-Last activity: 2026-01-11 — Completed 05-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-11 — Completed 05-02-PLAN.md (Phase 5 complete)
 
-Progress: ████████░░ 75%
+Progress: █████████░ 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 14 min
-- Total execution time: 2.48 hours
+- Total plans completed: 12
+- Average duration: 15 min
+- Total execution time: 2.73 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: ████████░░ 75%
 | 3. Puzzle Import | 2 | 20 min | 10 min |
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
-| 5. P2P Networking | 1 | 25 min | 25 min |
+| 5. P2P Networking | 2 | 40 min | 20 min |
 
 **Recent Trend:**
-- Last 5 plans: 14, 18, 6, 21, 25 min
-- Trend: Phase 5 started, P2P foundation established
+- Last 5 plans: 18, 6, 21, 25, 15 min
+- Trend: Phase 5 complete, P2P networking foundation ready
 
 ## Accumulated Context
 
@@ -81,6 +81,8 @@ Recent decisions affecting current work:
 | 05-01 | Session created after IndexedDB ready | Prevents empty state sync |
 | 05-01 | P2P session destroyed before store | Proper cleanup order |
 | 05-01 | roomId parsed from URL hash | Simple sharing mechanism |
+| 05-02 | ConnectionState via subscription pattern | Flexible UI binding, useSyncExternalStore |
+| 05-02 | Connection indicator in top-right | Minimal, doesn't distract from puzzle |
 
 ### Roadmap Evolution
 
@@ -97,5 +99,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 05-01-PLAN.md (y-webrtc Integration) - P2P foundation established
+Stopped at: Completed 05-02-PLAN.md - Phase 5 complete
 Resume file: None

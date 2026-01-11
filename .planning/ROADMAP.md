@@ -19,7 +19,7 @@ None
 - [x] **Phase 3: Puzzle Import** - Support for .puz, .ipuz, .jpz formats
 - [x] **Phase 3.1: Puzzle Downloader** - Automatic downloader from remote sources with picker for source and day (INSERTED)
 - [x] **Phase 4: CRDT State** - Conflict-free state management with Yjs/Automerge
-- [ ] **Phase 5: P2P Networking** - WebRTC connections, signaling, TURN fallback
+- [x] **Phase 5: P2P Networking** - WebRTC connections, signaling, TURN fallback
 - [ ] **Phase 6: Collaboration** - Presence, session sharing, timeline system
 - [ ] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [ ] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 3. Puzzle Import | 2/2 | Complete | 2026-01-11 |
 | 3.1 Puzzle Downloader | 2/2 | Complete | 2026-01-11 |
 | 4. CRDT State | 2/2 | Complete | 2026-01-11 |
-| 5. P2P Networking | 1/TBD | In progress | - |
+| 5. P2P Networking | 2/2 | Complete | 2026-01-11 |
 | 6. Collaboration | 0/TBD | Not started | - |
 | 7. Check/Reveal | 0/TBD | Not started | - |
 | 8. Polish & PWA | 0/TBD | Not started | - |
