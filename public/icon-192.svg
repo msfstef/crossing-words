@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" fill="#1a1a2e"/>
+  <!-- 3x3 crossword grid -->
+  <g stroke="#e0e0e0" stroke-width="3" fill="none">
+    <!-- Outer border -->
+    <rect x="36" y="36" width="120" height="120"/>
+    <!-- Vertical lines -->
+    <line x1="76" y1="36" x2="76" y2="156"/>
+    <line x1="116" y1="36" x2="116" y2="156"/>
+    <!-- Horizontal lines -->
+    <line x1="36" y1="76" x2="156" y2="76"/>
+    <line x1="36" y1="116" x2="156" y2="116"/>
+  </g>
+  <!-- Black squares (typical crossword pattern) -->
+  <rect x="76" y="76" width="40" height="40" fill="#1a1a2e"/>
+  <!-- Letter hints -->
+  <text x="56" y="65" fill="#e0e0e0" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">C</text>
+  <text x="136" y="105" fill="#e0e0e0" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">W</text>
+</svg>
