@@ -9,4 +9,6 @@ export interface PuzzleSource {
   format: 'puz' | 'jpz' | 'ipuz';
   requiresAuth: boolean;
   availableDays: 'daily' | 'weekdays' | 'sunday-only';
+  /** Construct direct URL for a given date (for direct fetch attempt) */
+  getDirectUrl: (date: Date) => string;
 }
