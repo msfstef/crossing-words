@@ -39,6 +39,11 @@ const EMPTY_COLLABORATORS: Collaborator[] = [];
  * ```
  */
 export function useCollaborators(awareness: Awareness | null): Collaborator[] {
+  // Cache for getSnapshot to avoid infinite loops
+  // useSyncExternalStore requires getSnapshot to return the same reference
+  // if the underlying data hasn't changed
+  const cacheRef = useRef<Collaborator[]>(EMPTY_COLLABORATORS);
+
   // Subscribe function for useSyncExternalStore
   const subscribe = useCallback(
     (callback: () => void) => {
@@ -52,6 +57,7 @@ export function useCollaborators(awareness: Awareness | null): Collaborator[] {
   );
 
   // Get snapshot function for useSyncExternalStore
+  // IMPORTANT: Must return cached value if data unchanged to avoid infinite loop
   const getSnapshot = useCallback((): Collaborator[] => {
     if (!awareness) return EMPTY_COLLABORATORS;
 
@@ -78,6 +84,25 @@ export function useCollaborators(awareness: Awareness | null): Collaborator[] {
       }
     });
 
+    // Compare with cached value to avoid returning new array if unchanged
+    const cached = cacheRef.current;
+    if (
+      cached.length === collaborators.length &&
+      cached.every(
+        (c, i) =>
+          c.clientId === collaborators[i].clientId &&
+          c.user.name === collaborators[i].user.name &&
+          c.user.color === collaborators[i].user.color &&
+          c.cursor?.row === collaborators[i].cursor?.row &&
+          c.cursor?.col === collaborators[i].cursor?.col &&
+          c.cursor?.direction === collaborators[i].cursor?.direction
+      )
+    ) {
+      return cached;
+    }
+
+    // Data changed, update cache and return new value
+    cacheRef.current = collaborators;
     return collaborators;
   }, [awareness]);
 
