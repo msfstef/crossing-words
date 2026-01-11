@@ -1,0 +1,31 @@
+.file-picker {
+  display: flex;
+  align-items: center;
+}
+
+.file-picker__input {
+  display: none;
+}
+
+.file-picker__button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #e0e0e0;
+  background-color: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.file-picker__button:hover {
+  background-color: #3a3a4e;
+  border-color: #555;
+}
+
+.file-picker__button:active {
+  background-color: #252538;
+}
