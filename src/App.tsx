@@ -258,6 +258,7 @@ function App() {
                   direction={direction}
                   currentWord={currentWord}
                   onCellClick={handleCellClick}
+                  collaborators={collaborators}
                 />
 
                 <ClueBar clue={currentClue} />
