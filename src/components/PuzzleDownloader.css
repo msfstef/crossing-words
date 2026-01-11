@@ -1,0 +1,71 @@
+.puzzle-downloader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.puzzle-downloader__source,
+.puzzle-downloader__date {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: #e0e0e0;
+  background-color: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.puzzle-downloader__source:hover,
+.puzzle-downloader__date:hover {
+  background-color: #3a3a4e;
+  border-color: #555;
+}
+
+.puzzle-downloader__source:focus,
+.puzzle-downloader__date:focus {
+  outline: none;
+  border-color: #e94560;
+}
+
+.puzzle-downloader__source:disabled,
+.puzzle-downloader__date:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Date input color scheme fix for dark theme */
+.puzzle-downloader__date::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+
+.puzzle-downloader__button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #e0e0e0;
+  background-color: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.puzzle-downloader__button:hover:not(:disabled) {
+  background-color: #3a3a4e;
+  border-color: #555;
+}
+
+.puzzle-downloader__button:active:not(:disabled) {
+  background-color: #252538;
+}
+
+.puzzle-downloader__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

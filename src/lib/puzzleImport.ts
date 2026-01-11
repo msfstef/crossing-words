@@ -74,17 +74,34 @@ export function detectFormat(
 
 /**
  * Import a puzzle file and convert it to our Puzzle format
- * @param file The File object to import
+ * @param input The File object or ArrayBuffer to import
+ * @param filename Required when input is ArrayBuffer (used for format detection)
  * @returns Promise resolving to the parsed Puzzle
  * @throws Error if the format is not supported or parsing fails
  */
-export async function importPuzzle(file: File): Promise<Puzzle> {
-  if (!file) {
+export async function importPuzzle(
+  input: File | ArrayBuffer,
+  filename?: string
+): Promise<Puzzle> {
+  if (!input) {
     throw new Error('No file provided');
   }
 
-  const buffer = await file.arrayBuffer();
-  const format = detectFormat(file.name, buffer);
+  let buffer: ArrayBuffer;
+  let name: string;
+
+  if (input instanceof File) {
+    buffer = await input.arrayBuffer();
+    name = input.name;
+  } else {
+    if (!filename) {
+      throw new Error('Filename required when importing from ArrayBuffer');
+    }
+    buffer = input;
+    name = filename;
+  }
+
+  const format = detectFormat(name, buffer);
 
   if (!format) {
     throw new Error(
