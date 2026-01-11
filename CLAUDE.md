@@ -8,6 +8,8 @@ Crossing Words is a cross-platform, peer-to-peer multiplayer crossword applicati
 
 ## Build & Development Commands
 
+Always try to evaluate your work using the Playwright MCP or Chrome extension for end-to-end testing the web app before asking the human partner for a review.
+
 <!-- TODO: Add build, test, and lint commands once the project structure is established -->
 
 ## Architecture
