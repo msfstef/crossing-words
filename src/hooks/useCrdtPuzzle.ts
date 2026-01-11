@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
+import type { Awareness } from 'y-protocols/awareness';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
 import { createP2PSession, type P2PSession, type ConnectionState } from '../crdt/webrtcProvider';
 
@@ -27,6 +28,8 @@ interface UseCrdtPuzzleReturn {
   roomId: string | undefined;
   /** P2P connection state ('disconnected' when no roomId) */
   connectionState: ConnectionState;
+  /** Yjs Awareness for presence tracking (null when not in P2P mode) */
+  awareness: Awareness | null;
 }
 
 // Empty map constant for initial state
@@ -203,6 +206,9 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
     return entries.get(key);
   }, [entries]);
 
+  // Get awareness from session (null when not in P2P mode)
+  const awareness = sessionRef.current?.awareness ?? null;
+
   return {
     entries,
     ready,
@@ -211,5 +217,6 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
     getEntry,
     roomId,
     connectionState,
+    awareness,
   };
 }

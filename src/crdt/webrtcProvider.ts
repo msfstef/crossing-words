@@ -6,7 +6,9 @@
  */
 
 import { WebrtcProvider } from 'y-webrtc';
+import type { Awareness } from 'y-protocols/awareness';
 import { PuzzleStore } from './puzzleStore';
+import { assignColor, generateNickname } from '../collaboration/colors';
 
 /**
  * Connection state for P2P sessions.
@@ -65,6 +67,8 @@ function getSignalingServers(): string[] {
 export interface P2PSession {
   /** The underlying y-webrtc provider instance */
   provider: WebrtcProvider;
+  /** Yjs Awareness for presence tracking */
+  awareness: Awareness;
   /** Current connection state */
   connectionState: ConnectionState;
   /** Subscribe to connection state changes. Returns unsubscribe function. */
@@ -109,6 +113,14 @@ export async function createP2PSession(
     },
   });
 
+  // Get awareness from provider and set initial local state
+  const awareness = provider.awareness;
+  awareness.setLocalStateField('user', {
+    name: generateNickname(),
+    color: assignColor(awareness.clientID),
+  });
+  awareness.setLocalStateField('cursor', null);
+
   // Track connection state internally
   let connectionState: ConnectionState = 'connecting';
   const subscribers = new Set<(state: ConnectionState) => void>();
@@ -131,6 +143,7 @@ export async function createP2PSession(
   // Create session object with getter for current state
   const session: P2PSession = {
     provider,
+    awareness,
     get connectionState() {
       return connectionState;
     },
