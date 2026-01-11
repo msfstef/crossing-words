@@ -9,6 +9,7 @@ function App() {
     userEntries,
     selectedCell,
     direction,
+    currentWord,
     handleCellClick,
     handleKeyDown,
   } = usePuzzleState(samplePuzzle);
@@ -42,6 +43,7 @@ function App() {
           userEntries={userEntries}
           selectedCell={selectedCell}
           direction={direction}
+          currentWord={currentWord}
           onCellClick={handleCellClick}
         />
       </main>

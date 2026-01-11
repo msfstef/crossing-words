@@ -7,7 +7,7 @@
   --cell-black-bg: #1a1a1a;
   --cell-selected-bg: #3a4a6e;
   --cell-selected-border: #4a9eff;
-  --cell-in-word-bg: #2a3a5e;
+  --cell-in-word-bg: #3a3a5e;
   --cell-border: #444;
   --letter-color: #e0e0e0;
   --clue-number-color: #888;
@@ -36,26 +36,26 @@
     border-color var(--transition-duration) ease;
 }
 
-.crossword-cell.white {
+.crossword-cell.cell--white {
   background-color: var(--cell-white-bg);
   cursor: pointer;
 }
 
-.crossword-cell.white:hover {
+.crossword-cell.cell--white:hover {
   background-color: var(--cell-white-hover-bg);
 }
 
-.crossword-cell.black {
+.crossword-cell.cell--black {
   background-color: var(--cell-black-bg);
   cursor: default;
 }
 
-.crossword-cell.selected {
+.crossword-cell.cell--selected {
   border: 2px solid var(--cell-selected-border);
   background-color: var(--cell-selected-bg);
 }
 
-.crossword-cell.in-word {
+.crossword-cell.cell--in-word {
   background-color: var(--cell-in-word-bg);
 }
 

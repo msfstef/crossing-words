@@ -6,6 +6,7 @@ interface CrosswordGridProps {
   userEntries: Map<string, string>;
   selectedCell: { row: number; col: number } | null;
   direction: 'across' | 'down';
+  currentWord: { row: number; col: number }[] | null;
   onCellClick: (row: number, col: number) => void;
 }
 
@@ -16,54 +17,15 @@ export function CrosswordGrid({
   puzzle,
   userEntries,
   selectedCell,
-  direction,
+  currentWord,
   onCellClick,
 }: CrosswordGridProps) {
   /**
    * Check if a cell is part of the currently selected word
    */
-  const isInSelectedWord = (row: number, col: number): boolean => {
-    if (!selectedCell) return false;
-
-    const cell = puzzle.grid[row][col];
-    if (cell.isBlack) return false;
-
-    // Find the word boundaries for the selected cell
-    if (direction === 'across') {
-      // Check if same row and within the word bounds
-      if (row !== selectedCell.row) return false;
-
-      // Find start of word (go left until black cell or edge)
-      let wordStart = selectedCell.col;
-      while (wordStart > 0 && !puzzle.grid[row][wordStart - 1].isBlack) {
-        wordStart--;
-      }
-
-      // Find end of word (go right until black cell or edge)
-      let wordEnd = selectedCell.col;
-      while (wordEnd < puzzle.width - 1 && !puzzle.grid[row][wordEnd + 1].isBlack) {
-        wordEnd++;
-      }
-
-      return col >= wordStart && col <= wordEnd;
-    } else {
-      // down direction
-      if (col !== selectedCell.col) return false;
-
-      // Find start of word (go up until black cell or edge)
-      let wordStart = selectedCell.row;
-      while (wordStart > 0 && !puzzle.grid[wordStart - 1][col].isBlack) {
-        wordStart--;
-      }
-
-      // Find end of word (go down until black cell or edge)
-      let wordEnd = selectedCell.row;
-      while (wordEnd < puzzle.height - 1 && !puzzle.grid[wordEnd + 1][col].isBlack) {
-        wordEnd++;
-      }
-
-      return row >= wordStart && row <= wordEnd;
-    }
+  const isInCurrentWord = (row: number, col: number): boolean => {
+    if (!currentWord) return false;
+    return currentWord.some((cell) => cell.row === row && cell.col === col);
   };
 
   return (
@@ -77,14 +39,14 @@ export function CrosswordGrid({
       {puzzle.grid.flat().map((cell) => {
         const key = `${cell.row},${cell.col}`;
         const isSelected = selectedCell?.row === cell.row && selectedCell?.col === cell.col;
-        const inWord = isInSelectedWord(cell.row, cell.col);
+        const inWord = isInCurrentWord(cell.row, cell.col);
         const userEntry = userEntries.get(key);
 
         const cellClasses = [
           'crossword-cell',
-          cell.isBlack ? 'black' : 'white',
-          isSelected ? 'selected' : '',
-          inWord && !isSelected ? 'in-word' : '',
+          cell.isBlack ? 'cell--black' : 'cell--white',
+          isSelected ? 'cell--selected' : '',
+          inWord && !isSelected ? 'cell--in-word' : '',
         ]
           .filter(Boolean)
           .join(' ');
