@@ -14,7 +14,7 @@ None
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Foundation** - PWA setup, project structure, build tooling
+- [x] **Phase 1: Foundation** - PWA setup, project structure, build tooling
 - [ ] **Phase 2: Puzzle Core** - Grid rendering, keyboard navigation, clue display
 - [ ] **Phase 3: Puzzle Import** - Support for .puz, .ipuz, .jpz formats
 - [ ] **Phase 4: CRDT State** - Conflict-free state management with Yjs/Automerge
@@ -83,7 +83,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 1/1 | Complete | 2026-01-11 |
 | 2. Puzzle Core | 0/TBD | Not started | - |
 | 3. Puzzle Import | 0/TBD | Not started | - |
 | 4. CRDT State | 0/TBD | Not started | - |
