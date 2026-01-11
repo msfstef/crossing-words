@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 — Collaboration (Plan 2 complete, ready for Plan 3)
+**Current focus:** Phase 6 — Collaboration (Plan 3 complete, visual presence done)
 
 ## Current Position
 
 Phase: 6 of 8 (Collaboration)
-Plan: 2 of TBD in current phase
-Status: Plan 2 complete
-Last activity: 2026-01-11 — Completed 06-02-PLAN.md (Session sharing)
+Plan: 3 of TBD in current phase
+Status: Plan 3 complete
+Last activity: 2026-01-11 — Completed 06-03-PLAN.md (Visual Presence)
 
-Progress: █████████░ 88%
+Progress: █████████░ 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 15 min
-- Total execution time: 3.18 hours
+- Total execution time: 3.38 hours
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: █████████░ 88%
 | 3.1 Puzzle Downloader | 2 | 32 min | 16 min |
 | 4. CRDT State | 2 | 27 min | 14 min |
 | 5. P2P Networking | 2 | 40 min | 20 min |
-| 6. Collaboration | 2 | 27 min | 14 min |
+| 6. Collaboration | 3 | 39 min | 13 min |
 
 **Recent Trend:**
-- Last 5 plans: 21, 25, 15, 18, 9 min
-- Trend: Phase 6 progressing, session sharing complete
+- Last 5 plans: 25, 15, 18, 9, 12 min
+- Trend: Phase 6 progressing well, visual presence complete
 
 ## Accumulated Context
 
@@ -90,6 +90,10 @@ Recent decisions affecting current work:
 | 06-02 | URL: #puzzle={id}&timeline={id} | Structured params, supports puzzle+timeline |
 | 06-02 | roomId = puzzleId:timelineId | Unique P2P room per puzzle+timeline combo |
 | 06-02 | Web Share API with clipboard fallback | Native share on mobile, copy on desktop |
+| 06-03 | Toast notifications in useCollaborators hook | Avoids duplicate awareness listeners |
+| 06-03 | 25% opacity for collaborator highlights | Subtle indication, doesn't distract |
+| 06-03 | Local selection priority over collaborator | User's own word always most visible |
+| 06-03 | Cache getSnapshot with deep comparison | Prevents useSyncExternalStore infinite loop |
 
 ### Roadmap Evolution
 
@@ -106,5 +110,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-11
-Stopped at: Completed 06-02-PLAN.md - Session sharing
+Stopped at: Completed 06-03-PLAN.md - Visual Presence
 Resume file: None

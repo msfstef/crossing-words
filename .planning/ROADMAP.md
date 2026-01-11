@@ -97,6 +97,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 3.1 Puzzle Downloader | 2/2 | Complete | 2026-01-11 |
 | 4. CRDT State | 2/2 | Complete | 2026-01-11 |
 | 5. P2P Networking | 2/2 | Complete | 2026-01-11 |
-| 6. Collaboration | 2/TBD | In progress | - |
+| 6. Collaboration | 3/TBD | In progress | - |
 | 7. Check/Reveal | 0/TBD | Not started | - |
 | 8. Polish & PWA | 0/TBD | Not started | - |
