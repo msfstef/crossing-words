@@ -22,16 +22,20 @@ interface PuzzleStateHook {
 /**
  * Custom hook for managing puzzle solving state
  * Handles cell selection, direction toggle, letter input, and navigation
- * Uses CRDT-backed entries for persistence and future multiplayer sync
+ * Uses CRDT-backed entries for persistence and multiplayer sync
+ *
+ * @param puzzle - The puzzle data
+ * @param puzzleId - Unique identifier for the puzzle
+ * @param roomId - Optional room ID for P2P collaboration
  */
-export function usePuzzleState(puzzle: Puzzle, puzzleId: string): PuzzleStateHook {
-  // Use CRDT-backed entries instead of local useState
+export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string): PuzzleStateHook {
+  // Use CRDT-backed entries with optional P2P sync
   const {
     entries: userEntries,
     ready,
     setEntry,
     clearEntry,
-  } = useCrdtPuzzle(puzzleId);
+  } = useCrdtPuzzle(puzzleId, roomId);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
 

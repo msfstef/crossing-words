@@ -19,16 +19,35 @@ function getPuzzleId(puzzle: Puzzle): string {
   return puzzle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
+/**
+ * Parse roomId from URL hash (e.g., #room=abc123)
+ */
+function getRoomIdFromHash(): string | undefined {
+  const hash = window.location.hash;
+  const match = hash.match(/room=([^&]+)/);
+  return match ? match[1] : undefined;
+}
+
 function App() {
   // Start with null to indicate loading state, then load saved or sample puzzle
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [roomId, setRoomId] = useState<string | undefined>(getRoomIdFromHash);
 
   // Load saved puzzle on startup
   useEffect(() => {
     loadCurrentPuzzle().then((savedPuzzle) => {
       setPuzzle(savedPuzzle ?? samplePuzzle);
     });
+  }, []);
+
+  // Listen for hash changes to update roomId
+  useEffect(() => {
+    const handleHashChange = () => {
+      setRoomId(getRoomIdFromHash());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Generate stable puzzle ID for CRDT storage
@@ -43,7 +62,7 @@ function App() {
     handleCellClick,
     handleKeyDown,
     ready,
-  } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading');
+  } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
 
   const handlePuzzleLoaded = useCallback((newPuzzle: Puzzle) => {
     setPuzzle(newPuzzle);

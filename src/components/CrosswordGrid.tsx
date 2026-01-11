@@ -55,6 +55,8 @@ export function CrosswordGrid({
           <div
             key={key}
             className={cellClasses}
+            data-row={cell.row}
+            data-col={cell.col}
             onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
           >
             {cell.clueNumber && <span className="clue-number">{cell.clueNumber}</span>}

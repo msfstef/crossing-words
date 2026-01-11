@@ -33,15 +33,23 @@ const ICE_SERVERS: RTCIceServer[] = [
 ];
 
 /**
- * Default signaling servers for peer discovery.
- * Using y-webrtc public servers for now - should be replaced
- * with custom signaling server for production reliability.
+ * Get signaling servers based on environment.
+ * Development uses local signaling server (y-webrtc bin/server.js).
+ * Production should use custom signaling server for reliability.
  */
-const SIGNALING_SERVERS = [
-  'wss://signaling.yjs.dev',
-  'wss://y-webrtc-signaling-eu.herokuapp.com',
-  'wss://y-webrtc-signaling-us.herokuapp.com',
-];
+function getSignalingServers(): string[] {
+  // In development, use local signaling server for reliable testing
+  if (import.meta.env.DEV) {
+    return ['ws://localhost:4444'];
+  }
+
+  // Production: use public servers (should be replaced with custom server)
+  return [
+    'wss://signaling.yjs.dev',
+    'wss://y-webrtc-signaling-eu.herokuapp.com',
+    'wss://y-webrtc-signaling-us.herokuapp.com',
+  ];
+}
 
 /**
  * P2P session interface for managing WebRTC connections.
@@ -83,7 +91,7 @@ export async function createP2PSession(
   console.debug(`[webrtcProvider] Creating P2P session for room: ${roomId}`);
 
   const provider = new WebrtcProvider(roomId, store.doc, {
-    signaling: SIGNALING_SERVERS,
+    signaling: getSignalingServers(),
     peerOpts: {
       config: { iceServers: ICE_SERVERS },
     },
