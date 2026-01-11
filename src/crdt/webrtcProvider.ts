@@ -9,6 +9,14 @@ import { WebrtcProvider } from 'y-webrtc';
 import { PuzzleStore } from './puzzleStore';
 
 /**
+ * Connection state for P2P sessions.
+ * - 'disconnected': Not connected to any peers (solo mode or lost connection)
+ * - 'connecting': Attempting to connect to signaling server and peers
+ * - 'connected': Successfully connected to at least one peer
+ */
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+/**
  * ICE server configuration for WebRTC connections.
  * Includes STUN servers for NAT discovery and TURN for relay fallback.
  *
@@ -57,6 +65,10 @@ function getSignalingServers(): string[] {
 export interface P2PSession {
   /** The underlying y-webrtc provider instance */
   provider: WebrtcProvider;
+  /** Current connection state */
+  connectionState: ConnectionState;
+  /** Subscribe to connection state changes. Returns unsubscribe function. */
+  onConnectionChange: (callback: (state: ConnectionState) => void) => () => void;
   /** Cleanup function to destroy the session */
   destroy: () => void;
 }
@@ -97,11 +109,45 @@ export async function createP2PSession(
     },
   });
 
-  return {
+  // Track connection state internally
+  let connectionState: ConnectionState = 'connecting';
+  const subscribers = new Set<(state: ConnectionState) => void>();
+
+  // Helper to update state and notify subscribers
+  const updateState = (newState: ConnectionState) => {
+    if (connectionState !== newState) {
+      connectionState = newState;
+      console.debug(`[P2P] state: ${newState}`);
+      subscribers.forEach((callback) => callback(newState));
+    }
+  };
+
+  // Listen to provider status events
+  // y-webrtc emits 'status' events with { connected: boolean }
+  provider.on('status', (event: { connected: boolean }) => {
+    updateState(event.connected ? 'connected' : 'disconnected');
+  });
+
+  // Create session object with getter for current state
+  const session: P2PSession = {
     provider,
+    get connectionState() {
+      return connectionState;
+    },
+    onConnectionChange: (callback: (state: ConnectionState) => void) => {
+      subscribers.add(callback);
+      // Immediately call with current state
+      callback(connectionState);
+      return () => {
+        subscribers.delete(callback);
+      };
+    },
     destroy: () => {
       console.debug(`[webrtcProvider] Destroying P2P session for room: ${roomId}`);
+      subscribers.clear();
       provider.destroy();
     },
   };
+
+  return session;
 }

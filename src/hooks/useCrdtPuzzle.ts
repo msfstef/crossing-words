@@ -10,7 +10,7 @@
 
 import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
-import { createP2PSession, type P2PSession } from '../crdt/webrtcProvider';
+import { createP2PSession, type P2PSession, type ConnectionState } from '../crdt/webrtcProvider';
 
 interface UseCrdtPuzzleReturn {
   /** Current entries map (React state mirror of Y.Map) */
@@ -25,6 +25,8 @@ interface UseCrdtPuzzleReturn {
   getEntry: (row: number, col: number) => string | undefined;
   /** Room ID for P2P session (undefined if not in P2P mode) */
   roomId: string | undefined;
+  /** P2P connection state ('disconnected' when no roomId) */
+  connectionState: ConnectionState;
 }
 
 // Empty map constant for initial state
@@ -69,6 +71,7 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
   const sessionRef = useRef<P2PSession | null>(null);
   const readyRef = useRef(false);
   const snapshotRef = useRef<Map<string, string>>(EMPTY_MAP);
+  const connectionStateRef = useRef<ConnectionState>('disconnected');
   const subscribersRef = useRef(new Set<() => void>());
 
   // Subscribe function for useSyncExternalStore
@@ -87,17 +90,24 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
   // Get snapshot function for useSyncExternalStore
   const getSnapshot = useCallback(() => snapshotRef.current, []);
   const getReadySnapshot = useCallback(() => readyRef.current, []);
+  const getConnectionStateSnapshot = useCallback(() => connectionStateRef.current, []);
 
-  // Use useSyncExternalStore for entries and ready state
+  // Use useSyncExternalStore for entries, ready state, and connection state
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const ready = useSyncExternalStore(subscribe, getReadySnapshot, getReadySnapshot);
+  const connectionState = useSyncExternalStore(subscribe, getConnectionStateSnapshot, getConnectionStateSnapshot);
 
   // Lifecycle management: create/destroy store on puzzleId change
   useEffect(() => {
     // Reset refs for new puzzle (synchronous, no setState in effect body)
     readyRef.current = false;
     snapshotRef.current = EMPTY_MAP;
+    // Set initial connection state: 'connecting' if roomId provided, 'disconnected' otherwise
+    connectionStateRef.current = roomId ? 'connecting' : 'disconnected';
     notifySubscribers();
+
+    // Track connection state unsubscribe function for cleanup
+    let connectionUnsubscribe: (() => void) | null = null;
 
     // Create new store for this puzzle
     const store = createPuzzleStore(puzzleId);
@@ -134,6 +144,11 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
         // Check again that store is still current after async operation
         if (storeRef.current === store) {
           sessionRef.current = session;
+          // Subscribe to connection state changes
+          connectionUnsubscribe = session.onConnectionChange((state) => {
+            connectionStateRef.current = state;
+            notifySubscribers();
+          });
         } else {
           // Store changed while we were creating session, clean up
           session.destroy();
@@ -147,6 +162,11 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
 
     // Cleanup on unmount or puzzleId/roomId change
     return () => {
+      // Unsubscribe from connection state changes
+      if (connectionUnsubscribe) {
+        connectionUnsubscribe();
+        connectionUnsubscribe = null;
+      }
       // Destroy P2P session first (before store)
       if (sessionRef.current) {
         sessionRef.current.destroy();
@@ -190,5 +210,6 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
     clearEntry,
     getEntry,
     roomId,
+    connectionState,
   };
 }
