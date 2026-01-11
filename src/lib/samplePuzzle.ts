@@ -20,17 +20,14 @@ import type { Puzzle, Cell } from '../types/puzzle';
  *
  * Across:
  * 1. STAR - Celestial body (4)
- * 5. LOW - Not high (3)
- * 6. AILS - Troubles (4)
- * 7. TOPS - Beats (4)
+ * 4. LOW - Not high (3)
+ * 5. AILS - Troubles (4)
+ * 6. TOPS - Beats (4)
  *
  * Down:
- * 1. SPAM - Junk mail (4)
- * 2. STALE - Not fresh (5)
- * 3. ALLOT - Distribute (5) - Actually ALLE + TOP = ALLETOP doesn't work, using different
- * 4. OWS - Doesn't work
- *
- * Let me use a simpler valid grid:
+ * 1. SPAM - Junk email (4)
+ * 2. ALLEO - Not quite right (5) - column 2: A,L,L,E,O
+ * 3. ROS - Paddle (3) - column 3: R,O,S
  */
 
 /**
@@ -107,13 +104,12 @@ export const samplePuzzle: Puzzle = {
       { number: 1, direction: 'across', text: 'Celestial body', row: 0, col: 0, length: 4 },
       { number: 4, direction: 'across', text: 'Not high', row: 1, col: 2, length: 3 },
       { number: 5, direction: 'across', text: 'Troubles', row: 2, col: 0, length: 4 },
-      { number: 7, direction: 'across', text: 'Beats', row: 4, col: 1, length: 4 },
+      { number: 6, direction: 'across', text: 'Beats', row: 4, col: 1, length: 4 },
     ],
     down: [
       { number: 1, direction: 'down', text: 'Junk email', row: 0, col: 0, length: 4 },
-      { number: 3, direction: 'down', text: 'Story', row: 0, col: 2, length: 4 },
-      { number: 4, direction: 'down', text: 'Oregon (abbr.)', row: 1, col: 3, length: 2 },
-      { number: 6, direction: 'down', text: 'Greeting', row: 2, col: 1, length: 2 },
+      { number: 2, direction: 'down', text: 'Not quite right', row: 0, col: 2, length: 5 },
+      { number: 3, direction: 'down', text: 'Paddle', row: 0, col: 3, length: 3 },
     ],
   },
 };
