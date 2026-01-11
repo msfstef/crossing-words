@@ -111,10 +111,9 @@ export const samplePuzzle: Puzzle = {
     ],
     down: [
       { number: 1, direction: 'down', text: 'Junk email', row: 0, col: 0, length: 4 },
-      { number: 2, direction: 'down', text: 'Celebrity', row: 0, col: 1, length: 1 }, // Just T - skip single letter
       { number: 3, direction: 'down', text: 'Story', row: 0, col: 2, length: 4 },
       { number: 4, direction: 'down', text: 'Oregon (abbr.)', row: 1, col: 3, length: 2 },
-      { number: 6, direction: 'down', text: 'Hello', row: 2, col: 1, length: 3 },
+      { number: 6, direction: 'down', text: 'Greeting', row: 2, col: 1, length: 2 },
     ],
   },
 };

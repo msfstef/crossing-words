@@ -77,16 +77,22 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
     const clue = findClueForCell(selectedCell.row, selectedCell.col, direction);
     if (!clue) return null;
 
-    // Build array of cells from the clue
+    // Build array of cells from the clue (skipping black cells for safety)
     const cells: { row: number; col: number }[] = [];
 
     if (direction === 'across') {
       for (let i = 0; i < clue.length; i++) {
-        cells.push({ row: clue.row, col: clue.col + i });
+        const col = clue.col + i;
+        if (col < puzzle.width && !puzzle.grid[clue.row][col].isBlack) {
+          cells.push({ row: clue.row, col });
+        }
       }
     } else {
       for (let i = 0; i < clue.length; i++) {
-        cells.push({ row: clue.row + i, col: clue.col });
+        const row = clue.row + i;
+        if (row < puzzle.height && !puzzle.grid[row][clue.col].isBlack) {
+          cells.push({ row, col: clue.col });
+        }
       }
     }
 
@@ -102,20 +108,37 @@ export function usePuzzleState(puzzle: Puzzle): PuzzleStateHook {
 
   /**
    * Handle cell click - select cell or toggle direction if clicking same cell
+   * Only toggles direction if the alternate direction has a valid clue
    */
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       // Skip black cells
       if (puzzle.grid[row][col].isBlack) return;
 
-      // If clicking the same cell, toggle direction
+      // If clicking the same cell, toggle direction only if alternate has a clue
       if (selectedCell?.row === row && selectedCell?.col === col) {
-        setDirection((prev) => (prev === 'across' ? 'down' : 'across'));
+        const alternateDirection = direction === 'across' ? 'down' : 'across';
+        const alternateClue = findClueForCell(row, col, alternateDirection);
+        if (alternateClue) {
+          setDirection(alternateDirection);
+        }
+        // If no alternate clue, stay in current direction
       } else {
+        // When selecting a new cell, prefer a direction that has a clue
+        const acrossClue = findClueForCell(row, col, 'across');
+        const downClue = findClueForCell(row, col, 'down');
+
+        if (acrossClue && !downClue) {
+          setDirection('across');
+        } else if (downClue && !acrossClue) {
+          setDirection('down');
+        }
+        // If both or neither exist, keep current direction
+
         setSelectedCell({ row, col });
       }
     },
-    [puzzle, selectedCell]
+    [puzzle, selectedCell, direction, findClueForCell]
   );
 
   /**
