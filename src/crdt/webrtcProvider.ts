@@ -130,43 +130,44 @@ export async function createP2PSession(
   awareness.setLocalStateField('cursor', null);
 
   // Re-check color uniqueness when awareness changes (in case we connected before others)
-  let hasCheckedColorConflict = false;
+  // Debounce to avoid excessive re-checks during rapid updates
+  let colorCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   const checkColorConflict = () => {
-    if (hasCheckedColorConflict) return;
+    // Debounce: wait 100ms after last change before checking
+    if (colorCheckTimeout) clearTimeout(colorCheckTimeout);
+    colorCheckTimeout = setTimeout(() => {
+      const myState = awareness.getLocalState() as { user?: { color?: string } } | null;
+      const myColor = myState?.user?.color?.toLowerCase();
+      if (!myColor) return;
 
-    const myState = awareness.getLocalState() as { user?: { color?: string } } | null;
-    const myColor = myState?.user?.color?.toLowerCase();
-    if (!myColor) return;
+      // Check if any other client has the same color
+      let hasConflict = false;
+      const otherColors: string[] = [];
 
-    // Check if any other client has the same color
-    let hasConflict = false;
-    const otherColors: string[] = [];
-
-    awareness.getStates().forEach((state, clientId) => {
-      if (clientId !== awareness.clientID) {
-        const userState = state as { user?: { color?: string } } | undefined;
-        if (userState?.user?.color) {
-          otherColors.push(userState.user.color);
-          if (userState.user.color.toLowerCase() === myColor) {
-            hasConflict = true;
+      awareness.getStates().forEach((state, clientId) => {
+        if (clientId !== awareness.clientID) {
+          const userState = state as { user?: { color?: string } } | undefined;
+          if (userState?.user?.color) {
+            otherColors.push(userState.user.color);
+            if (userState.user.color.toLowerCase() === myColor) {
+              hasConflict = true;
+            }
           }
         }
-      }
-    });
+      });
 
-    if (hasConflict) {
-      // Re-assign unique color
-      const newColor = assignUniqueColor(otherColors, awareness.clientID);
-      if (newColor.toLowerCase() !== myColor) {
-        console.debug('[webrtcProvider] Color conflict detected, reassigning to:', newColor);
-        awareness.setLocalStateField('user', {
-          ...myState?.user,
-          color: newColor,
-        });
+      if (hasConflict) {
+        // Re-assign unique color
+        const newColor = assignUniqueColor(otherColors, awareness.clientID);
+        if (newColor.toLowerCase() !== myColor) {
+          console.debug('[webrtcProvider] Color conflict detected, reassigning to:', newColor);
+          awareness.setLocalStateField('user', {
+            ...myState?.user,
+            color: newColor,
+          });
+        }
       }
-    }
-
-    hasCheckedColorConflict = true;
+    }, 100);
   };
 
   // Check for conflicts when awareness changes
@@ -208,6 +209,7 @@ export async function createP2PSession(
     },
     destroy: () => {
       console.debug(`[webrtcProvider] Destroying P2P session for room: ${roomId}`);
+      if (colorCheckTimeout) clearTimeout(colorCheckTimeout);
       awareness.off('change', checkColorConflict);
       subscribers.clear();
       provider.destroy();

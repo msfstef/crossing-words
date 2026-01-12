@@ -267,10 +267,14 @@ export function CrosswordGrid({
           .join(" ");
 
         // Build inline style for collaborator highlighting
-        // Word highlight = subtle background, cursor = visible border (box-shadow to avoid layout shift)
+        // Word highlight = subtle background, cursor = visible outline (doesn't affect layout)
         const cellStyle: React.CSSProperties = {
           ...(hasCollaboratorHighlight ? { backgroundColor: hexToRgba(collaboratorColor, 0.25) } : {}),
-          ...(hasCollaboratorCursor ? { boxShadow: `inset 0 0 0 2px ${cursorColor}` } : {}),
+          ...(hasCollaboratorCursor ? {
+            outline: `3px solid ${cursorColor}`,
+            outlineOffset: '-3px',
+            zIndex: 5,
+          } : {}),
         };
 
         return (

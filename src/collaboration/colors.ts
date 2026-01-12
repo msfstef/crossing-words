@@ -9,12 +9,12 @@
 import distinctColors from 'distinct-colors';
 
 /**
- * Pre-generated palette of 12 visually distinct colors.
+ * Pre-generated palette of 20 visually distinct colors.
  * Using chromaMin: 50 avoids washed-out colors.
  * lightMin/lightMax ensure colors work on dark backgrounds.
  */
 const PALETTE = distinctColors({
-  count: 12,
+  count: 20,
   chromaMin: 50,
   lightMin: 35,
   lightMax: 75,
