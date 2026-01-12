@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6.1 complete — Ready for Phase 7: Check/Reveal
+**Current focus:** Phase 7 in progress — Check/Reveal verification system
 
 ## Current Position
 
-Phase: 6.1 of 8 (Cloudflare Worker Signaling) - COMPLETE
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-01-12 — Completed 6.1-01-PLAN.md (Cloudflare Worker Signaling)
+Phase: 7 of 8 (Check/Reveal)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-12 — Completed 07-01-PLAN.md (CRDT Verification State)
 
-Progress: █████████░ 93%
+Progress: █████████░ 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
-- Average duration: 14 min
-- Total execution time: 3.87 hours
+- Total plans completed: 18
+- Average duration: 13 min
+- Total execution time: 3.92 hours
 
 **By Phase:**
 
@@ -35,10 +35,11 @@ Progress: █████████░ 93%
 | 5. P2P Networking | 2 | 40 min | 20 min |
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
+| 7. Check/Reveal | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 18, 9, 12, 21, 8 min
-- Trend: Phase 6.1 complete, production signaling deployed
+- Last 5 plans: 9, 12, 21, 8, 3 min
+- Trend: Phase 7 started, CRDT verification state added
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 | 6.1-01 | new_sqlite_classes migration | Cloudflare free tier requires SQLite-backed DOs |
 | 6.1-01 | Single global DO with topic isolation | y-webrtc handles room filtering client-side |
 | 6.1-01 | WebSocket Hibernation API | Billed only during message processing |
+| 07-01 | doc.transact() for atomic verification updates | Prevents race conditions on concurrent check |
+| 07-01 | Skip already-verified cells | Verified is terminal state |
+| 07-01 | Clear errors when marking verified | Clean state transition |
 
 ### Roadmap Evolution
 
@@ -123,5 +127,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 6.1-01-PLAN.md - Cloudflare Worker Signaling (Phase 6.1 complete)
+Stopped at: Completed 07-01-PLAN.md - CRDT Verification State
 Resume file: None
