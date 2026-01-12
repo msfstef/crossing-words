@@ -59,6 +59,8 @@ interface PuzzleStateHook {
   typeLetter: (letter: string) => void;
   /** Handle backspace action (for virtual keyboard) */
   handleBackspace: () => void;
+  /** Toggle direction between across and down (if alternate clue exists) */
+  toggleDirection: () => void;
 }
 
 /**
@@ -229,6 +231,22 @@ export function usePuzzleState(
     },
     [puzzle, selectedCell, direction, findClueForCell]
   );
+
+  /**
+   * Toggle direction between across and down.
+   * Only toggles if current cell has a clue in the alternate direction.
+   */
+  const toggleDirection = useCallback(() => {
+    if (!selectedCell) return;
+
+    const alternateDirection = direction === 'across' ? 'down' : 'across';
+    const alternateClue = findClueForCell(selectedCell.row, selectedCell.col, alternateDirection);
+
+    if (alternateClue) {
+      setDirection(alternateDirection);
+    }
+    // If no alternate clue, do nothing
+  }, [selectedCell, direction, findClueForCell]);
 
   /**
    * Find the next valid cell in the given direction (skipping black cells)
@@ -662,5 +680,6 @@ export function usePuzzleState(
     hasNextClue: clueNavState.hasNext,
     typeLetter,
     handleBackspace: handleBackspaceAction,
+    toggleDirection,
   };
 }

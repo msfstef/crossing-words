@@ -14,6 +14,8 @@ interface ClueBarProps {
   hasPrev?: boolean;
   /** Whether there is a next clue to navigate to */
   hasNext?: boolean;
+  /** Toggle direction between across and down */
+  onToggleDirection?: () => void;
 }
 
 /**
@@ -25,6 +27,7 @@ export function ClueBar({
   onNextClue,
   hasPrev = false,
   hasNext = false,
+  onToggleDirection,
 }: ClueBarProps) {
   if (!clue) {
     return (
@@ -48,7 +51,18 @@ export function ClueBar({
         ◀
       </button>
 
-      <div className="clue-bar__content">
+      <div
+        className={`clue-bar__content${onToggleDirection ? ' clue-bar__content--tappable' : ''}`}
+        onClick={onToggleDirection}
+        role={onToggleDirection ? 'button' : undefined}
+        tabIndex={onToggleDirection ? 0 : undefined}
+        onKeyDown={onToggleDirection ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleDirection();
+          }
+        } : undefined}
+      >
         <span className="clue-bar__number">{clue.number}{directionLabel}:</span>
         <span className="clue-bar__text">{clue.text}</span>
       </div>

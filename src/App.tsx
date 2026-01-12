@@ -354,6 +354,7 @@ function App() {
     hasNextClue,
     typeLetter,
     handleBackspace,
+    toggleDirection,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Use verification hook for check/reveal actions
@@ -627,6 +628,7 @@ function App() {
             onNextClue={goToNextClue}
             hasPrev={hasPrevClue}
             hasNext={hasNextClue}
+            onToggleDirection={toggleDirection}
           />
         }
         keyboard={
