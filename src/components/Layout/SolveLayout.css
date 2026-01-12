@@ -28,7 +28,8 @@
 .solve-layout__header {
   flex: 0 0 auto;
   min-height: var(--header-height);
-  overflow: hidden; /* Prevent header overflow */
+  position: relative;
+  z-index: 100; /* Ensure header dropdowns appear above grid */
 }
 
 .solve-layout__grid {
