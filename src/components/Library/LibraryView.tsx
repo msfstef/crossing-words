@@ -255,8 +255,8 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         // Generate puzzle ID
         const puzzleId = puzzle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-        // Save to library
-        await savePuzzle(puzzleId, puzzle);
+        // Save to library with source and date from download dialog
+        await savePuzzle(puzzleId, puzzle, sourceName, formattedDate);
 
         // Remove ghost and reload puzzles to show real entry
         setGhostEntries((prev) => prev.filter((g) => g.id !== ghostId));

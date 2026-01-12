@@ -50,7 +50,7 @@ export function PuzzleCard({
       <div className="puzzle-card__content">
         <div className="puzzle-card__info">
           <span className="puzzle-card__title">{source ?? title}</span>
-          {source && source !== title && (
+          {source && (
             <span className="puzzle-card__subtitle">{title}</span>
           )}
         </div>
