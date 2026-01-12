@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
-import { CollaboratorAvatars } from './components/CollaboratorAvatars';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
 import { Toolbar } from './components/Toolbar';
 import { LibraryView } from './components/Library';
+import { SolveLayout, SolveHeader } from './components/Layout';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
@@ -346,6 +346,10 @@ function App() {
     entriesMap,
     autoCheckEnabled,
     setAutoCheck,
+    goToPrevClue,
+    goToNextClue,
+    hasPrevClue,
+    hasNextClue,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Use verification hook for check/reveal actions
@@ -506,128 +510,102 @@ function App() {
     );
   }
 
-  // Render Solve view
-  return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="header-left">
-          <button
-            type="button"
-            className="back-button"
-            onClick={handleBackToLibrary}
-            aria-label="Back to library"
-          >
-            ← Back
-          </button>
-          <h1 className="puzzle-header-title">{puzzle?.title ?? 'Loading...'}</h1>
-        </div>
+  // Build toolbar content for header menu
+  const toolbarContent = puzzle && ready ? (
+    <Toolbar
+      onCheckLetter={checkLetter}
+      onCheckWord={checkWord}
+      onCheckPuzzle={checkPuzzle}
+      onRevealLetter={revealLetter}
+      onRevealWord={revealWord}
+      onRevealPuzzle={revealPuzzle}
+      autoCheckEnabled={autoCheckEnabled}
+      onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+    />
+  ) : null;
 
-        {/* Toolbar - visible when puzzle is loaded and ready */}
-        {puzzle && ready && (
-          <Toolbar
-            onCheckLetter={checkLetter}
-            onCheckWord={checkWord}
-            onCheckPuzzle={checkPuzzle}
-            onRevealLetter={revealLetter}
-            onRevealWord={revealWord}
-            onRevealPuzzle={revealPuzzle}
-            autoCheckEnabled={autoCheckEnabled}
-            onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+  // Build grid content
+  const gridContent = (
+    <>
+      {waitingForPuzzle ? (
+        <div className="puzzle-loading">
+          <p>Joining shared session...</p>
+          <p className="puzzle-loading__subtitle">Waiting for puzzle data from host</p>
+        </div>
+      ) : !puzzle ? (
+        <div className="puzzle-loading">Loading...</div>
+      ) : !ready ? (
+        <div className="puzzle-loading">Loading puzzle state...</div>
+      ) : (
+        <>
+          {/* Connecting banner - inside grid area */}
+          {roomId && connectionState === 'connecting' && (
+            <div className="connecting-banner">
+              <span className="connecting-banner__spinner" />
+              <span>Connecting to collaborators...</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-banner">
+              <span className="error-banner__message">{error}</span>
+              <button
+                type="button"
+                onClick={dismissError}
+                className="error-banner__dismiss"
+                aria-label="Dismiss error"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
+          {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
+
+          <CrosswordGrid
+            puzzle={puzzle}
+            userEntries={userEntries}
+            selectedCell={selectedCell}
+            direction={direction}
+            currentWord={currentWord}
+            onCellClick={handleCellClick}
+            collaborators={collaborators}
+            verifiedCells={verifiedCells}
+            errorCells={errorCells}
           />
-        )}
-
-        {/* Share button and collaboration info */}
-        <div className="header-actions">
-          {/* Collaborator avatars - only show in P2P mode with collaborators */}
-          {timelineId && collaborators.length > 0 && (
-            <CollaboratorAvatars collaborators={collaborators} />
-          )}
-
-          {/* Share button - visible when puzzle is loaded */}
-          {puzzle && (
-            <button
-              type="button"
-              className="share-button"
-              onClick={handleShare}
-              aria-label="Share puzzle"
-            >
-              Share
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Connection indicator - only show in P2P mode */}
-      {roomId && (
-        <div
-          className={`connection-indicator connection-indicator--${connectionState}`}
-          data-connection-state={connectionState}
-        >
-          <span className="connection-indicator__dot" />
-          <span className="connection-indicator__label">
-            {connectionState === 'connecting' && 'Connecting...'}
-            {connectionState === 'connected' && 'Connected'}
-            {connectionState === 'disconnected' && 'Offline'}
-          </span>
-        </div>
+        </>
       )}
+    </>
+  );
 
-      {/* Connecting banner - show prominently while establishing P2P connection */}
-      {roomId && connectionState === 'connecting' && !waitingForPuzzle && (
-        <div className="connecting-banner">
-          <span className="connecting-banner__spinner" />
-          <span>Connecting to collaborators...</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="error-banner">
-          <span className="error-banner__message">{error}</span>
-          <button
-            type="button"
-            onClick={dismissError}
-            className="error-banner__dismiss"
-            aria-label="Dismiss error"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      <main className="puzzle-container" key={puzzle?.title ?? 'loading'}>
-        {waitingForPuzzle ? (
-          <div className="puzzle-loading">
-            <p>Joining shared session...</p>
-            <p className="puzzle-loading__subtitle">Waiting for puzzle data from host</p>
-          </div>
-        ) : !puzzle ? (
-          <div className="puzzle-loading">Loading...</div>
-        ) : (
-          <>
-            {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
-
-            {!ready ? (
-              <div className="puzzle-loading">Loading puzzle state...</div>
-            ) : (
-              <>
-                <CrosswordGrid
-                  puzzle={puzzle}
-                  userEntries={userEntries}
-                  selectedCell={selectedCell}
-                  direction={direction}
-                  currentWord={currentWord}
-                  onCellClick={handleCellClick}
-                  collaborators={collaborators}
-                  verifiedCells={verifiedCells}
-                  errorCells={errorCells}
-                />
-
-                <ClueBar clue={currentClue} />
-              </>
-            )}
-          </>
-        )}
-      </main>
+  // Render Solve view with new layout
+  return (
+    <>
+      <SolveLayout
+        header={
+          <SolveHeader
+            puzzleTitle={puzzle?.title ?? 'Loading...'}
+            onBack={handleBackToLibrary}
+            onShare={handleShare}
+            onMenuClick={() => {}}
+            collaborators={collaborators}
+            menuContent={toolbarContent}
+            connectionState={connectionState}
+            isP2PSession={Boolean(roomId)}
+          />
+        }
+        grid={gridContent}
+        clueBar={
+          <ClueBar
+            clue={currentClue}
+            onPrevClue={goToPrevClue}
+            onNextClue={goToNextClue}
+            hasPrev={hasPrevClue}
+            hasNext={hasNextClue}
+          />
+        }
+        keyboard={null}
+      />
 
       {/* Share dialog */}
       <ShareDialog
@@ -649,7 +627,7 @@ function App() {
 
       {/* Toast notifications */}
       <Toaster position="bottom-center" theme="dark" />
-    </div>
+    </>
   );
 }
 

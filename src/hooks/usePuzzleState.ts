@@ -47,6 +47,14 @@ interface PuzzleStateHook {
   autoCheckEnabled: boolean;
   /** Toggle auto-check mode (synced via CRDT) */
   setAutoCheck: (enabled: boolean) => void;
+  /** Navigate to previous clue in current direction */
+  goToPrevClue: () => void;
+  /** Navigate to next clue in current direction */
+  goToNextClue: () => void;
+  /** Whether there is a previous clue */
+  hasPrevClue: boolean;
+  /** Whether there is a next clue */
+  hasNextClue: boolean;
 }
 
 /**
@@ -487,6 +495,79 @@ export function usePuzzleState(
   // Compute current word and clue
   const wordAndClue = getCurrentWordAndClue();
 
+  /**
+   * Get sorted list of clue numbers for the current direction.
+   */
+  const getClueNumbers = useCallback((): number[] => {
+    const clues = direction === 'across' ? puzzle.clues.across : puzzle.clues.down;
+    return clues.map((c) => c.number).sort((a, b) => a - b);
+  }, [puzzle, direction]);
+
+  /**
+   * Get the current clue number based on selected cell.
+   */
+  const getCurrentClueNumber = useCallback((): number | null => {
+    if (!selectedCell) return null;
+    const clue = findClueForCell(selectedCell.row, selectedCell.col, direction);
+    return clue?.number ?? null;
+  }, [selectedCell, direction, findClueForCell]);
+
+  /**
+   * Navigate to a clue by its number. Selects the first cell of that clue.
+   */
+  const goToClue = useCallback(
+    (clueNumber: number) => {
+      const clues = direction === 'across' ? puzzle.clues.across : puzzle.clues.down;
+      const clue = clues.find((c) => c.number === clueNumber);
+      if (clue) {
+        setSelectedCell({ row: clue.row, col: clue.col });
+      }
+    },
+    [puzzle, direction]
+  );
+
+  /**
+   * Navigate to the previous clue in the current direction.
+   */
+  const goToPrevClue = useCallback(() => {
+    const clueNumbers = getClueNumbers();
+    const currentNum = getCurrentClueNumber();
+    if (currentNum === null) return;
+
+    const currentIndex = clueNumbers.indexOf(currentNum);
+    if (currentIndex > 0) {
+      goToClue(clueNumbers[currentIndex - 1]);
+    }
+  }, [getClueNumbers, getCurrentClueNumber, goToClue]);
+
+  /**
+   * Navigate to the next clue in the current direction.
+   */
+  const goToNextClue = useCallback(() => {
+    const clueNumbers = getClueNumbers();
+    const currentNum = getCurrentClueNumber();
+    if (currentNum === null) return;
+
+    const currentIndex = clueNumbers.indexOf(currentNum);
+    if (currentIndex >= 0 && currentIndex < clueNumbers.length - 1) {
+      goToClue(clueNumbers[currentIndex + 1]);
+    }
+  }, [getClueNumbers, getCurrentClueNumber, goToClue]);
+
+  // Compute whether prev/next clue navigation is available
+  const clueNavState = (() => {
+    const clueNumbers = getClueNumbers();
+    const currentNum = getCurrentClueNumber();
+    if (currentNum === null) {
+      return { hasPrev: false, hasNext: false };
+    }
+    const currentIndex = clueNumbers.indexOf(currentNum);
+    return {
+      hasPrev: currentIndex > 0,
+      hasNext: currentIndex >= 0 && currentIndex < clueNumbers.length - 1,
+    };
+  })();
+
   return {
     userEntries,
     selectedCell,
@@ -506,5 +587,9 @@ export function usePuzzleState(
     entriesMap,
     autoCheckEnabled,
     setAutoCheck,
+    goToPrevClue,
+    goToNextClue,
+    hasPrevClue: clueNavState.hasPrev,
+    hasNextClue: clueNavState.hasNext,
   };
 }
