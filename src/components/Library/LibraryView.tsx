@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { PuzzleCard } from './PuzzleCard';
-import { FilePicker } from '../FilePicker';
-import { PuzzleDownloader } from '../PuzzleDownloader';
+import { LoadingCard } from './LoadingCard';
+import { FAB } from './FAB';
+import { DownloadDialog } from './DownloadDialog';
 import { SettingsMenu } from '../SettingsMenu';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
+import { fetchPuzzle } from '../../services/puzzleSources/fetchPuzzle';
+import { importPuzzle } from '../../lib/puzzleImport';
 import {
   listAllPuzzles,
   deletePuzzle,
@@ -19,30 +23,51 @@ interface PuzzleWithProgress extends PuzzleEntry {
   progress: { filled: number; total: number };
 }
 
+interface GhostEntry {
+  id: string;
+  title: string;
+  source: string;
+  date: string;
+  loading: true;
+}
+
 interface LibraryViewProps {
   onOpenPuzzle: (puzzle: Puzzle, puzzleId: string) => void;
   onError: (message: string) => void;
+}
+
+type LibraryEntry = PuzzleWithProgress | GhostEntry;
+
+function isGhostEntry(entry: LibraryEntry): entry is GhostEntry {
+  return 'loading' in entry && entry.loading === true;
 }
 
 /**
  * Group puzzles by date (or savedAt date if no puzzle date).
  * Returns groups sorted by date (most recent first).
  */
-function groupPuzzlesByDate(puzzles: PuzzleWithProgress[]): Map<string, PuzzleWithProgress[]> {
-  const groups = new Map<string, PuzzleWithProgress[]>();
+function groupEntriesByDate(entries: LibraryEntry[]): Map<string, LibraryEntry[]> {
+  const groups = new Map<string, LibraryEntry[]>();
 
-  for (const puzzle of puzzles) {
+  for (const entry of entries) {
     // Use puzzle date if available, otherwise format savedAt
-    const dateKey = puzzle.date ?? formatDate(new Date(puzzle.savedAt));
+    const dateKey = entry.date ?? (isGhostEntry(entry) ? formatDate(new Date()) : formatDate(new Date((entry as PuzzleWithProgress).savedAt)));
     if (!groups.has(dateKey)) {
       groups.set(dateKey, []);
     }
-    groups.get(dateKey)!.push(puzzle);
+    groups.get(dateKey)!.push(entry);
   }
 
-  // Sort within each group by savedAt (most recent first)
-  for (const puzzles of groups.values()) {
-    puzzles.sort((a, b) => b.savedAt - a.savedAt);
+  // Sort within each group - ghosts first (loading), then by savedAt (most recent first)
+  for (const groupEntries of groups.values()) {
+    groupEntries.sort((a, b) => {
+      // Ghosts first
+      if (isGhostEntry(a) && !isGhostEntry(b)) return -1;
+      if (!isGhostEntry(a) && isGhostEntry(b)) return 1;
+      if (isGhostEntry(a) && isGhostEntry(b)) return 0;
+      // Then by savedAt
+      return (b as PuzzleWithProgress).savedAt - (a as PuzzleWithProgress).savedAt;
+    });
   }
 
   return groups;
@@ -87,8 +112,11 @@ function formatDateKey(dateKey: string): string {
  */
 export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [puzzles, setPuzzles] = useState<PuzzleWithProgress[]>([]);
+  const [ghostEntries, setGhostEntries] = useState<GhostEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const isOnline = useOnlineStatus();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load all puzzles on mount
   const loadPuzzles = useCallback(async () => {
@@ -168,7 +196,84 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
     [onOpenPuzzle]
   );
 
-  const groupedPuzzles = groupPuzzlesByDate(puzzles);
+  // Handle file import from FAB
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const puzzle = await importPuzzle(file);
+        await handlePuzzleLoaded(puzzle);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to load puzzle';
+        onError(message);
+      }
+
+      // Clear input value so the same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [handlePuzzleLoaded, onError]
+  );
+
+  // Handle download with optimistic UI
+  const handleDownload = useCallback(
+    async (sourceId: string, sourceName: string, puzzleDate: Date) => {
+      // Close dialog immediately
+      setDownloadDialogOpen(false);
+
+      // Create ghost entry
+      const ghostId = `loading-${Date.now()}`;
+      const formattedDate = puzzleDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const ghost: GhostEntry = {
+        id: ghostId,
+        title: `${sourceName} - ${formattedDate}`,
+        source: sourceName,
+        date: formattedDate,
+        loading: true,
+      };
+
+      // Add ghost to state
+      setGhostEntries((prev) => [...prev, ghost]);
+
+      try {
+        const source = PUZZLE_SOURCES.find((s) => s.id === sourceId);
+        if (!source) throw new Error('Invalid source');
+
+        const buffer = await fetchPuzzle(sourceId, puzzleDate);
+
+        // Use existing importPuzzle with filename hint for format detection
+        const puzzle = await importPuzzle(buffer, `puzzle.${source.format}`);
+
+        // Generate puzzle ID
+        const puzzleId = puzzle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+        // Save to library
+        await savePuzzle(puzzleId, puzzle);
+
+        // Remove ghost and reload puzzles to show real entry
+        setGhostEntries((prev) => prev.filter((g) => g.id !== ghostId));
+        await loadPuzzles();
+      } catch (err) {
+        // Remove ghost entry on error
+        setGhostEntries((prev) => prev.filter((g) => g.id !== ghostId));
+        onError(err instanceof Error ? err.message : 'Failed to download puzzle');
+      }
+    },
+    [loadPuzzles, onError]
+  );
+
+  // Combine puzzles and ghost entries
+  const allEntries: LibraryEntry[] = [...ghostEntries, ...puzzles];
+  const groupedEntries = groupEntriesByDate(allEntries);
+  const hasEntries = allEntries.length > 0;
 
   return (
     <div className="library-view">
@@ -182,8 +287,6 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
           )}
         </div>
         <div className="library-actions">
-          <FilePicker onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
-          <PuzzleDownloader onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
           <SettingsMenu />
         </div>
       </header>
@@ -191,37 +294,67 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
       <main className="library-content">
         {loading ? (
           <div className="library-loading">Loading puzzles...</div>
-        ) : puzzles.length === 0 ? (
+        ) : !hasEntries ? (
           <div className="library-empty">
             <p className="library-empty__title">No puzzles yet</p>
             <p className="library-empty__subtitle">
-              Import a puzzle file or download one to get started
+              Tap the + button to import or download a puzzle
             </p>
           </div>
         ) : (
           <div className="library-groups">
-            {Array.from(groupedPuzzles.entries()).map(([dateKey, groupPuzzles]) => (
+            {Array.from(groupedEntries.entries()).map(([dateKey, groupEntries]) => (
               <div key={dateKey} className="library-group">
                 <h2 className="library-group__date">{formatDateKey(dateKey)}</h2>
                 <div className="library-group__puzzles">
-                  {groupPuzzles.map((puzzle) => (
-                    <PuzzleCard
-                      key={puzzle.id}
-                      id={puzzle.id}
-                      title={puzzle.title}
-                      source={puzzle.source}
-                      date={puzzle.date}
-                      progress={puzzle.progress}
-                      onOpen={() => handleOpenPuzzle(puzzle.id)}
-                      onDelete={() => handleDeletePuzzle(puzzle.id)}
-                    />
-                  ))}
+                  {groupEntries.map((entry) =>
+                    isGhostEntry(entry) ? (
+                      <LoadingCard
+                        key={entry.id}
+                        title={entry.title}
+                        source={entry.source}
+                      />
+                    ) : (
+                      <PuzzleCard
+                        key={entry.id}
+                        id={entry.id}
+                        title={entry.title}
+                        source={entry.source}
+                        date={entry.date}
+                        progress={entry.progress}
+                        onOpen={() => handleOpenPuzzle(entry.id)}
+                        onDelete={() => handleDeletePuzzle(entry.id)}
+                      />
+                    )
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+
+      {/* Hidden file input for FAB import */}
+      <input
+        type="file"
+        accept=".puz,.ipuz,.jpz"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="library-file-input"
+      />
+
+      {/* FAB for Import/Download */}
+      <FAB
+        onDownloadClick={() => setDownloadDialogOpen(true)}
+        fileInputRef={fileInputRef}
+      />
+
+      {/* Download dialog */}
+      <DownloadDialog
+        isOpen={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        onDownload={handleDownload}
+      />
     </div>
   );
 }
