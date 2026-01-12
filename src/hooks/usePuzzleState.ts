@@ -29,6 +29,10 @@ interface PuzzleStateHook {
   connectionState: ConnectionState;
   /** Yjs Awareness for presence tracking (null when not in P2P mode) */
   awareness: Awareness | null;
+  /** Set of verified cell keys ("row,col") */
+  verifiedCells: Set<string>;
+  /** Set of error cell keys ("row,col") */
+  errorCells: Set<string>;
 }
 
 /**
@@ -55,6 +59,8 @@ export function usePuzzleState(
     clearEntry,
     connectionState,
     awareness,
+    verifiedCells,
+    errorCells,
   } = useCrdtPuzzle(puzzleId, roomId, {
     puzzle: options?.puzzle,
     onPuzzleReceived: options?.onPuzzleReceived,
@@ -221,36 +227,41 @@ export function usePuzzleState(
 
   /**
    * Find the first cell in a row that has a clue in the given direction
+   * Skips verified cells (they are locked and cannot be edited)
    */
   const findFirstCellInRowWithClue = useCallback(
     (row: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let col = 0; col < puzzle.width; col++) {
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
+        const key = `${row},${col}`;
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle, findClueForCell]
+    [puzzle, findClueForCell, verifiedCells]
   );
 
   /**
    * Find the first cell in a column that has a clue in the given direction
+   * Skips verified cells (they are locked and cannot be edited)
    */
   const findFirstCellInColWithClue = useCallback(
     (col: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let row = 0; row < puzzle.height; row++) {
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
+        const key = `${row},${col}`;
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle, findClueForCell]
+    [puzzle, findClueForCell, verifiedCells]
   );
 
   /**
    * Find next cell that has a clue in the current direction
+   * Skips verified cells (they are locked and cannot be edited)
    */
   const findNextCellWithClue = useCallback(
     (
@@ -264,7 +275,10 @@ export function usePuzzleState(
       let col = fromCol + deltaCol;
 
       while (row >= 0 && row < puzzle.height && col >= 0 && col < puzzle.width) {
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir)) {
+        const key = `${row},${col}`;
+
+        // Skip black cells and verified cells
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
           return { row, col };
         }
         row += deltaRow;
@@ -273,7 +287,7 @@ export function usePuzzleState(
 
       return null;
     },
-    [puzzle, findClueForCell]
+    [puzzle, findClueForCell, verifiedCells]
   );
 
   /**
@@ -334,6 +348,29 @@ export function usePuzzleState(
   );
 
   /**
+   * Find previous non-verified cell for backspace navigation
+   */
+  const findPrevNonVerifiedCell = useCallback(
+    (fromRow: number, fromCol: number): { row: number; col: number } | null => {
+      const deltaRow = direction === 'down' ? -1 : 0;
+      const deltaCol = direction === 'across' ? -1 : 0;
+      let row = fromRow + deltaRow;
+      let col = fromCol + deltaCol;
+
+      while (row >= 0 && row < puzzle.height && col >= 0 && col < puzzle.width) {
+        const key = `${row},${col}`;
+        if (!puzzle.grid[row][col].isBlack && !verifiedCells.has(key)) {
+          return { row, col };
+        }
+        row += deltaRow;
+        col += deltaCol;
+      }
+      return null;
+    },
+    [puzzle, direction, verifiedCells]
+  );
+
+  /**
    * Handle keyboard events for navigation and letter input
    */
   const handleKeyDown = useCallback(
@@ -341,10 +378,17 @@ export function usePuzzleState(
       if (!selectedCell) return;
 
       const { key } = event;
+      const cellKey = `${selectedCell.row},${selectedCell.col}`;
 
       // Handle letter keys (A-Z)
       if (/^[a-zA-Z]$/.test(key)) {
         event.preventDefault();
+
+        // Block editing verified cells - just advance without editing
+        if (verifiedCells.has(cellKey)) {
+          autoAdvance(selectedCell.row, selectedCell.col);
+          return;
+        }
 
         // Use CRDT-backed setEntry
         setEntry(selectedCell.row, selectedCell.col, key.toUpperCase());
@@ -357,22 +401,34 @@ export function usePuzzleState(
       // Handle Backspace - clear current cell and move back
       if (key === 'Backspace') {
         event.preventDefault();
-        const cellKey = `${selectedCell.row},${selectedCell.col}`;
+
+        // Block deleting verified cells - find previous non-verified cell
+        if (verifiedCells.has(cellKey)) {
+          const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
+          if (prevCell) {
+            setSelectedCell(prevCell);
+          }
+          return;
+        }
+
         const currentEntry = userEntries.get(cellKey);
 
         if (currentEntry) {
           // If current cell has a letter, just clear it (CRDT-backed)
           clearEntry(selectedCell.row, selectedCell.col);
         } else {
-          // If current cell is empty, move back and clear that cell
-          const deltaRow = direction === 'down' ? -1 : 0;
-          const deltaCol = direction === 'across' ? -1 : 0;
-          const prevCell = findNextCell(selectedCell.row, selectedCell.col, deltaRow, deltaCol);
+          // If current cell is empty, move back to previous non-verified cell and clear it
+          const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
 
           if (prevCell) {
-            setSelectedCell(prevCell);
-            // Clear previous cell (CRDT-backed)
-            clearEntry(prevCell.row, prevCell.col);
+            const prevKey = `${prevCell.row},${prevCell.col}`;
+            // Only clear if not verified
+            if (!verifiedCells.has(prevKey)) {
+              setSelectedCell(prevCell);
+              clearEntry(prevCell.row, prevCell.col);
+            } else {
+              setSelectedCell(prevCell);
+            }
           }
         }
         return;
@@ -405,7 +461,7 @@ export function usePuzzleState(
         setSelectedCell(nextCell);
       }
     },
-    [selectedCell, userEntries, direction, autoAdvance, findNextCell, setEntry, clearEntry]
+    [selectedCell, userEntries, direction, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells]
   );
 
   // Compute current word and clue
@@ -422,5 +478,7 @@ export function usePuzzleState(
     ready,
     connectionState,
     awareness,
+    verifiedCells,
+    errorCells,
   };
 }
