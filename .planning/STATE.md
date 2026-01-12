@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Milestone complete — All 8 phases finished
+**Current focus:** Phase 9 added — UI refinements, details, polish
 
 ## Current Position
 
-Phase: 8 of 8 (Polish & PWA)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-01-12 — Completed 08-05-PLAN.md (PWA Polish)
+Phase: 9 of 9 (UI Refinements)
+Plan: 09-02 complete (Circular Progress Indicator)
+Status: Ready for next plan
+Last activity: 2026-01-12 — Completed 09-02: Circular progress indicator in PuzzleCard
 
-Progress: ██████████ 100%
+Progress: █████████░ 97%
 
 ## Performance Metrics
 
@@ -141,6 +141,7 @@ Recent decisions affecting current work:
 
 - Phase 3.1 inserted after Phase 3: Automatic downloader from remote sources with picker for source and day (INSERTED)
 - Phase 6.1 inserted after Phase 6: Cloudflare Worker signaling server for production P2P (URGENT)
+- Phase 9 added: UI refinements, details, polish
 
 ### Deferred Issues
 
@@ -153,5 +154,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 08-05-PLAN.md - PWA Polish (Phase 8 complete, Milestone complete)
+Stopped at: Completed 09-02 - Circular progress indicator in PuzzleCard
 Resume file: None

@@ -24,6 +24,7 @@ None
 - [x] **Phase 6.1: Cloudflare Worker Signaling** - Production signaling server (INSERTED)
 - [x] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [x] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
+- [ ] **Phase 9: UI Refinements** - UI refinements, details, polish
 
 ## Phase Details
 
@@ -92,10 +93,16 @@ None
 **Research**: Unlikely (standard PWA and mobile UX patterns)
 **Plans**: TBD
 
+### Phase 9: UI Refinements
+**Goal**: UI refinements, details, polish
+**Depends on**: Phase 8
+**Research**: Unlikely (internal UI polish)
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -109,3 +116,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
 | 8. Polish & PWA | 5/5 | Complete | 2026-01-12 |
+| 9. UI Refinements | 1/? | In progress | - |
