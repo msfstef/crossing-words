@@ -1,4 +1,5 @@
 import './PuzzleCard.css';
+import { ProgressCircle } from './ProgressCircle';
 
 interface PuzzleCardProps {
   id: string;
@@ -28,13 +29,6 @@ export function PuzzleCard({
   const isComplete = filled === total && total > 0;
   const percentage = filled > 0 ? Math.round((filled / total) * 100) : (filled === -1 ? 50 : 0);
 
-  // Display text for progress
-  const progressText = isComplete
-    ? '✓'
-    : filled === -1
-    ? 'In progress'
-    : `${percentage}%`;
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger onOpen
     onDelete();
@@ -62,15 +56,7 @@ export function PuzzleCard({
         </div>
 
         <div className="puzzle-card__progress">
-          <div className="puzzle-card__progress-bar">
-            <div
-              className={`puzzle-card__progress-fill ${isComplete ? 'puzzle-card__progress-fill--complete' : ''}`}
-              style={{ width: `${isComplete ? 100 : (filled === -1 ? 50 : percentage)}%` }}
-            />
-          </div>
-          <span className={`puzzle-card__progress-text ${isComplete ? 'puzzle-card__progress-text--complete' : ''}`}>
-            {progressText}
-          </span>
+          <ProgressCircle percentage={percentage} isComplete={isComplete} />
         </div>
       </div>
 

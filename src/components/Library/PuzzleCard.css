@@ -63,41 +63,7 @@
 }
 
 .puzzle-card__progress {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   flex-shrink: 0;
-}
-
-.puzzle-card__progress-bar {
-  width: 80px;
-  height: 6px;
-  background-color: var(--color-bg-tertiary);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.puzzle-card__progress-fill {
-  height: 100%;
-  background-color: var(--color-accent);
-  border-radius: 3px;
-  transition: width 200ms ease;
-}
-
-.puzzle-card__progress-fill--complete {
-  background-color: var(--color-verified);
-}
-
-.puzzle-card__progress-text {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  min-width: 3.5rem;
-  text-align: right;
-}
-
-.puzzle-card__progress-text--complete {
-  color: var(--color-verified);
 }
 
 .puzzle-card__delete {
@@ -142,9 +108,5 @@
 @media (max-width: 600px) {
   .puzzle-card__delete {
     opacity: 0.6;
-  }
-
-  .puzzle-card__progress-bar {
-    width: 60px;
   }
 }
