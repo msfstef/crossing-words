@@ -2,26 +2,27 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-11)
+See: .planning/PROJECT.md (updated 2026-01-12)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 10 — Gameplay flow improvements
+**Current focus:** v1.0 MVP complete — planning next milestone or done
 
 ## Current Position
 
 Phase: 10 of 10 (Gameplay Flow Improvements)
-Plan: 3 of 3 in current phase (+ 1 FIX plan)
-Status: Phase complete
-Last activity: 2026-01-12 — Completed 10-03-PLAN.md (Auto-timeline)
+Plan: 3 of 3 in current phase
+Status: MILESTONE COMPLETE
+Last activity: 2026-01-12 — v1.0 milestone shipped
 
 Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
-- Average duration: 14 min
-- Total execution time: 6.5 hours
+- Total plans completed: 37 (33 regular + 4 FIX)
+- Average duration: ~10 min
+- Total execution time: ~6.5 hours
+- Development timeline: 2 days (2026-01-11 → 2026-01-12)
 
 **By Phase:**
 
@@ -37,135 +38,14 @@ Progress: ██████████ 100%
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
 | 8. Polish & PWA | 5 | 96 min | 19 min |
+| 9. UI Refinements | 5 | 70 min | 14 min |
 | 10. Gameplay Flow | 3 | 31 min | 10 min |
-
-**Recent Trend:**
-- Last 5 plans: 30, 25, 8, 15, 8 min
-- Trend: Phase 10 complete - auto-timeline
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-| Phase | Decision | Rationale |
-|-------|----------|-----------|
-| 01 | Dark theme (#1a1a2e) as default | Matches PWA manifest, consistent branding |
-| 01 | SVG placeholder icons | Scalable, real icons deferred to Phase 8 |
-| 01-FIX | Relative icon paths in manifest | Avoids path resolution issues |
-| 01-FIX | Added maskable icon variants | Better PWA installability |
-| 02-01 | Map<string,string> with 'row,col' key | Efficient userEntries lookup |
-| 02-01 | Store solution in Cell.letter | Enables future check/reveal |
-| 02-01 | CSS Grid with aspect-ratio: 1 | Square cells, responsive layout |
-| 02-02 | Document-level keydown listener | Immediate keyboard input |
-| 02-02 | Auto-advance stays at word end | Natural crossword behavior |
-| 02-02 | Backspace dual behavior | Clear or move back based on cell state |
-| 02-03 | Auto-advance skips cells without clue | Only land on cells with clue in direction |
-| 02-03 | Direction toggle only if alternate valid | Prevents showing empty clue bar |
-| 02-03 | Row/column wrap on advance | Natural flow when reaching end |
-| 03-01 | Use xd-crossword-tools for puz/jpz | Don't hand-roll binary/XML parsing |
-| 03-01 | Parse ipuz directly | Native JSON format, no library needed |
-| 03-02 | Hidden file input pattern | Styled button, invisible native input |
-| 03-02 | Error auto-dismiss 5s | Non-blocking UX, manual close option too |
-| 03-02 | Key prop for puzzle reset | Forces usePuzzleState to reinitialize |
-| 3.1-01 | Cloudflare Workers for CORS proxy | Free tier, global edge, no maintenance |
-| 3.1-01 | POST /puzzle with JSON body API | Source/date separation, easy to extend |
-| 3.1-01 | 10s upstream timeout | Prevent hanging requests |
-| 3.1-02 | Direct-first fetch with proxy fallback | Reduces proxy load, lower latency when CORS allowed |
-| 3.1-02 | herbach.dnsalias.com for Universal | Official andrewsmcmeel.com 404s, community archive reliable |
-| 3.1-02 | Source registry with getDirectUrl | Per-source URL construction flexibility |
-| 04-01 | Flat Y.Map with 'row,col' keys | Matches existing userEntries pattern |
-| 04-01 | One Y.Doc per puzzle | Isolated persistence and clean provider attachment |
-| 04-01 | Ready promise pattern | Prevents reading empty state before IndexedDB loads |
-| 04-02 | useSyncExternalStore for Yjs sync | Proper React 18 pattern, avoids setState-in-effect lint warnings |
-| 04-02 | puzzleId from sanitized title | Simple, deterministic, unique per puzzle |
-| 04-02 | Separate puzzle storage (not in CRDT) | Independent persistence, simpler versioning |
-| 05-01 | Local signaling server in dev mode | Public signaling servers unreliable |
-| 05-01 | Session created after IndexedDB ready | Prevents empty state sync |
-| 05-01 | P2P session destroyed before store | Proper cleanup order |
-| 05-01 | roomId parsed from URL hash | Simple sharing mechanism |
-| 05-02 | ConnectionState via subscription pattern | Flexible UI binding, useSyncExternalStore |
-| 05-02 | Connection indicator in top-right | Minimal, doesn't distract from puzzle |
-| 06-01 | 12 distinct colors pre-generated | Visual differentiation for collaborators |
-| 06-01 | Nickname: Adjective + Animal | Simple, playful, no external dependency |
-| 06-01 | useSyncExternalStore for awareness | Avoids ref access during render lint error |
-| 06-02 | URL: #puzzle={id}&timeline={id} | Structured params, supports puzzle+timeline |
-| 06-02 | roomId = puzzleId:timelineId | Unique P2P room per puzzle+timeline combo |
-| 06-02 | Web Share API with clipboard fallback | Native share on mobile, copy on desktop |
-| 06-03 | Toast notifications in useCollaborators hook | Avoids duplicate awareness listeners |
-| 06-03 | 25% opacity for collaborator highlights | Subtle indication, doesn't distract |
-| 06-03 | Local selection priority over collaborator | User's own word always most visible |
-| 06-03 | Cache getSnapshot with deep comparison | Prevents useSyncExternalStore infinite loop |
-| 06-04 | localStorage for timeline:puzzleId mapping | Sync access needed for collision check |
-| 06-04 | IndexedDB databases() API for progress detection | Check existence without loading full doc |
-| 06-04 | Yjs automatic merge on room connect | CRDT handles merge, no manual intervention |
-| 06-04 | Start Fresh = delete IndexedDB | Cleanest fresh state before joining |
-| 06-FIX | Puzzle sync via Y.Map("puzzle") | Recipients receive puzzle from sharer via CRDT |
-| 06-FIX | Refs for puzzle sync options | Prevents P2P session reset when puzzle received |
-| 06-FIX | assignUniqueColor() | Picks first unused color, avoids collisions |
-| 06-FIX | Connecting banner with spinner | Clear feedback during P2P connection delay |
-| 6.1-01 | new_sqlite_classes migration | Cloudflare free tier requires SQLite-backed DOs |
-| 6.1-01 | Single global DO with topic isolation | y-webrtc handles room filtering client-side |
-| 6.1-01 | WebSocket Hibernation API | Billed only during message processing |
-| 07-01 | doc.transact() for atomic verification updates | Prevents race conditions on concurrent check |
-| 07-01 | Skip already-verified cells | Verified is terminal state |
-| 07-01 | Clear errors when marking verified | Clean state transition |
-| 07-02 | Green dot indicator for verified cells | Subtle, corner placement, doesn't obscure letter |
-| 07-02 | Red background with shake for errors | Noticeable feedback without being jarring |
-| 07-02 | Error auto-clear on entry change | Cross-map observer in useCrdtPuzzle |
-| 07-03 | Auto-check synced via CRDT | All collaborators see same setting, prevents confusion |
-| 07-03 | Production signaling by default | VITE_SIGNALING_SERVER env var for local override |
-| 07-03 | Settings Y.Map for shared prefs | Extensible pattern for future shared settings |
-| 08-01 | Light theme as structural :root default | Dark applied by blocking script if needed |
-| 08-01 | Blocking script in <head> before scripts | Prevents flash of wrong theme (FART) |
-| 08-01 | useSyncExternalStore for theme subscription | Consistent pattern for React 18 |
-| 08-02 | Separate puzzles-meta store | Efficient listing without loading full puzzle data |
-| 08-02 | puzzleId from sanitized title | Consistent ID generation across import paths |
-| 08-02 | Library as default view | Transforms app from puzzle-first to library-first UX |
-| 08-02 | Back button in header | Clear navigation between library and solve views |
-| 08-03 | CSS Grid with named areas | Flexible layout structure for header/grid/clue-bar/keyboard |
-| 08-03 | 100dvh for full viewport | Dynamic viewport height handles mobile browser chrome |
-| 08-03 | Compact direction labels (A/D) | Space-efficient clue display |
-| 08-03 | Slot-based layout composition | ReactNode props for layout areas |
-| 08-04 | react-simple-keyboard | Mature library, customizable, touch-optimized |
-| 08-04 | pointer: coarse for touch detection | More accurate than viewport width |
-| 08-04 | Flexbox over CSS Grid for SolveLayout | Better iOS Safari shrinking behavior |
-| 08-04 | No container queries | Limited iOS Safari support, use percentage sizing |
-| 08-04 | typeLetter/handleBackspace methods | Clean separation of keyboard input from DOM events |
-| 08-05 | useSyncExternalStore for online status | Matches project conventions (useTheme, useCollaborators) |
-| 08-05 | Separate SettingsMenu from Toolbar | User preferences vs puzzle actions |
-| 08-05 | NetworkFirst for API, CacheFirst for files | Fresh data when online, offline fallback |
-| 09-01 | FAB expands vertically with transform/opacity | Smooth animation, performance-friendly |
-| 09-01 | Ghost entries appear immediately in library | Optimistic UI for better perceived performance |
-| 09-01 | LoadingCard uses pulse animation and spinner | Visual feedback during download |
-| 09-01 | Download dialog centered with backdrop | Modal pattern for focused interaction |
-| 09-03 | Consolidated Check/Reveal/Auto-check into Settings | Reduces toolbar clutter, single menu for all actions |
-| 09-03 | Toggle switch for Auto-check (track + knob) | Better visual feedback than checkbox |
-| 09-03 | Neutral Share button with SVG icon | Consistent header button styling |
-| 09-04 | Fixed 56px clue bar height (fits 2 lines) | Consistent height, no layout jumps |
-| 09-04 | Number and text wrap as one string | Natural wrapping behavior |
-| 09-04 | Auto-shrink font 15px→13px for overflow | Long clues fit without truncation |
-| 09-04 | No visual feedback on clue bar tap | Clean, minimal interaction style |
-| 09-04 | Nav buttons styled like keyboard keys | Consistent button styling across app |
-| 09-05 | Puzzle title above grid only, not in header | Single source of truth, cleaner header |
-| 09-05 | Dark mode cell-word highlight #454570 | Distinct from grid gap #3a3a5a |
-| 10-01 | Cell size clamp(24px, 6vmin, 36px) | Responsive bounds for fixed sizing |
-| 10-01 | Letter font scales with calc(--cell-size * 0.55) | Proportional to cell |
-| 10-01 | Clue number z-index 1, letter z-index 2 | Proper layering hierarchy |
-| 10-01 | Verified dot reduced to 4px | Subtle, behind letter |
-| 10-01-FIX | ResizeObserver for dynamic cell sizing | CSS clamp can't factor puzzle dimensions |
-| 10-01-FIX | Cell size min 16px, max 36px | Lower min allows large puzzles to fit |
-| 10-01-FIX | Container wrapper pattern | Provides sizing context for ResizeObserver |
-| 10-02 | Outline for cursor indicator | More visible than box-shadow |
-| 10-02 | Local user uses collaborator color | Selection matches what others see |
-| 10-02 | Collaborator cursors 50% opacity | Subtle, doesn't distract from local |
-| 10-02 | 20 colors in palette | Better variety for larger sessions |
-| 10-02 | Debounced color conflict detection | Runs on every awareness change |
-| 10-03 | Timeline generated on puzzle open | Every puzzle session P2P-ready immediately |
-| 10-03 | Existing timeline priority | Enables session resumption when returning |
-| 10-03 | Joined timeline persists | Shared link becomes user's timeline for puzzle |
+All key decisions documented in PROJECT.md Key Decisions table with outcomes marked "Good".
 
 ### Roadmap Evolution
 
@@ -176,14 +56,14 @@ Recent decisions affecting current work:
 
 ### Deferred Issues
 
-None yet.
+None — all planned work complete.
 
 ### Blockers/Concerns
 
-None yet.
+None — v1.0 shipped successfully.
 
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 10-03-PLAN.md (Auto-timeline) - MILESTONE COMPLETE
+Stopped at: v1.0 MILESTONE COMPLETE
 Resume file: None
