@@ -15,8 +15,9 @@
 
     display: grid;
     gap: var(--grid-gap);
-    width: min(100%, 400px);
-    max-width: 400px;
+    /* Size based on smallest dimension to fit container while maintaining square */
+    width: min(100%, 100cqmin, 400px);
+    max-width: min(100cqmin, 400px);
     aspect-ratio: 1;
     background-color: var(--grid-bg);
     padding: 2px;
