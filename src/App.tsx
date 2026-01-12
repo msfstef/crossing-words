@@ -449,6 +449,14 @@ function App() {
         </div>
       )}
 
+      {/* Connecting banner - show prominently while establishing P2P connection */}
+      {roomId && connectionState === 'connecting' && !waitingForPuzzle && (
+        <div className="connecting-banner">
+          <span className="connecting-banner__spinner" />
+          <span>Connecting to collaborators...</span>
+        </div>
+      )}
+
       {error && (
         <div className="error-banner">
           <span className="error-banner__message">{error}</span>

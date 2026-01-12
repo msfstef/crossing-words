@@ -80,10 +80,34 @@ const ANIMALS = [
  *
  * @param clientId - The Yjs Awareness client ID
  * @returns Hex color string (e.g., "#ff6b6b")
+ * @deprecated Use assignUniqueColor instead to avoid color collisions
  */
 export function assignColor(clientId: number): string {
   const index = Math.abs(clientId) % PALETTE.length;
   return PALETTE[index];
+}
+
+/**
+ * Assigns a unique color by checking what colors are already in use.
+ * Falls back to hash-based assignment if all colors are taken.
+ *
+ * @param usedColors - Array of hex colors already in use by other clients
+ * @param clientId - The client ID (used as fallback for hash-based assignment)
+ * @returns Hex color string that isn't in usedColors (if possible)
+ */
+export function assignUniqueColor(usedColors: string[], clientId: number): string {
+  // Normalize used colors to lowercase for comparison
+  const usedSet = new Set(usedColors.map(c => c.toLowerCase()));
+
+  // Find first unused color
+  for (const color of PALETTE) {
+    if (!usedSet.has(color.toLowerCase())) {
+      return color;
+    }
+  }
+
+  // All colors taken, fall back to hash-based (will collide, but rare with 12 colors)
+  return assignColor(clientId);
 }
 
 /**

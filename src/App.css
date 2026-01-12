@@ -200,3 +200,36 @@
     opacity: 0.4;
   }
 }
+
+/* Connecting banner - prominent feedback while establishing connection */
+.connecting-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 500px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  background-color: rgba(250, 204, 21, 0.15);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 8px;
+  color: #facc15;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.connecting-banner__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(250, 204, 21, 0.3);
+  border-top-color: #facc15;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
