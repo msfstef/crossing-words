@@ -1,5 +1,6 @@
 interface Env {
   ALLOWED_ORIGINS: string;
+  SIGNALING_ROOM: DurableObjectNamespace;
 }
 
 interface PuzzleRequest {
@@ -198,6 +199,14 @@ export default {
       );
     }
 
+    // WebSocket signaling for P2P
+    // Uses single DO instance - y-webrtc handles room isolation via topics
+    if (url.pathname === '/signaling') {
+      const id = env.SIGNALING_ROOM.idFromName('global');
+      const stub = env.SIGNALING_ROOM.get(id);
+      return stub.fetch(request);
+    }
+
     return new Response(JSON.stringify({ error: 'Not found' }), {
       status: 404,
       headers: {
@@ -207,3 +216,6 @@ export default {
     });
   },
 };
+
+// Export Durable Object class for Cloudflare
+export { SignalingRoom } from './SignalingRoom';
