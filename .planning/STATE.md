@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 8 in progress — Library view complete
+**Current focus:** Phase 8 in progress — Unified layout complete
 
 ## Current Position
 
 Phase: 8 of 8 (Polish & PWA)
-Plan: 2 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-12 — Completed 08-02-PLAN.md (Library View)
+Last activity: 2026-01-12 — Completed 08-03-PLAN.md (Unified Layout)
 
 Progress: █████████░ 96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 14 min
-- Total execution time: 4.88 hours
+- Total execution time: 5.18 hours
 
 **By Phase:**
 
@@ -36,11 +36,11 @@ Progress: █████████░ 96%
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
-| 8. Polish & PWA | 2 | 23 min | 12 min |
+| 8. Polish & PWA | 3 | 41 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 3, 7, 43, 8, 15 min
-- Trend: Library view added as home screen
+- Last 5 plans: 7, 43, 8, 15, 18 min
+- Trend: Unified layout with compact header and clue navigation
 
 ## Accumulated Context
 
@@ -124,6 +124,10 @@ Recent decisions affecting current work:
 | 08-02 | puzzleId from sanitized title | Consistent ID generation across import paths |
 | 08-02 | Library as default view | Transforms app from puzzle-first to library-first UX |
 | 08-02 | Back button in header | Clear navigation between library and solve views |
+| 08-03 | CSS Grid with named areas | Flexible layout structure for header/grid/clue-bar/keyboard |
+| 08-03 | 100dvh for full viewport | Dynamic viewport height handles mobile browser chrome |
+| 08-03 | Compact direction labels (A/D) | Space-efficient clue display |
+| 08-03 | Slot-based layout composition | ReactNode props for layout areas |
 
 ### Roadmap Evolution
 
@@ -141,5 +145,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 08-02-PLAN.md - Library view
+Stopped at: Completed 08-03-PLAN.md - Unified layout
 Resume file: None
