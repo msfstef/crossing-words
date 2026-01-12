@@ -130,3 +130,9 @@
 .cell--error {
     animation: cell-shake 0.3s ease-in-out;
 }
+
+/* Collaborator cursor - colored border via box-shadow (set inline for dynamic color) */
+.cell--collaborator-cursor {
+    /* Styling applied via inline box-shadow style for dynamic collaborator color */
+    /* This class exists for potential future hover states or animations */
+}

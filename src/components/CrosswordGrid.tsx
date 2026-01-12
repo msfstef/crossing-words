@@ -194,6 +194,26 @@ export function CrosswordGrid({
     return highlights;
   }, [puzzle, collaborators]);
 
+  /**
+   * Build a map of cursor positions to collaborator colors.
+   * Shows exact cell each collaborator is focused on (border indicator).
+   * First collaborator on a cell wins.
+   */
+  const collaboratorCursors = useMemo(() => {
+    const cursors = new Map<string, string>(); // key -> color
+
+    for (const collab of collaborators) {
+      if (!collab.cursor) continue;
+      const key = `${collab.cursor.row},${collab.cursor.col}`;
+      // First collaborator on cell wins
+      if (!cursors.has(key)) {
+        cursors.set(key, collab.user.color);
+      }
+    }
+
+    return cursors;
+  }, [collaborators]);
+
   return (
     <div
       ref={containerRef}
@@ -224,6 +244,11 @@ export function CrosswordGrid({
         const hasCollaboratorHighlight =
           collaboratorColor && !inWord && !isSelected;
 
+        // Get collaborator cursor color (exact focused cell)
+        const cursorColor = collaboratorCursors.get(key);
+        // Only show cursor if not the local user's selected cell
+        const hasCollaboratorCursor = cursorColor && !isSelected;
+
         // Check verification and error status
         const isVerified = verifiedCells.has(key);
         const hasError = errorCells.has(key);
@@ -234,16 +259,19 @@ export function CrosswordGrid({
           isSelected ? "cell--selected" : "",
           inWord && !isSelected ? "cell--in-word" : "",
           hasCollaboratorHighlight ? "cell--collaborator" : "",
+          hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
           isVerified ? "cell--verified" : "",
           hasError ? "cell--error" : "",
         ]
           .filter(Boolean)
           .join(" ");
 
-        // Build inline style for collaborator highlight (dynamic color)
-        const cellStyle = hasCollaboratorHighlight
-          ? { backgroundColor: hexToRgba(collaboratorColor, 0.25) }
-          : undefined;
+        // Build inline style for collaborator highlighting
+        // Word highlight = subtle background, cursor = visible border (box-shadow to avoid layout shift)
+        const cellStyle: React.CSSProperties = {
+          ...(hasCollaboratorHighlight ? { backgroundColor: hexToRgba(collaboratorColor, 0.25) } : {}),
+          ...(hasCollaboratorCursor ? { boxShadow: `inset 0 0 0 2px ${cursorColor}` } : {}),
+        };
 
         return (
           <div
