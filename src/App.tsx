@@ -3,16 +3,15 @@ import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { CollaboratorAvatars } from './components/CollaboratorAvatars';
-import { FilePicker } from './components/FilePicker';
-import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
 import { Toolbar } from './components/Toolbar';
+import { LibraryView } from './components/Library';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { samplePuzzle } from './lib/samplePuzzle';
-import { loadCurrentPuzzle, saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
+import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
 import {
   parseShareUrl,
   parseLegacyRoomUrl,
@@ -68,8 +67,16 @@ function getSessionFromHash(): { puzzleIdFromUrl?: string; timelineId?: string }
 }
 
 function App() {
-  // Start with null to indicate loading state, then load saved or sample puzzle
+  // View state: library (home) or solve (puzzle view)
+  // Default to library unless URL has timeline (shared session)
+  const initialSession = getSessionFromHash();
+  const [activeView, setActiveView] = useState<'library' | 'solve'>(
+    initialSession.timelineId ? 'solve' : 'library'
+  );
+
+  // Start with null puzzle - will be set when opening from library or joining shared session
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [activePuzzleId, setActivePuzzleId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   // Session state: timeline ID for P2P collaboration
@@ -78,16 +85,18 @@ function App() {
 
   // Track the timeline ID from URL that needs conflict checking
   const [pendingUrlTimeline, setPendingUrlTimeline] = useState<string | null>(
-    () => getSessionFromHash().timelineId ?? null
+    () => initialSession.timelineId ?? null
   );
 
   // Track the puzzle ID from URL (for joining sessions where we don't have the puzzle)
   const [urlPuzzleId, setUrlPuzzleId] = useState<string | null>(
-    () => getSessionFromHash().puzzleIdFromUrl ?? null
+    () => initialSession.puzzleIdFromUrl ?? null
   );
 
   // Track if we're waiting for a puzzle from a sharer
-  const [waitingForPuzzle, setWaitingForPuzzle] = useState(false);
+  const [waitingForPuzzle, setWaitingForPuzzle] = useState(
+    Boolean(initialSession.timelineId && initialSession.puzzleIdFromUrl)
+  );
 
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -104,9 +113,9 @@ function App() {
     localEntryCount: 0,
   });
 
-  // Load saved puzzle on startup, considering URL parameters
+  // Handle shared session URL on initial load
   useEffect(() => {
-    const loadPuzzle = async () => {
+    const handleSharedSession = async () => {
       const session = getSessionFromHash();
 
       // If URL has a puzzle ID, check if we have it or need to wait for it
@@ -116,29 +125,25 @@ function App() {
         if (storedPuzzle) {
           // We have the puzzle - use it
           setPuzzle(storedPuzzle);
-          setUrlPuzzleId(null); // Clear URL puzzle ID since we found it
-          return;
+          setActivePuzzleId(session.puzzleIdFromUrl);
+          setActiveView('solve');
+          setUrlPuzzleId(null);
+          setWaitingForPuzzle(false);
+        } else {
+          // We don't have this puzzle - we'll need to wait for it from the sharer
+          setActiveView('solve');
+          setActivePuzzleId(session.puzzleIdFromUrl);
+          setWaitingForPuzzle(true);
         }
-
-        // We don't have this puzzle - we'll need to wait for it from the sharer
-        // For now, set the puzzle ID from URL so the CRDT hook can connect
-        // and receive the puzzle via sync
-        setWaitingForPuzzle(true);
-        // Keep urlPuzzleId set so we know what room to join
-        return;
       }
-
-      // Normal flow: load saved puzzle or use sample
-      const savedPuzzle = await loadCurrentPuzzle();
-      setPuzzle(savedPuzzle ?? samplePuzzle);
     };
 
-    loadPuzzle();
+    handleSharedSession();
   }, []);
 
   // Generate stable puzzle ID for CRDT storage
   // Use URL puzzle ID when waiting for a puzzle from sharer
-  const puzzleId = waitingForPuzzle && urlPuzzleId ? urlPuzzleId : (puzzle ? getPuzzleId(puzzle) : '');
+  const puzzleId = waitingForPuzzle && urlPuzzleId ? urlPuzzleId : activePuzzleId;
 
   // Listen for hash changes to detect shared timeline from URL
   useEffect(() => {
@@ -154,6 +159,7 @@ function App() {
       // Set pending timeline - will be processed by the effect below
       if (newTimeline) {
         setPendingUrlTimeline(newTimeline);
+        setActiveView('solve');
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -303,6 +309,7 @@ function App() {
 
     // Save the received puzzle for future use
     const newPuzzleId = getPuzzleId(receivedPuzzle);
+    setActivePuzzleId(newPuzzleId);
     savePuzzle(newPuzzleId, receivedPuzzle).catch((err) => {
       console.error('Failed to save received puzzle:', err);
     });
@@ -411,22 +418,42 @@ function App() {
     setShowShareDialog(true);
   }, [puzzle, puzzleId, timelineId]);
 
-  const handlePuzzleLoaded = useCallback((newPuzzle: Puzzle) => {
-    setPuzzle(newPuzzle);
+  /**
+   * Handle opening a puzzle from the library.
+   */
+  const handleOpenPuzzle = useCallback((loadedPuzzle: Puzzle, loadedPuzzleId: string) => {
+    setPuzzle(loadedPuzzle);
+    setActivePuzzleId(loadedPuzzleId);
+    setActiveView('solve');
     setError(null);
-    // Persist the puzzle to IndexedDB
-    saveCurrentPuzzle(newPuzzle).catch((err) => {
+    // Persist as current puzzle
+    saveCurrentPuzzle(loadedPuzzle).catch((err) => {
       console.error('Failed to save puzzle:', err);
     });
   }, []);
 
-  const handleError = (errorMessage: string) => {
-    setError(errorMessage);
-  };
+  /**
+   * Handle going back to library from solve view.
+   */
+  const handleBackToLibrary = useCallback(() => {
+    // Clear the URL hash when leaving a puzzle
+    clearUrlHash();
+    // Reset timeline since we're leaving the puzzle
+    setTimelineId(undefined);
+    // Switch to library view
+    setActiveView('library');
+    // Clear puzzle state
+    setPuzzle(null);
+    setActivePuzzleId('');
+  }, []);
 
-  const dismissError = () => {
+  const handleError = useCallback((errorMessage: string) => {
+    setError(errorMessage);
+  }, []);
+
+  const dismissError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -438,8 +465,10 @@ function App() {
     }
   }, [error]);
 
-  // Add keyboard event listener to document
+  // Add keyboard event listener to document (only in solve view)
   useEffect(() => {
+    if (activeView !== 'solve') return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       handleKeyDown(event);
     };
@@ -449,23 +478,48 @@ function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [handleKeyDown]);
+  }, [activeView, handleKeyDown]);
 
+  // Render Library view
+  if (activeView === 'library') {
+    return (
+      <>
+        <LibraryView
+          onOpenPuzzle={handleOpenPuzzle}
+          onError={handleError}
+        />
+        {error && (
+          <div className="error-banner error-banner--floating">
+            <span className="error-banner__message">{error}</span>
+            <button
+              type="button"
+              onClick={dismissError}
+              className="error-banner__dismiss"
+              aria-label="Dismiss error"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+        <Toaster position="bottom-center" theme="dark" />
+      </>
+    );
+  }
+
+  // Render Solve view
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1>Crossing Words</h1>
-        <p className="tagline">Collaborative crossword puzzles</p>
-        <div className="puzzle-import">
-          <FilePicker
-            onPuzzleLoaded={handlePuzzleLoaded}
-            onError={handleError}
-          />
-          <span className="puzzle-import__separator">or</span>
-          <PuzzleDownloader
-            onPuzzleLoaded={handlePuzzleLoaded}
-            onError={handleError}
-          />
+        <div className="header-left">
+          <button
+            type="button"
+            className="back-button"
+            onClick={handleBackToLibrary}
+            aria-label="Back to library"
+          >
+            ← Back
+          </button>
+          <h1 className="puzzle-header-title">{puzzle?.title ?? 'Loading...'}</h1>
         </div>
 
         {/* Toolbar - visible when puzzle is loaded and ready */}
@@ -550,7 +604,6 @@ function App() {
           <div className="puzzle-loading">Loading...</div>
         ) : (
           <>
-            <h2 className="puzzle-title">{puzzle.title}</h2>
             {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
 
             {!ready ? (
