@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 7 in progress — Check/Reveal verification system
+**Current focus:** Phase 7 complete — Ready for Phase 8: Polish & PWA
 
 ## Current Position
 
 Phase: 7 of 8 (Check/Reveal)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-12 — Completed 07-02-PLAN.md (Grid Verification Integration)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-12 — Completed 07-03-PLAN.md (Toolbar & Playwright Tests)
 
 Progress: █████████░ 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
-- Average duration: 13 min
-- Total execution time: 4.03 hours
+- Total plans completed: 20
+- Average duration: 14 min
+- Total execution time: 4.75 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: █████████░ 95%
 | 5. P2P Networking | 2 | 40 min | 20 min |
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
-| 7. Check/Reveal | 2 | 10 min | 5 min |
+| 7. Check/Reveal | 3 | 53 min | 18 min |
 
 **Recent Trend:**
-- Last 5 plans: 12, 21, 8, 3, 7 min
-- Trend: Phase 7 progressing, grid integration complete
+- Last 5 plans: 21, 8, 3, 7, 43 min
+- Trend: Phase 7 complete with comprehensive e2e tests
 
 ## Accumulated Context
 
@@ -113,6 +113,9 @@ Recent decisions affecting current work:
 | 07-02 | Green dot indicator for verified cells | Subtle, corner placement, doesn't obscure letter |
 | 07-02 | Red background with shake for errors | Noticeable feedback without being jarring |
 | 07-02 | Error auto-clear on entry change | Cross-map observer in useCrdtPuzzle |
+| 07-03 | Auto-check synced via CRDT | All collaborators see same setting, prevents confusion |
+| 07-03 | Production signaling by default | VITE_SIGNALING_SERVER env var for local override |
+| 07-03 | Settings Y.Map for shared prefs | Extensible pattern for future shared settings |
 
 ### Roadmap Evolution
 
@@ -130,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 07-02-PLAN.md - Grid Verification Integration
+Stopped at: Completed 07-03-PLAN.md - Phase 7 complete
 Resume file: None

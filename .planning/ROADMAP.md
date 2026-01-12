@@ -22,7 +22,7 @@ None
 - [x] **Phase 5: P2P Networking** - WebRTC connections, signaling, TURN fallback
 - [x] **Phase 6: Collaboration** - Presence, session sharing, timeline system
 - [x] **Phase 6.1: Cloudflare Worker Signaling** - Production signaling server (INSERTED)
-- [ ] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
+- [x] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [ ] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
 
 ## Phase Details
@@ -107,5 +107,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 5. P2P Networking | 2/2 | Complete | 2026-01-11 |
 | 6. Collaboration | 4/4 | Complete | 2026-01-11 |
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
-| 7. Check/Reveal | 2/3 | In progress | - |
+| 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
 | 8. Polish & PWA | 0/TBD | Not started | - |
