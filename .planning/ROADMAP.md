@@ -108,4 +108,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 6. Collaboration | 4/4 | Complete | 2026-01-11 |
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
-| 8. Polish & PWA | 0/TBD | Not started | - |
+| 8. Polish & PWA | 1/5 | In progress | - |

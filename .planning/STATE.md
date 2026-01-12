@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 7 complete — Ready for Phase 8: Polish & PWA
+**Current focus:** Phase 8 in progress — Theme system complete
 
 ## Current Position
 
-Phase: 7 of 8 (Check/Reveal)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-12 — Completed 07-03-PLAN.md (Toolbar & Playwright Tests)
+Phase: 8 of 8 (Polish & PWA)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-01-12 — Completed 08-01-PLAN.md (Theme System)
 
-Progress: █████████░ 95%
+Progress: █████████░ 96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 14 min
-- Total execution time: 4.75 hours
+- Total execution time: 4.88 hours
 
 **By Phase:**
 
@@ -36,10 +36,11 @@ Progress: █████████░ 95%
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
+| 8. Polish & PWA | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 21, 8, 3, 7, 43 min
-- Trend: Phase 7 complete with comprehensive e2e tests
+- Last 5 plans: 8, 3, 7, 43, 8 min
+- Trend: Phase 8 started with theme infrastructure
 
 ## Accumulated Context
 
@@ -116,6 +117,9 @@ Recent decisions affecting current work:
 | 07-03 | Auto-check synced via CRDT | All collaborators see same setting, prevents confusion |
 | 07-03 | Production signaling by default | VITE_SIGNALING_SERVER env var for local override |
 | 07-03 | Settings Y.Map for shared prefs | Extensible pattern for future shared settings |
+| 08-01 | Light theme as structural :root default | Dark applied by blocking script if needed |
+| 08-01 | Blocking script in <head> before scripts | Prevents flash of wrong theme (FART) |
+| 08-01 | useSyncExternalStore for theme subscription | Consistent pattern for React 18 |
 
 ### Roadmap Evolution
 
@@ -133,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 07-03-PLAN.md - Phase 7 complete
+Stopped at: Completed 08-01-PLAN.md - Theme system
 Resume file: None
