@@ -55,6 +55,10 @@ interface PuzzleStateHook {
   hasPrevClue: boolean;
   /** Whether there is a next clue */
   hasNextClue: boolean;
+  /** Type a letter in the current cell (for virtual keyboard) */
+  typeLetter: (letter: string) => void;
+  /** Handle backspace action (for virtual keyboard) */
+  handleBackspace: () => void;
 }
 
 /**
@@ -376,6 +380,31 @@ export function usePuzzleState(
   );
 
   /**
+   * Type a letter in the current cell (for virtual keyboard).
+   * Same behavior as physical keyboard letter input.
+   */
+  const typeLetter = useCallback(
+    (letter: string) => {
+      if (!selectedCell) return;
+
+      const cellKey = `${selectedCell.row},${selectedCell.col}`;
+
+      // Block editing verified cells - just advance without editing
+      if (verifiedCells.has(cellKey)) {
+        autoAdvance(selectedCell.row, selectedCell.col);
+        return;
+      }
+
+      // Use CRDT-backed setEntry
+      setEntry(selectedCell.row, selectedCell.col, letter.toUpperCase());
+
+      // Auto-advance to next cell
+      autoAdvance(selectedCell.row, selectedCell.col);
+    },
+    [selectedCell, verifiedCells, setEntry, autoAdvance]
+  );
+
+  /**
    * Find previous non-verified cell for backspace navigation
    */
   const findPrevNonVerifiedCell = useCallback(
@@ -397,6 +426,46 @@ export function usePuzzleState(
     },
     [puzzle, direction, verifiedCells]
   );
+
+  /**
+   * Handle backspace action (for virtual keyboard).
+   * Same behavior as physical backspace key.
+   */
+  const handleBackspaceAction = useCallback(() => {
+    if (!selectedCell) return;
+
+    const cellKey = `${selectedCell.row},${selectedCell.col}`;
+
+    // Block deleting verified cells - find previous non-verified cell
+    if (verifiedCells.has(cellKey)) {
+      const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
+      if (prevCell) {
+        setSelectedCell(prevCell);
+      }
+      return;
+    }
+
+    const currentEntry = userEntries.get(cellKey);
+
+    if (currentEntry) {
+      // If current cell has a letter, just clear it (CRDT-backed)
+      clearEntry(selectedCell.row, selectedCell.col);
+    } else {
+      // If current cell is empty, move back to previous non-verified cell and clear it
+      const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
+
+      if (prevCell) {
+        const prevKey = `${prevCell.row},${prevCell.col}`;
+        // Only clear if not verified
+        if (!verifiedCells.has(prevKey)) {
+          setSelectedCell(prevCell);
+          clearEntry(prevCell.row, prevCell.col);
+        } else {
+          setSelectedCell(prevCell);
+        }
+      }
+    }
+  }, [selectedCell, userEntries, verifiedCells, clearEntry, findPrevNonVerifiedCell]);
 
   /**
    * Handle keyboard events for navigation and letter input
@@ -591,5 +660,7 @@ export function usePuzzleState(
     goToNextClue,
     hasPrevClue: clueNavState.hasPrev,
     hasNextClue: clueNavState.hasNext,
+    typeLetter,
+    handleBackspace: handleBackspaceAction,
   };
 }

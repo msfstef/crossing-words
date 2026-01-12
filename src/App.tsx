@@ -7,6 +7,7 @@ import { JoinDialog } from './components/JoinDialog';
 import { Toolbar } from './components/Toolbar';
 import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
+import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
@@ -350,6 +351,8 @@ function App() {
     goToNextClue,
     hasPrevClue,
     hasNextClue,
+    typeLetter,
+    handleBackspace,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Use verification hook for check/reveal actions
@@ -399,6 +402,22 @@ function App() {
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
+
+  // Detect touch device for virtual keyboard display
+  // Uses pointer: coarse media query which matches touch devices
+  const [isTouchDevice, setIsTouchDevice] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(pointer: coarse)').matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(pointer: coarse)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsTouchDevice(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   /**
    * Handle Share button click.
@@ -604,7 +623,14 @@ function App() {
             hasNext={hasNextClue}
           />
         }
-        keyboard={null}
+        keyboard={
+          isTouchDevice && puzzle && ready ? (
+            <CrosswordKeyboard
+              onKeyPress={typeLetter}
+              onBackspace={handleBackspace}
+            />
+          ) : null
+        }
       />
 
       {/* Share dialog */}
