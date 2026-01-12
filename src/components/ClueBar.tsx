@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from 'react';
 import './ClueBar.css';
 
 interface ClueBarProps {
@@ -29,6 +30,33 @@ export function ClueBar({
   hasNext = false,
   onToggleDirection,
 }: ClueBarProps) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fontSize, setFontSize] = useState<string>('0.9375rem');
+
+  // Measure text and shrink font if needed to fit in 2 lines
+  useEffect(() => {
+    if (!clue || !textRef.current) return;
+
+    // Reset to default size first
+    setFontSize('0.9375rem');
+
+    // Use requestAnimationFrame to measure after render
+    requestAnimationFrame(() => {
+      const el = textRef.current;
+      if (!el) return;
+
+      // Check if content is clipped (scrollHeight > clientHeight means overflow)
+      // With -webkit-line-clamp, we can check if the text was truncated
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+      const maxHeight = lineHeight * 2; // 2 lines
+
+      if (el.scrollHeight > maxHeight + 2) {
+        // Content overflows, try smaller font
+        setFontSize('0.8125rem'); // 13px
+      }
+    });
+  }, [clue]);
+
   if (!clue) {
     return (
       <div className="clue-bar clue-bar--empty">
@@ -63,8 +91,14 @@ export function ClueBar({
           }
         } : undefined}
       >
-        <span className="clue-bar__number">{clue.number}{directionLabel}:</span>
-        <span className="clue-bar__text">{clue.text}</span>
+        <span
+          ref={textRef}
+          className="clue-bar__clue-text"
+          style={{ fontSize }}
+        >
+          <span className="clue-bar__number">{clue.number}{directionLabel}:</span>{' '}
+          {clue.text}
+        </span>
       </div>
 
       <button

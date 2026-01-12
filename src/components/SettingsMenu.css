@@ -10,17 +10,26 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
   color: var(--color-text);
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
-  transition: background 0.2s;
+  transition: background 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .settings-menu__button:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-bg);
+}
+
+.settings-menu__button:active {
+  background: var(--color-border);
+}
+
+.settings-menu__button:focus {
+  outline: none;
 }
 
 .settings-menu__dropdown {

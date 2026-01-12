@@ -1,16 +1,6 @@
 /* CSS custom properties for consistent theming */
 .crossword-grid {
     --grid-gap: 2px;
-    --grid-bg: #333;
-    --cell-white-bg: #2a2a3e;
-    --cell-white-hover-bg: #3a3a4e;
-    --cell-black-bg: #1a1a1a;
-    --cell-selected-bg: #3a4a6e;
-    --cell-selected-border: #4a9eff;
-    --cell-in-word-bg: #3a3a5e;
-    --cell-border: #444;
-    --letter-color: #e0e0e0;
-    --clue-number-color: #888;
     --transition-duration: 120ms;
 
     display: grid;
@@ -20,7 +10,7 @@
     max-width: 400px;
     max-height: 100%;
     aspect-ratio: 1;
-    background-color: var(--grid-bg);
+    background-color: var(--color-border);
     padding: 2px;
     border-radius: 4px;
     /* Ensure grid shrinks to fit available space */
@@ -33,7 +23,7 @@
     align-items: center;
     justify-content: center;
     aspect-ratio: 1;
-    border: 1px solid var(--cell-border);
+    border: 1px solid var(--color-border);
     user-select: none;
     transition:
         background-color var(--transition-duration) ease,
@@ -41,26 +31,26 @@
 }
 
 .crossword-cell.cell--white {
-    background-color: var(--cell-white-bg);
+    background-color: var(--color-cell-bg);
     cursor: pointer;
 }
 
 .crossword-cell.cell--white:hover {
-    background-color: var(--cell-white-hover-bg);
+    background-color: var(--color-cell-word);
 }
 
 .crossword-cell.cell--black {
-    background-color: var(--cell-black-bg);
+    background-color: var(--color-cell-blocked);
     cursor: default;
 }
 
 .crossword-cell.cell--selected {
-    border: 2px solid var(--cell-selected-border);
-    background-color: var(--cell-selected-bg);
+    border: 2px solid var(--color-accent);
+    background-color: var(--color-cell-selected);
 }
 
 .crossword-cell.cell--in-word {
-    background-color: var(--cell-in-word-bg);
+    background-color: var(--color-cell-word);
 }
 
 .clue-number {
@@ -69,7 +59,7 @@
     left: 3px;
     font-size: 0.6rem;
     font-weight: 500;
-    color: var(--clue-number-color);
+    color: var(--color-text-muted);
     line-height: 1;
 }
 
@@ -77,7 +67,7 @@
     font-size: 1rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--letter-color);
+    color: var(--color-text);
     line-height: 1;
 }
 
@@ -93,18 +83,18 @@
     right: 2px;
     width: 6px;
     height: 6px;
-    background-color: #4caf50;
+    background-color: var(--color-verified);
     border-radius: 50%;
     opacity: 0.8;
 }
 
 /* Error cell - red highlight for incorrect entry */
 .cell--error {
-    background-color: rgba(244, 67, 54, 0.25) !important;
+    background-color: color-mix(in srgb, var(--color-error) 25%, transparent) !important;
 }
 
 .cell--error .cell-letter {
-    color: #f44336;
+    color: var(--color-error);
 }
 
 /* Subtle shake animation on error (triggers when class added) */
