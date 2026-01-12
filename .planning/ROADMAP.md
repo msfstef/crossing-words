@@ -23,7 +23,7 @@ None
 - [x] **Phase 6: Collaboration** - Presence, session sharing, timeline system
 - [x] **Phase 6.1: Cloudflare Worker Signaling** - Production signaling server (INSERTED)
 - [x] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
-- [ ] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
+- [x] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
 
 ## Phase Details
 
@@ -108,4 +108,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 6. Collaboration | 4/4 | Complete | 2026-01-11 |
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
-| 8. Polish & PWA | 3/5 | In progress | - |
+| 8. Polish & PWA | 5/5 | Complete | 2026-01-12 |

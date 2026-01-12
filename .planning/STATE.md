@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 8 in progress — Mobile keyboard complete
+**Current focus:** Milestone complete — All 8 phases finished
 
 ## Current Position
 
 Phase: 8 of 8 (Polish & PWA)
-Plan: 4 of 5 in current phase
-Status: In progress
-Last activity: 2026-01-12 — Completed 08-04-PLAN.md (Mobile Virtual Keyboard)
+Plan: 5 of 5 in current phase
+Status: Phase complete
+Last activity: 2026-01-12 — Completed 08-05-PLAN.md (PWA Polish)
 
-Progress: █████████░ 97%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
+- Total plans completed: 24
 - Average duration: 14 min
-- Total execution time: 5.68 hours
+- Total execution time: 6.1 hours
 
 **By Phase:**
 
@@ -36,11 +36,11 @@ Progress: █████████░ 97%
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
-| 8. Polish & PWA | 4 | 71 min | 18 min |
+| 8. Polish & PWA | 5 | 96 min | 19 min |
 
 **Recent Trend:**
-- Last 5 plans: 43, 8, 15, 18, 30 min
-- Trend: Mobile virtual keyboard with iOS viewport fixes
+- Last 5 plans: 8, 15, 18, 30, 25 min
+- Trend: PWA polish - offline indicator, theme toggle, runtime caching
 
 ## Accumulated Context
 
@@ -133,6 +133,9 @@ Recent decisions affecting current work:
 | 08-04 | Flexbox over CSS Grid for SolveLayout | Better iOS Safari shrinking behavior |
 | 08-04 | No container queries | Limited iOS Safari support, use percentage sizing |
 | 08-04 | typeLetter/handleBackspace methods | Clean separation of keyboard input from DOM events |
+| 08-05 | useSyncExternalStore for online status | Matches project conventions (useTheme, useCollaborators) |
+| 08-05 | Separate SettingsMenu from Toolbar | User preferences vs puzzle actions |
+| 08-05 | NetworkFirst for API, CacheFirst for files | Fresh data when online, offline fallback |
 
 ### Roadmap Evolution
 
@@ -150,5 +153,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 08-04-PLAN.md - Mobile virtual keyboard
+Stopped at: Completed 08-05-PLAN.md - PWA Polish (Phase 8 complete, Milestone complete)
 Resume file: None
