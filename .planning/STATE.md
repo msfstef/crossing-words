@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 9 of 9 (UI Refinements)
-Plan: 09-02 complete (Circular Progress Indicator)
+Plan: 2 of 5 complete (09-01 FAB + 09-02 Progress Indicator)
 Status: Ready for next plan
-Last activity: 2026-01-12 — Completed 09-02: Circular progress indicator in PuzzleCard
+Last activity: 2026-01-12 — Completed 09-01: FAB with download dialog and optimistic UI
 
 Progress: █████████░ 97%
 
@@ -136,6 +136,10 @@ Recent decisions affecting current work:
 | 08-05 | useSyncExternalStore for online status | Matches project conventions (useTheme, useCollaborators) |
 | 08-05 | Separate SettingsMenu from Toolbar | User preferences vs puzzle actions |
 | 08-05 | NetworkFirst for API, CacheFirst for files | Fresh data when online, offline fallback |
+| 09-01 | FAB expands vertically with transform/opacity | Smooth animation, performance-friendly |
+| 09-01 | Ghost entries appear immediately in library | Optimistic UI for better perceived performance |
+| 09-01 | LoadingCard uses pulse animation and spinner | Visual feedback during download |
+| 09-01 | Download dialog centered with backdrop | Modal pattern for focused interaction |
 
 ### Roadmap Evolution
 
@@ -154,5 +158,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 09-02 - Circular progress indicator in PuzzleCard
+Stopped at: Completed 09-01 - FAB with download dialog and optimistic UI
 Resume file: None

@@ -116,4 +116,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
 | 8. Polish & PWA | 5/5 | Complete | 2026-01-12 |
-| 9. UI Refinements | 1/? | In progress | - |
+| 9. UI Refinements | 2/5 | In progress | - |
