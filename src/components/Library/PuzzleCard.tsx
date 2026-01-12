@@ -6,7 +6,7 @@ interface PuzzleCardProps {
   title: string;
   source?: string;
   date?: string;
-  progress: { filled: number; total: number };
+  progress: { filled: number; verified: number; total: number };
   onOpen: () => void;
   onDelete: () => void;
 }
@@ -22,10 +22,10 @@ export function PuzzleCard({
   onOpen,
   onDelete,
 }: PuzzleCardProps) {
-  const { filled, total } = progress;
+  const { filled, verified, total } = progress;
 
-  // Calculate percentage
-  const isComplete = filled === total && total > 0;
+  // Calculate percentage - isComplete only when all cells are verified (correct)
+  const isComplete = verified === total && total > 0;
   const percentage = total > 0 ? Math.round((filled / total) * 100) : 0;
 
   const handleDelete = (e: React.MouseEvent) => {

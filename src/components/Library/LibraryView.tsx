@@ -20,7 +20,7 @@ import type { Puzzle } from '../../types/puzzle';
 import './LibraryView.css';
 
 interface PuzzleWithProgress extends PuzzleEntry {
-  progress: { filled: number; total: number };
+  progress: { filled: number; verified: number; total: number };
 }
 
 interface GhostEntry {
@@ -130,7 +130,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
           const puzzle = await loadPuzzleById(entry.id);
           const progress = puzzle
             ? await getPuzzleProgress(entry.id, puzzle)
-            : { filled: 0, total: 0 };
+            : { filled: 0, verified: 0, total: 0 };
 
           return {
             ...entry,

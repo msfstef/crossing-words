@@ -404,16 +404,16 @@ export async function deletePuzzle(puzzleId: string): Promise<void> {
 
 /**
  * Gets the progress for a puzzle by decoding the CRDT state.
- * Counts actual filled cells from the Yjs 'entries' map.
+ * Counts actual filled cells from the Yjs 'entries' map and verified cells.
  *
  * @param puzzleId - The puzzle ID to check progress for
  * @param puzzle - The puzzle to calculate total fillable cells from
- * @returns Object with filled and total counts
+ * @returns Object with filled, verified, and total counts
  */
 export async function getPuzzleProgress(
   puzzleId: string,
   puzzle: Puzzle
-): Promise<{ filled: number; total: number }> {
+): Promise<{ filled: number; verified: number; total: number }> {
   // Count total fillable cells from puzzle grid
   let total = 0;
   for (const row of puzzle.grid) {
@@ -434,7 +434,7 @@ export async function getPuzzleProgress(
       const dbExists = databases.some((db) => db.name === dbName);
       if (!dbExists) {
         console.debug('[puzzleStorage] No CRDT database for puzzle:', puzzleId);
-        return { filled: 0, total };
+        return { filled: 0, verified: 0, total };
       }
     }
 
@@ -444,7 +444,7 @@ export async function getPuzzleProgress(
 
       request.onerror = () => {
         console.debug('[puzzleStorage] Failed to open CRDT database for puzzle:', puzzleId);
-        resolve({ filled: 0, total });
+        resolve({ filled: 0, verified: 0, total });
       };
 
       request.onsuccess = () => {
@@ -453,7 +453,7 @@ export async function getPuzzleProgress(
           // Check if 'updates' store exists (y-indexeddb stores updates there)
           if (!db.objectStoreNames.contains('updates')) {
             db.close();
-            resolve({ filled: 0, total });
+            resolve({ filled: 0, verified: 0, total });
             return;
           }
 
@@ -467,7 +467,7 @@ export async function getPuzzleProgress(
             db.close();
 
             if (updates.length === 0) {
-              resolve({ filled: 0, total });
+              resolve({ filled: 0, verified: 0, total });
               return;
             }
 
@@ -477,27 +477,29 @@ export async function getPuzzleProgress(
               Y.applyUpdate(doc, update);
             }
 
-            // Count entries in the 'entries' map
+            // Count entries in the 'entries' map and 'verified' map
             const entries = doc.getMap<string>('entries');
+            const verifiedMap = doc.getMap<string>('verified');
             const filled = entries.size;
+            const verified = verifiedMap.size;
 
-            console.debug('[puzzleStorage] Puzzle', puzzleId, 'has', filled, 'filled cells');
+            console.debug('[puzzleStorage] Puzzle', puzzleId, 'has', filled, 'filled,', verified, 'verified cells');
             doc.destroy();
-            resolve({ filled, total });
+            resolve({ filled, verified, total });
           };
 
           getAllRequest.onerror = () => {
             db.close();
-            resolve({ filled: 0, total });
+            resolve({ filled: 0, verified: 0, total });
           };
         } catch {
           db.close();
-          resolve({ filled: 0, total });
+          resolve({ filled: 0, verified: 0, total });
         }
       };
     });
   } catch (error) {
     console.debug('[puzzleStorage] Error checking puzzle progress:', error);
-    return { filled: 0, total };
+    return { filled: 0, verified: 0, total };
   }
 }
