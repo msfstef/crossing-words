@@ -301,6 +301,7 @@ function App() {
   /**
    * Handle receiving puzzle data from CRDT sync.
    * Called when joining a shared session where we don't have the puzzle locally.
+   * Stores the timeline mapping so future opens of this puzzle rejoin the same timeline.
    */
   const handlePuzzleReceived = useCallback((receivedPuzzle: Puzzle) => {
     console.log('[App] Received puzzle from CRDT:', receivedPuzzle.title);
@@ -320,7 +321,13 @@ function App() {
     saveCurrentPuzzle(receivedPuzzle).catch((err) => {
       console.error('Failed to save current puzzle:', err);
     });
-  }, []);
+
+    // Store the timeline mapping for future rejoins
+    // timelineId is already set from pendingUrlTimeline when waitingForPuzzle
+    if (timelineId) {
+      saveTimelineMapping(newPuzzleId, timelineId);
+    }
+  }, [timelineId]);
 
   // Memoize puzzle sync options to avoid unnecessary effect re-runs
   const puzzleSyncOptions = useMemo(() => ({
