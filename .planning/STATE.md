@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 UAT fixes complete — Ready for Phase 7: Check/Reveal
+**Current focus:** Phase 6.1 complete — Ready for Phase 7: Check/Reveal
 
 ## Current Position
 
-Phase: 6 of 8 (Collaboration) - COMPLETE (with fixes)
-Plan: 4 of 4 + FIX in current phase
-Status: Phase complete, UAT issues resolved
-Last activity: 2026-01-12 — Completed 06-FIX.md (UAT issue fixes)
+Phase: 6.1 of 8 (Cloudflare Worker Signaling) - COMPLETE
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-12 — Completed 6.1-01-PLAN.md (Cloudflare Worker Signaling)
 
-Progress: █████████░ 90%
+Progress: █████████░ 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 15 min
-- Total execution time: 3.73 hours
+- Total plans completed: 17
+- Average duration: 14 min
+- Total execution time: 3.87 hours
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: █████████░ 90%
 | 4. CRDT State | 2 | 27 min | 14 min |
 | 5. P2P Networking | 2 | 40 min | 20 min |
 | 6. Collaboration | 4 | 60 min | 15 min |
+| 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 15, 18, 9, 12, 21 min
-- Trend: Phase 6 complete, all collaboration features working
+- Last 5 plans: 18, 9, 12, 21, 8 min
+- Trend: Phase 6.1 complete, production signaling deployed
 
 ## Accumulated Context
 
@@ -102,10 +103,14 @@ Recent decisions affecting current work:
 | 06-FIX | Refs for puzzle sync options | Prevents P2P session reset when puzzle received |
 | 06-FIX | assignUniqueColor() | Picks first unused color, avoids collisions |
 | 06-FIX | Connecting banner with spinner | Clear feedback during P2P connection delay |
+| 6.1-01 | new_sqlite_classes migration | Cloudflare free tier requires SQLite-backed DOs |
+| 6.1-01 | Single global DO with topic isolation | y-webrtc handles room filtering client-side |
+| 6.1-01 | WebSocket Hibernation API | Billed only during message processing |
 
 ### Roadmap Evolution
 
 - Phase 3.1 inserted after Phase 3: Automatic downloader from remote sources with picker for source and day (INSERTED)
+- Phase 6.1 inserted after Phase 6: Cloudflare Worker signaling server for production P2P (URGENT)
 
 ### Deferred Issues
 
@@ -117,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-11
-Stopped at: Completed 06-04-PLAN.md - Timeline Collision & Join Flow (Phase 6 complete)
+Last session: 2026-01-12
+Stopped at: Completed 6.1-01-PLAN.md - Cloudflare Worker Signaling (Phase 6.1 complete)
 Resume file: None

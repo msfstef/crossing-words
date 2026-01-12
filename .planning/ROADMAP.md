@@ -21,6 +21,7 @@ None
 - [x] **Phase 4: CRDT State** - Conflict-free state management with Yjs/Automerge
 - [x] **Phase 5: P2P Networking** - WebRTC connections, signaling, TURN fallback
 - [x] **Phase 6: Collaboration** - Presence, session sharing, timeline system
+- [x] **Phase 6.1: Cloudflare Worker Signaling** - Production signaling server (INSERTED)
 - [ ] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [ ] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
 
@@ -72,6 +73,13 @@ None
 **Research**: Unlikely (builds on established patterns from phases 4-5)
 **Plans**: TBD
 
+### Phase 6.1: Cloudflare Worker Signaling (INSERTED)
+**Goal**: Replace local signaling server with Cloudflare Worker for production P2P connections
+**Depends on**: Phase 6
+**Research**: Likely (WebSocket Durable Objects, existing proxy worker reuse)
+**Research topics**: Cloudflare Durable Objects for WebSocket, reusing existing CORS proxy worker, signaling protocol implementation
+**Plans**: TBD
+
 ### Phase 7: Check/Reveal
 **Goal**: Implement verification at letter, word, and puzzle levels with auto-check option
 **Depends on**: Phase 4
@@ -87,7 +95,7 @@ None
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -98,5 +106,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 4. CRDT State | 2/2 | Complete | 2026-01-11 |
 | 5. P2P Networking | 2/2 | Complete | 2026-01-11 |
 | 6. Collaboration | 4/4 | Complete | 2026-01-11 |
+| 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
 | 7. Check/Reveal | 0/TBD | Not started | - |
 | 8. Polish & PWA | 0/TBD | Not started | - |
