@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 6 complete — Ready for Phase 7: Check/Reveal
+**Current focus:** Phase 6 UAT fixes complete — Ready for Phase 7: Check/Reveal
 
 ## Current Position
 
-Phase: 6 of 8 (Collaboration) - COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase complete
-Last activity: 2026-01-11 — Completed 06-04-PLAN.md (Timeline Collision & Join Flow)
+Phase: 6 of 8 (Collaboration) - COMPLETE (with fixes)
+Plan: 4 of 4 + FIX in current phase
+Status: Phase complete, UAT issues resolved
+Last activity: 2026-01-12 — Completed 06-FIX.md (UAT issue fixes)
 
 Progress: █████████░ 90%
 
@@ -98,6 +98,10 @@ Recent decisions affecting current work:
 | 06-04 | IndexedDB databases() API for progress detection | Check existence without loading full doc |
 | 06-04 | Yjs automatic merge on room connect | CRDT handles merge, no manual intervention |
 | 06-04 | Start Fresh = delete IndexedDB | Cleanest fresh state before joining |
+| 06-FIX | Puzzle sync via Y.Map("puzzle") | Recipients receive puzzle from sharer via CRDT |
+| 06-FIX | Refs for puzzle sync options | Prevents P2P session reset when puzzle received |
+| 06-FIX | assignUniqueColor() | Picks first unused color, avoids collisions |
+| 06-FIX | Connecting banner with spinner | Clear feedback during P2P connection delay |
 
 ### Roadmap Evolution
 
