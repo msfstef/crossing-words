@@ -1,0 +1,24 @@
+/* ProgressCircle component styles */
+
+.progress-circle {
+  flex-shrink: 0;
+}
+
+.progress-circle__track {
+  stroke: var(--color-border);
+}
+
+.progress-circle__progress {
+  stroke: var(--color-accent);
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 200ms ease;
+}
+
+.progress-circle--complete .progress-circle__complete-bg {
+  fill: var(--color-verified, #22c55e);
+}
+
+.progress-circle--complete .progress-circle__checkmark {
+  stroke: white;
+}
