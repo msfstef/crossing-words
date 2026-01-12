@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
@@ -7,7 +7,9 @@ import { FilePicker } from './components/FilePicker';
 import { PuzzleDownloader } from './components/PuzzleDownloader';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
+import { Toolbar } from './components/Toolbar';
 import { usePuzzleState } from './hooks/usePuzzleState';
+import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { loadCurrentPuzzle, saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
@@ -329,7 +331,58 @@ function App() {
     ready,
     connectionState,
     awareness,
+    verifiedCells,
+    errorCells,
+    verifiedMap,
+    errorsMap,
+    doc,
+    entriesMap,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
+
+  // Auto-check mode state (local only - personal preference, not synced)
+  const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
+
+  // Use verification hook for check/reveal actions
+  const {
+    checkLetter,
+    checkWord,
+    checkPuzzle,
+    revealLetter,
+    revealWord,
+    revealPuzzle,
+  } = useVerification({
+    puzzle: puzzle ?? samplePuzzle,
+    entries: userEntries,
+    entriesMap: entriesMap!,
+    verifiedMap: verifiedMap!,
+    errorsMap: errorsMap!,
+    doc: doc!,
+    currentWord,
+    selectedCell,
+  });
+
+  // Track previous entry for auto-check comparison
+  const prevEntryRef = useRef<string | undefined>(undefined);
+
+  // Auto-check on entry change (when enabled)
+  useEffect(() => {
+    if (!autoCheckEnabled || !selectedCell || !puzzle || !errorsMap) return;
+
+    const key = `${selectedCell.row},${selectedCell.col}`;
+    const entry = userEntries.get(key);
+
+    // Only check if entry changed and cell is not already verified
+    if (entry && entry !== prevEntryRef.current && !verifiedCells.has(key)) {
+      const cell = puzzle.grid[selectedCell.row][selectedCell.col];
+      if (entry !== cell.letter) {
+        errorsMap.set(key, true);
+      } else {
+        errorsMap.delete(key);
+      }
+    }
+
+    prevEntryRef.current = entry;
+  }, [autoCheckEnabled, selectedCell, userEntries, puzzle, verifiedCells, errorsMap]);
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
@@ -412,6 +465,20 @@ function App() {
             onError={handleError}
           />
         </div>
+
+        {/* Toolbar - visible when puzzle is loaded and ready */}
+        {puzzle && ready && (
+          <Toolbar
+            onCheckLetter={checkLetter}
+            onCheckWord={checkWord}
+            onCheckPuzzle={checkPuzzle}
+            onRevealLetter={revealLetter}
+            onRevealWord={revealWord}
+            onRevealPuzzle={revealPuzzle}
+            autoCheckEnabled={autoCheckEnabled}
+            onAutoCheckToggle={() => setAutoCheckEnabled(!autoCheckEnabled)}
+          />
+        )}
 
         {/* Share button and collaboration info */}
         <div className="header-actions">
@@ -496,6 +563,8 @@ function App() {
                   currentWord={currentWord}
                   onCellClick={handleCellClick}
                   collaborators={collaborators}
+                  verifiedCells={verifiedCells}
+                  errorCells={errorCells}
                 />
 
                 <ClueBar clue={currentClue} />

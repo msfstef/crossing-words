@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Awareness } from 'y-protocols/awareness';
+import type * as Y from 'yjs';
 import type { Puzzle, Clue } from '../types/puzzle';
 import { useCrdtPuzzle } from './useCrdtPuzzle';
 import type { ConnectionState } from '../crdt/webrtcProvider';
+import type { VerifiedMap, ErrorsMap } from '../crdt/puzzleDoc';
 
 interface CurrentClue {
   number: number;
@@ -33,6 +35,14 @@ interface PuzzleStateHook {
   verifiedCells: Set<string>;
   /** Set of error cell keys ("row,col") */
   errorCells: Set<string>;
+  /** Raw verified map for useVerification hook */
+  verifiedMap: VerifiedMap | null;
+  /** Raw errors map for useVerification hook */
+  errorsMap: ErrorsMap | null;
+  /** Raw Y.Doc for useVerification hook */
+  doc: Y.Doc | null;
+  /** Raw entries map for useVerification hook */
+  entriesMap: Y.Map<string> | null;
 }
 
 /**
@@ -61,6 +71,10 @@ export function usePuzzleState(
     awareness,
     verifiedCells,
     errorCells,
+    verifiedMap,
+    errorsMap,
+    doc,
+    entriesMap,
   } = useCrdtPuzzle(puzzleId, roomId, {
     puzzle: options?.puzzle,
     onPuzzleReceived: options?.onPuzzleReceived,
@@ -480,5 +494,9 @@ export function usePuzzleState(
     awareness,
     verifiedCells,
     errorCells,
+    verifiedMap,
+    errorsMap,
+    doc,
+    entriesMap,
   };
 }

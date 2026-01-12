@@ -56,6 +56,8 @@ interface UseCrdtPuzzleReturn {
   errorsMap: ErrorsMap | null;
   /** Raw Y.Doc for useVerification hook */
   doc: Y.Doc | null;
+  /** Raw entries Y.Map for useVerification hook */
+  entriesMap: Y.Map<string> | null;
 }
 
 // Empty map constant for initial state
@@ -166,6 +168,7 @@ export function useCrdtPuzzle(
   const getVerifiedMapSnapshot = useCallback(() => verifiedMapRef.current, []);
   const getErrorsMapSnapshot = useCallback(() => errorsMapRef.current, []);
   const getDocSnapshot = useCallback(() => storeRef.current?.doc ?? null, []);
+  const getEntriesMapSnapshot = useCallback(() => storeRef.current?.entries ?? null, []);
 
   // Use useSyncExternalStore for entries, ready state, connection state, and awareness
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -177,6 +180,7 @@ export function useCrdtPuzzle(
   const verifiedMap = useSyncExternalStore(subscribe, getVerifiedMapSnapshot, getVerifiedMapSnapshot);
   const errorsMap = useSyncExternalStore(subscribe, getErrorsMapSnapshot, getErrorsMapSnapshot);
   const doc = useSyncExternalStore(subscribe, getDocSnapshot, getDocSnapshot);
+  const entriesMap = useSyncExternalStore(subscribe, getEntriesMapSnapshot, getEntriesMapSnapshot);
 
   // Lifecycle management: create/destroy store on puzzleId/roomId change
   // NOTE: puzzle and onPuzzleReceived are accessed via refs to avoid re-running
@@ -390,5 +394,6 @@ export function useCrdtPuzzle(
     verifiedMap,
     errorsMap,
     doc,
+    entriesMap,
   };
 }
