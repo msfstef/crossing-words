@@ -1,78 +1,117 @@
 /* CSS custom properties for consistent theming */
 .crossword-grid {
-  --grid-gap: 2px;
-  --grid-bg: #333;
-  --cell-white-bg: #2a2a3e;
-  --cell-white-hover-bg: #3a3a4e;
-  --cell-black-bg: #1a1a1a;
-  --cell-selected-bg: #3a4a6e;
-  --cell-selected-border: #4a9eff;
-  --cell-in-word-bg: #3a3a5e;
-  --cell-border: #444;
-  --letter-color: #e0e0e0;
-  --clue-number-color: #888;
-  --transition-duration: 120ms;
+    --grid-gap: 2px;
+    --grid-bg: #333;
+    --cell-white-bg: #2a2a3e;
+    --cell-white-hover-bg: #3a3a4e;
+    --cell-black-bg: #1a1a1a;
+    --cell-selected-bg: #3a4a6e;
+    --cell-selected-border: #4a9eff;
+    --cell-in-word-bg: #3a3a5e;
+    --cell-border: #444;
+    --letter-color: #e0e0e0;
+    --clue-number-color: #888;
+    --transition-duration: 120ms;
 
-  display: grid;
-  gap: var(--grid-gap);
-  width: min(100%, 400px);
-  max-width: 400px;
-  aspect-ratio: 1;
-  background-color: var(--grid-bg);
-  padding: 2px;
-  border-radius: 4px;
+    display: grid;
+    gap: var(--grid-gap);
+    width: min(100%, 400px);
+    max-width: 400px;
+    aspect-ratio: 1;
+    background-color: var(--grid-bg);
+    padding: 2px;
+    border-radius: 4px;
 }
 
 .crossword-cell {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1;
-  border: 1px solid var(--cell-border);
-  user-select: none;
-  transition:
-    background-color var(--transition-duration) ease,
-    border-color var(--transition-duration) ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border: 1px solid var(--cell-border);
+    user-select: none;
+    transition:
+        background-color var(--transition-duration) ease,
+        border-color var(--transition-duration) ease;
 }
 
 .crossword-cell.cell--white {
-  background-color: var(--cell-white-bg);
-  cursor: pointer;
+    background-color: var(--cell-white-bg);
+    cursor: pointer;
 }
 
 .crossword-cell.cell--white:hover {
-  background-color: var(--cell-white-hover-bg);
+    background-color: var(--cell-white-hover-bg);
 }
 
 .crossword-cell.cell--black {
-  background-color: var(--cell-black-bg);
-  cursor: default;
+    background-color: var(--cell-black-bg);
+    cursor: default;
 }
 
 .crossword-cell.cell--selected {
-  border: 2px solid var(--cell-selected-border);
-  background-color: var(--cell-selected-bg);
+    border: 2px solid var(--cell-selected-border);
+    background-color: var(--cell-selected-bg);
 }
 
 .crossword-cell.cell--in-word {
-  background-color: var(--cell-in-word-bg);
+    background-color: var(--cell-in-word-bg);
 }
 
 .clue-number {
-  position: absolute;
-  top: 2px;
-  left: 3px;
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: var(--clue-number-color);
-  line-height: 1;
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--clue-number-color);
+    line-height: 1;
 }
 
 .cell-letter {
-  font-size: 1.6rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--letter-color);
-  line-height: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--letter-color);
+    line-height: 1;
+}
+
+/* Verified cell - subtle green indicator, visually "locked" */
+.cell--verified {
+    position: relative;
+}
+
+.cell--verified::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+/* Error cell - red highlight for incorrect entry */
+.cell--error {
+    background-color: rgba(244, 67, 54, 0.25) !important;
+}
+
+.cell--error .cell-letter {
+    color: #f44336;
+}
+
+/* Subtle shake animation on error (triggers when class added) */
+@keyframes cell-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+.cell--error {
+    animation: cell-shake 0.3s ease-in-out;
 }
