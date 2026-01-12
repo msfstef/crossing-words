@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
 import "./CrosswordGrid.css";
@@ -134,8 +134,9 @@ export function CrosswordGrid({
   // Cell size state - starts with 0 (hidden), updates via ResizeObserver
   const [cellSize, setCellSize] = useState(0);
 
-  // ResizeObserver to track container size and recalculate cell size
-  useEffect(() => {
+  // useLayoutEffect to measure before first paint (prevents flash)
+  // ResizeObserver handles subsequent size changes
+  useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
