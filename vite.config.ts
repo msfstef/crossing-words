@@ -3,79 +3,88 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
-export default defineConfig({
-  preview: {
-    allowedHosts: ["ungloweringly-ramose-donita.ngrok-free.dev"],
-  },
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: "autoUpdate",
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            // Cache puzzle downloads from CORS proxy
-            urlPattern: /^https:\/\/crossing-words-proxy\..*\.workers\.dev\/puzzle/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "puzzle-api-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
-              networkTimeoutSeconds: 10,
-            },
-          },
-          {
-            // Cache external puzzle sources (with fallback to cache)
-            urlPattern: /^https:\/\/(www\.)?.*\.(puz|ipuz|jpz|json)$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "puzzle-files-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+export default defineConfig(({ command }) => {
+  const base = command === "build" ? "/crossing-words/" : "/";
+
+  return {
+    base,
+    server: {
+      allowedHosts: ["ungloweringly-ramose-donita.ngrok-free.dev"],
+    },
+    preview: {
+      allowedHosts: ["ungloweringly-ramose-donita.ngrok-free.dev"],
+    },
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: "autoUpdate",
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          runtimeCaching: [
+            {
+              // Cache puzzle downloads from CORS proxy
+              urlPattern:
+                /^https:\/\/crossing-words-proxy\..*\.workers\.dev\/puzzle/i,
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "puzzle-api-cache",
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                },
+                networkTimeoutSeconds: 10,
               },
             },
-          },
-        ],
-      },
-      manifest: {
-        name: "Crossing Words",
-        short_name: "CrossingWords",
-        description: "Cross-platform, peer-to-peer collaborative crossword app",
-        theme_color: "#1a1a2e",
-        background_color: "#1a1a2e",
-        display: "standalone",
-        start_url: "/",
-        icons: [
-          {
-            src: "icon-192.svg",
-            sizes: "192x192",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
-          {
-            src: "icon-512.svg",
-            sizes: "512x512",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
-          {
-            src: "icon-192.svg",
-            sizes: "192x192",
-            type: "image/svg+xml",
-            purpose: "maskable",
-          },
-          {
-            src: "icon-512.svg",
-            sizes: "512x512",
-            type: "image/svg+xml",
-            purpose: "maskable",
-          },
-        ],
-      },
-    }),
-  ],
+            {
+              // Cache external puzzle sources (with fallback to cache)
+              urlPattern: /^https:\/\/(www\.)?.*\.(puz|ipuz|jpz|json)$/i,
+              handler: "CacheFirst",
+              options: {
+                cacheName: "puzzle-files-cache",
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
+          ],
+        },
+        manifest: {
+          name: "Crossing Words",
+          short_name: "CrossingWords",
+          description: "Cross-platform, peer-to-peer collaborative crossword app",
+          theme_color: "#1a1a2e",
+          background_color: "#1a1a2e",
+          display: "standalone",
+          start_url: base,
+          icons: [
+            {
+              src: "icon-192.svg",
+              sizes: "192x192",
+              type: "image/svg+xml",
+              purpose: "any",
+            },
+            {
+              src: "icon-512.svg",
+              sizes: "512x512",
+              type: "image/svg+xml",
+              purpose: "any",
+            },
+            {
+              src: "icon-192.svg",
+              sizes: "192x192",
+              type: "image/svg+xml",
+              purpose: "maskable",
+            },
+            {
+              src: "icon-512.svg",
+              sizes: "512x512",
+              type: "image/svg+xml",
+              purpose: "maskable",
+            },
+          ],
+        },
+      }),
+    ],
+  };
 });
