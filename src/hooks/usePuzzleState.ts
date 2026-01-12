@@ -117,6 +117,29 @@ export function usePuzzleState(
     }
   }, [awareness, selectedCell, direction]);
 
+  // Auto-select first clue when puzzle becomes ready
+  useEffect(() => {
+    // Only run when ready and no cell is selected
+    if (!ready || selectedCell) return;
+
+    // Find first across clue
+    const firstAcross = puzzle.clues.across[0];
+    if (firstAcross) {
+      setSelectedCell({ row: firstAcross.row, col: firstAcross.col });
+      setDirection('across');
+      return;
+    }
+
+    // If no across clues, try first down clue
+    const firstDown = puzzle.clues.down[0];
+    if (firstDown) {
+      setSelectedCell({ row: firstDown.row, col: firstDown.col });
+      setDirection('down');
+    }
+    // If no clues at all, leave unselected (shouldn't happen with valid puzzles)
+  }, [ready, puzzle.clues.across, puzzle.clues.down]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Note: selectedCell intentionally excluded to prevent re-runs after user navigates
+
   /**
    * Find the clue that contains the selected cell in the given direction
    */
