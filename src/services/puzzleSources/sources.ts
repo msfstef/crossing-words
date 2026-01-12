@@ -28,7 +28,19 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
       return `https://herbach.dnsalias.com/uc/uc${dateStr}.puz`;
     },
   },
-  // Additional sources can be added here
+  {
+    id: 'wapo-sunday',
+    name: 'Washington Post Sunday',
+    description: 'Sunday puzzle edited by Evan Birnholz',
+    format: 'puz',
+    requiresAuth: false,
+    availableDays: 'sunday-only',
+    getDirectUrl: (date: Date) => {
+      const dateStr = formatDateYYMMDD(date);
+      // Martin Herbach's .puz archive for Washington Post Sunday crossword
+      return `https://herbach.dnsalias.com/WaPo/wp${dateStr}.puz`;
+    },
+  },
 ];
 
 export function getSource(id: string): PuzzleSource | undefined {
