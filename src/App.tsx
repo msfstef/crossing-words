@@ -4,7 +4,6 @@ import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
-import { Toolbar } from './components/Toolbar';
 import { SettingsMenu } from './components/SettingsMenu';
 import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
@@ -534,22 +533,21 @@ function App() {
     );
   }
 
-  // Build toolbar content for header menu
-  const toolbarContent = puzzle && ready ? (
-    <>
-      <Toolbar
-        onCheckLetter={checkLetter}
-        onCheckWord={checkWord}
-        onCheckPuzzle={checkPuzzle}
-        onRevealLetter={revealLetter}
-        onRevealWord={revealWord}
-        onRevealPuzzle={revealPuzzle}
-        autoCheckEnabled={autoCheckEnabled}
-        onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
-      />
-      <SettingsMenu />
-    </>
-  ) : null;
+  // Build settings menu for header
+  const settingsMenuContent = puzzle && ready ? (
+    <SettingsMenu
+      onCheckLetter={checkLetter}
+      onCheckWord={checkWord}
+      onCheckPuzzle={checkPuzzle}
+      onRevealLetter={revealLetter}
+      onRevealWord={revealWord}
+      onRevealPuzzle={revealPuzzle}
+      autoCheckEnabled={autoCheckEnabled}
+      onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+    />
+  ) : (
+    <SettingsMenu />
+  );
 
   // Build grid content
   const gridContent = (
@@ -614,9 +612,8 @@ function App() {
             puzzleTitle={puzzle?.title ?? 'Loading...'}
             onBack={handleBackToLibrary}
             onShare={handleShare}
-            onMenuClick={() => {}}
             collaborators={collaborators}
-            menuContent={toolbarContent}
+            settingsMenu={settingsMenuContent}
             connectionState={connectionState}
             isP2PSession={Boolean(roomId)}
             isOnline={isOnline}

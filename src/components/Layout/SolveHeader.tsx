@@ -12,12 +12,10 @@ interface SolveHeaderProps {
   onBack: () => void;
   /** Share button handler */
   onShare: () => void;
-  /** Menu button handler */
-  onMenuClick: () => void;
   /** List of connected collaborators */
   collaborators: Collaborator[];
-  /** Toolbar dropdown menus (Check/Reveal) */
-  menuContent: ReactNode;
+  /** Settings menu component */
+  settingsMenu: ReactNode;
   /** P2P connection state */
   connectionState: ConnectionState;
   /** Whether we're in a P2P session */
@@ -28,7 +26,7 @@ interface SolveHeaderProps {
 
 /**
  * Compact header for the puzzle solving view.
- * Layout: Back | Puzzle Info | Collaborators | Connection | Share | Menu
+ * Layout: Back | Puzzle Info | Spacer | Collaborators | Connection | Share | Settings
  */
 export function SolveHeader({
   puzzleTitle,
@@ -36,7 +34,7 @@ export function SolveHeader({
   onBack,
   onShare,
   collaborators,
-  menuContent,
+  settingsMenu,
   connectionState,
   isP2PSession,
   isOnline,
@@ -101,21 +99,31 @@ export function SolveHeader({
         />
       )}
 
-      {/* Share button - icon only on mobile */}
+      {/* Share button - neutral styling with share icon */}
       <button
         type="button"
         className="solve-header__share"
         onClick={onShare}
         aria-label="Share puzzle"
+        title="Share puzzle"
       >
-        <span className="solve-header__share-icon">↗</span>
-        <span className="solve-header__share-text">Share</span>
+        <svg
+          className="solve-header__share-svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
       </button>
 
-      {/* Menu area - contains toolbar dropdowns */}
-      <div className="solve-header__menu">
-        {menuContent}
-      </div>
+      {/* Settings menu */}
+      {settingsMenu}
     </header>
   );
 }
