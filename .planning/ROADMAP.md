@@ -107,5 +107,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 5. P2P Networking | 2/2 | Complete | 2026-01-11 |
 | 6. Collaboration | 4/4 | Complete | 2026-01-11 |
 | 6.1 CF Worker Signaling | 1/1 | Complete | 2026-01-12 |
-| 7. Check/Reveal | 1/3 | In progress | - |
+| 7. Check/Reveal | 2/3 | In progress | - |
 | 8. Polish & PWA | 0/TBD | Not started | - |
