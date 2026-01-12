@@ -611,7 +611,6 @@ function App() {
       <SolveLayout
         header={
           <SolveHeader
-            puzzleTitle={puzzle?.title ?? 'Loading...'}
             onBack={handleBackToLibrary}
             onShare={handleShare}
             collaborators={collaborators}

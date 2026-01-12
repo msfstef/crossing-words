@@ -4,10 +4,6 @@ import type { ConnectionState } from '../../crdt/webrtcProvider';
 import './SolveHeader.css';
 
 interface SolveHeaderProps {
-  /** Puzzle title */
-  puzzleTitle: string;
-  /** Formatted display date (optional) */
-  puzzleDate?: string;
   /** Back button handler */
   onBack: () => void;
   /** Share button handler */
@@ -26,11 +22,9 @@ interface SolveHeaderProps {
 
 /**
  * Compact header for the puzzle solving view.
- * Layout: Back | Puzzle Info | Spacer | Collaborators | Connection | Share | Settings
+ * Layout: Back | Spacer | Collaborators | Connection | Share | Settings
  */
 export function SolveHeader({
-  puzzleTitle,
-  puzzleDate,
   onBack,
   onShare,
   collaborators,
@@ -51,18 +45,7 @@ export function SolveHeader({
         ←
       </button>
 
-      {/* Puzzle info - title and optional date */}
-      <div className="solve-header__info">
-        <span className="solve-header__title">{puzzleTitle}</span>
-        {puzzleDate && (
-          <>
-            <span className="solve-header__separator">•</span>
-            <span className="solve-header__date">{puzzleDate}</span>
-          </>
-        )}
-      </div>
-
-      {/* Spacer */}
+      {/* Spacer - header title removed, now shown above grid */}
       <div className="solve-header__spacer" />
 
       {/* Collaborator dots - compact overlapping avatars */}
