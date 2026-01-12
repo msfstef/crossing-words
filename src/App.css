@@ -134,10 +134,20 @@
   margin-bottom: 0.25rem;
 }
 
+/* Puzzle title displayed above the grid in solve view */
+.puzzle-title-above-grid {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+  margin: 0 0 0.25rem 0;
+}
+
 .puzzle-author {
-  color: #888;
+  color: var(--color-text-muted, #888);
   font-size: 0.875rem;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 /* Error banner */

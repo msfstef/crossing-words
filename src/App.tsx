@@ -586,6 +586,7 @@ function App() {
             </div>
           )}
 
+          <h2 className="puzzle-title-above-grid">{puzzle.title}</h2>
           {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
 
           <CrosswordGrid
