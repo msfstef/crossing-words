@@ -7,6 +7,7 @@ import {
   deletePuzzle,
   getPuzzleProgress,
   loadPuzzleById,
+  savePuzzle,
   type PuzzleEntry,
 } from '../../lib/puzzleStorage';
 import type { Puzzle } from '../../types/puzzle';
@@ -147,14 +148,21 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   }, []);
 
   const handlePuzzleLoaded = useCallback(
-    (puzzle: Puzzle) => {
-      // Reload the library to show the new puzzle
-      loadPuzzles();
-      // Optionally open it immediately
+    async (puzzle: Puzzle) => {
+      // Generate puzzle ID
       const puzzleId = puzzle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+      // Save to library
+      try {
+        await savePuzzle(puzzleId, puzzle);
+      } catch (error) {
+        console.error('[LibraryView] Failed to save puzzle to library:', error);
+      }
+
+      // Open the puzzle immediately
       onOpenPuzzle(puzzle, puzzleId);
     },
-    [loadPuzzles, onOpenPuzzle]
+    [onOpenPuzzle]
   );
 
   const groupedPuzzles = groupPuzzlesByDate(puzzles);
