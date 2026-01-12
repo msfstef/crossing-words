@@ -123,6 +123,7 @@ export async function createP2PSession(
     }
   });
 
+  // Assign a unique color for this user (what others will see)
   awareness.setLocalStateField('user', {
     name: generateNickname(),
     color: assignUniqueColor(usedColors, awareness.clientID),
