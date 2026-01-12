@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 9 added — UI refinements, details, polish
+**Current focus:** Phase 10 — Gameplay flow improvements
 
 ## Current Position
 
-Phase: 9 of 9 (UI Refinements)
-Plan: 5 of 5 complete (all plans)
-Status: Phase complete
-Last activity: 2026-01-12 — Completed 09-05: Puzzle title above grid
+Phase: 10 of 10 (Gameplay Flow Improvements)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-12 — Completed 10-01-PLAN.md
 
-Progress: ██████████ 100%
+Progress: █████████░ 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 14 min
-- Total execution time: 6.1 hours
+- Total execution time: 6.2 hours
 
 **By Phase:**
 
@@ -37,10 +37,11 @@ Progress: ██████████ 100%
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
 | 8. Polish & PWA | 5 | 96 min | 19 min |
+| 10. Gameplay Flow | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 8, 15, 18, 30, 25 min
-- Trend: PWA polish - offline indicator, theme toggle, runtime caching
+- Last 5 plans: 15, 18, 30, 25, 8 min
+- Trend: Gameplay flow - fixed cell sizing
 
 ## Accumulated Context
 
@@ -150,12 +151,17 @@ Recent decisions affecting current work:
 | 09-04 | Nav buttons styled like keyboard keys | Consistent button styling across app |
 | 09-05 | Puzzle title above grid only, not in header | Single source of truth, cleaner header |
 | 09-05 | Dark mode cell-word highlight #454570 | Distinct from grid gap #3a3a5a |
+| 10-01 | Cell size clamp(24px, 6vmin, 36px) | Responsive bounds for fixed sizing |
+| 10-01 | Letter font scales with calc(--cell-size * 0.55) | Proportional to cell |
+| 10-01 | Clue number z-index 1, letter z-index 2 | Proper layering hierarchy |
+| 10-01 | Verified dot reduced to 4px | Subtle, behind letter |
 
 ### Roadmap Evolution
 
 - Phase 3.1 inserted after Phase 3: Automatic downloader from remote sources with picker for source and day (INSERTED)
 - Phase 6.1 inserted after Phase 6: Cloudflare Worker signaling server for production P2P (URGENT)
 - Phase 9 added: UI refinements, details, polish
+- Phase 10 added: Gameplay flow improvements - fixed cell sizing, cursor sharing, auto-timeline
 
 ### Deferred Issues
 
@@ -168,5 +174,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 09-05 - Puzzle title above grid, Phase 9 complete
+Stopped at: Completed 10-01-PLAN.md (fixed cell sizing)
 Resume file: None

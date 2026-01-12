@@ -25,6 +25,7 @@ None
 - [x] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [x] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
 - [x] **Phase 9: UI Refinements** - UI refinements, details, polish
+- [ ] **Phase 10: Gameplay Flow Improvements** - Fixed cell sizing, cursor sharing, auto-timeline on puzzle open
 
 ## Phase Details
 
@@ -99,10 +100,21 @@ None
 **Research**: Unlikely (internal UI polish)
 **Plans**: TBD
 
+### Phase 10: Gameplay Flow Improvements
+**Goal**: Fix cell sizing for all puzzle sizes, share cursor position in collaboration, auto-generate timeline on puzzle open
+**Depends on**: Phase 9
+**Research**: Unlikely (internal improvements)
+**Plans**: TBD
+
+**Scope:**
+1. **Fixed cell sizing** - Cells should be fixed size, letters scale to fit, clue numbers smaller and behind letter, verified mark behind letter
+2. **Cursor sharing** - Share focused cell position (not just highlighted word), ensure unique colors per collaborator
+3. **Auto-timeline** - Generate and store timeline when opening puzzle, auto-rejoin on return, store received timeline when joining via link
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1 → 7 → 8 → 9
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1 → 7 → 8 → 9 → 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -117,3 +129,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
 | 8. Polish & PWA | 5/5 | Complete | 2026-01-12 |
 | 9. UI Refinements | 5/5 | Complete | 2026-01-12 |
+| 10. Gameplay Flow | 1/3 | In progress | - |
