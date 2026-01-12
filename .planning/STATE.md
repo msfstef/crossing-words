@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 10 of 10 (Gameplay Flow Improvements)
-Plan: 2 of 3 in current phase (+ 1 FIX plan)
-Status: In progress
-Last activity: 2026-01-12 — Completed 10-02-PLAN.md (Cursor sharing)
+Plan: 3 of 3 in current phase (+ 1 FIX plan)
+Status: Phase complete
+Last activity: 2026-01-12 — Completed 10-03-PLAN.md (Auto-timeline)
 
-Progress: █████████░ 98%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
@@ -37,11 +37,11 @@ Progress: █████████░ 98%
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
 | 8. Polish & PWA | 5 | 96 min | 19 min |
-| 10. Gameplay Flow | 2 | 23 min | 12 min |
+| 10. Gameplay Flow | 3 | 31 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 18, 30, 25, 8, 15 min
-- Trend: Gameplay flow - cursor sharing
+- Last 5 plans: 30, 25, 8, 15, 8 min
+- Trend: Phase 10 complete - auto-timeline
 
 ## Accumulated Context
 
@@ -163,6 +163,9 @@ Recent decisions affecting current work:
 | 10-02 | Collaborator cursors 50% opacity | Subtle, doesn't distract from local |
 | 10-02 | 20 colors in palette | Better variety for larger sessions |
 | 10-02 | Debounced color conflict detection | Runs on every awareness change |
+| 10-03 | Timeline generated on puzzle open | Every puzzle session P2P-ready immediately |
+| 10-03 | Existing timeline priority | Enables session resumption when returning |
+| 10-03 | Joined timeline persists | Shared link becomes user's timeline for puzzle |
 
 ### Roadmap Evolution
 
@@ -182,5 +185,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 10-02-PLAN.md (Cursor sharing)
+Stopped at: Completed 10-03-PLAN.md (Auto-timeline) - MILESTONE COMPLETE
 Resume file: None

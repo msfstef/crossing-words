@@ -25,7 +25,7 @@ None
 - [x] **Phase 7: Check/Reveal** - Verification at letter/word/puzzle level
 - [x] **Phase 8: Polish & PWA** - Mobile keyboard, themes, offline, installability
 - [x] **Phase 9: UI Refinements** - UI refinements, details, polish
-- [ ] **Phase 10: Gameplay Flow Improvements** - Fixed cell sizing, cursor sharing, auto-timeline on puzzle open
+- [x] **Phase 10: Gameplay Flow Improvements** - Fixed cell sizing, cursor sharing, auto-timeline on puzzle open
 
 ## Phase Details
 
@@ -129,4 +129,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 6.1
 | 7. Check/Reveal | 3/3 | Complete | 2026-01-12 |
 | 8. Polish & PWA | 5/5 | Complete | 2026-01-12 |
 | 9. UI Refinements | 5/5 | Complete | 2026-01-12 |
-| 10. Gameplay Flow | 2/3 | In progress | - |
+| 10. Gameplay Flow | 3/3 | Complete | 2026-01-12 |
