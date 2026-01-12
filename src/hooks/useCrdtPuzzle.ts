@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
+import type * as Y from 'yjs';
 import type { Awareness } from 'y-protocols/awareness';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
 import { createP2PSession, type P2PSession, type ConnectionState } from '../crdt/webrtcProvider';
@@ -18,6 +19,7 @@ import {
   getPuzzleFromCrdt,
   observePuzzleInCrdt,
 } from '../collaboration/puzzleSync';
+import { getVerifiedMap, getErrorsMap, type VerifiedMap, type ErrorsMap } from '../crdt/puzzleDoc';
 import type { Puzzle } from '../types/puzzle';
 
 interface UseCrdtPuzzleOptions {
@@ -44,10 +46,23 @@ interface UseCrdtPuzzleReturn {
   connectionState: ConnectionState;
   /** Yjs Awareness for presence tracking (null when not in P2P mode) */
   awareness: Awareness | null;
+  /** Set of verified cell keys ("row,col") */
+  verifiedCells: Set<string>;
+  /** Set of error cell keys ("row,col") */
+  errorCells: Set<string>;
+  /** Raw verified map for useVerification hook */
+  verifiedMap: VerifiedMap | null;
+  /** Raw errors map for useVerification hook */
+  errorsMap: ErrorsMap | null;
+  /** Raw Y.Doc for useVerification hook */
+  doc: Y.Doc | null;
 }
 
 // Empty map constant for initial state
 const EMPTY_MAP = new Map<string, string>();
+
+// Empty set constant for initial verification state
+const EMPTY_SET = new Set<string>();
 
 /**
  * Hook for managing CRDT-backed puzzle entries with optional P2P sync.
@@ -112,6 +127,12 @@ export function useCrdtPuzzle(
   const awarenessRef = useRef<Awareness | null>(null);
   const subscribersRef = useRef(new Set<() => void>());
 
+  // Verification state refs
+  const verifiedSnapshotRef = useRef<Set<string>>(EMPTY_SET);
+  const errorsSnapshotRef = useRef<Set<string>>(EMPTY_SET);
+  const verifiedMapRef = useRef<VerifiedMap | null>(null);
+  const errorsMapRef = useRef<ErrorsMap | null>(null);
+
   // Use refs for puzzle sync to avoid triggering effect re-runs
   const puzzleRef = useRef(puzzle);
   const onPuzzleReceivedRef = useRef(onPuzzleReceived);
@@ -140,12 +161,22 @@ export function useCrdtPuzzle(
   const getReadySnapshot = useCallback(() => readyRef.current, []);
   const getConnectionStateSnapshot = useCallback(() => connectionStateRef.current, []);
   const getAwarenessSnapshot = useCallback(() => awarenessRef.current, []);
+  const getVerifiedSnapshot = useCallback(() => verifiedSnapshotRef.current, []);
+  const getErrorsSnapshot = useCallback(() => errorsSnapshotRef.current, []);
+  const getVerifiedMapSnapshot = useCallback(() => verifiedMapRef.current, []);
+  const getErrorsMapSnapshot = useCallback(() => errorsMapRef.current, []);
+  const getDocSnapshot = useCallback(() => storeRef.current?.doc ?? null, []);
 
   // Use useSyncExternalStore for entries, ready state, connection state, and awareness
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const ready = useSyncExternalStore(subscribe, getReadySnapshot, getReadySnapshot);
   const connectionState = useSyncExternalStore(subscribe, getConnectionStateSnapshot, getConnectionStateSnapshot);
   const awareness = useSyncExternalStore(subscribe, getAwarenessSnapshot, getAwarenessSnapshot);
+  const verifiedCells = useSyncExternalStore(subscribe, getVerifiedSnapshot, getVerifiedSnapshot);
+  const errorCells = useSyncExternalStore(subscribe, getErrorsSnapshot, getErrorsSnapshot);
+  const verifiedMap = useSyncExternalStore(subscribe, getVerifiedMapSnapshot, getVerifiedMapSnapshot);
+  const errorsMap = useSyncExternalStore(subscribe, getErrorsMapSnapshot, getErrorsMapSnapshot);
+  const doc = useSyncExternalStore(subscribe, getDocSnapshot, getDocSnapshot);
 
   // Lifecycle management: create/destroy store on puzzleId/roomId change
   // NOTE: puzzle and onPuzzleReceived are accessed via refs to avoid re-running
@@ -157,6 +188,11 @@ export function useCrdtPuzzle(
     // Set initial connection state: 'connecting' if roomId provided, 'disconnected' otherwise
     connectionStateRef.current = roomId ? 'connecting' : 'disconnected';
     awarenessRef.current = null;
+    // Reset verification state
+    verifiedSnapshotRef.current = EMPTY_SET;
+    errorsSnapshotRef.current = EMPTY_SET;
+    verifiedMapRef.current = null;
+    errorsMapRef.current = null;
     // Reset puzzle received tracking for new session
     puzzleReceivedCalledRef.current = false;
     notifySubscribers();
@@ -173,11 +209,39 @@ export function useCrdtPuzzle(
     // Track whether observer was attached (for safe cleanup)
     let observerAttached = false;
 
+    // Get verification maps from store doc
+    const verifiedMapInstance = getVerifiedMap(store.doc);
+    const errorsMapInstance = getErrorsMap(store.doc);
+    verifiedMapRef.current = verifiedMapInstance;
+    errorsMapRef.current = errorsMapInstance;
+
     // Observer to sync Y.Map changes to React state
     const observer = () => {
       // Convert Y.Map to regular Map for React
       snapshotRef.current = new Map(store.entries.entries());
       notifySubscribers();
+    };
+
+    // Observer to sync verified map changes to React state
+    const verifiedObserver = () => {
+      verifiedSnapshotRef.current = new Set(verifiedMapInstance.keys());
+      notifySubscribers();
+    };
+
+    // Observer to sync errors map changes to React state
+    const errorsObserver = () => {
+      errorsSnapshotRef.current = new Set(errorsMapInstance.keys());
+      notifySubscribers();
+    };
+
+    // Observer to clear errors when entry changes
+    const entryClearErrorObserver = (event: { changes: { keys: Map<string, unknown> } }) => {
+      event.changes.keys.forEach((_change, key) => {
+        // When entry changes, clear any error at that position
+        if (errorsMapInstance.has(key)) {
+          errorsMapInstance.delete(key);
+        }
+      });
     };
 
     // Wait for IndexedDB sync, then set up observer and optionally P2P
@@ -190,9 +254,14 @@ export function useCrdtPuzzle(
 
       // Initialize React state from persisted data
       snapshotRef.current = new Map(store.entries.entries());
+      verifiedSnapshotRef.current = new Set(verifiedMapInstance.keys());
+      errorsSnapshotRef.current = new Set(errorsMapInstance.keys());
 
       // Set up observer for future changes
       store.entries.observe(observer);
+      store.entries.observe(entryClearErrorObserver);
+      verifiedMapInstance.observe(verifiedObserver);
+      errorsMapInstance.observe(errorsObserver);
       observerAttached = true;
 
       // Create P2P session if roomId is provided (AFTER IndexedDB ready)
@@ -264,7 +333,13 @@ export function useCrdtPuzzle(
       // Only unobserve if observer was attached
       if (observerAttached) {
         store.entries.unobserve(observer);
+        store.entries.unobserve(entryClearErrorObserver);
+        verifiedMapInstance.unobserve(verifiedObserver);
+        errorsMapInstance.unobserve(errorsObserver);
       }
+      // Clear verification refs
+      verifiedMapRef.current = null;
+      errorsMapRef.current = null;
       store.destroy();
       storeRef.current = null;
     };
@@ -310,5 +385,10 @@ export function useCrdtPuzzle(
     roomId,
     connectionState,
     awareness,
+    verifiedCells,
+    errorCells,
+    verifiedMap,
+    errorsMap,
+    doc,
   };
 }
