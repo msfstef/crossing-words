@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 9 of 9 (UI Refinements)
-Plan: 2 of 5 complete (09-01 FAB + 09-02 Progress Indicator)
-Status: Ready for next plan
-Last activity: 2026-01-12 — Completed 09-01: FAB with download dialog and optimistic UI
+Plan: 3 of 5 complete (09-01 FAB + 09-02 Progress + 09-03 Toolbar Consolidation)
+Status: In progress
+Last activity: 2026-01-12 — Completed 09-03: Consolidated Settings menu, removed Toolbar
 
 Progress: █████████░ 97%
 
@@ -140,6 +140,9 @@ Recent decisions affecting current work:
 | 09-01 | Ghost entries appear immediately in library | Optimistic UI for better perceived performance |
 | 09-01 | LoadingCard uses pulse animation and spinner | Visual feedback during download |
 | 09-01 | Download dialog centered with backdrop | Modal pattern for focused interaction |
+| 09-03 | Consolidated Check/Reveal/Auto-check into Settings | Reduces toolbar clutter, single menu for all actions |
+| 09-03 | Toggle switch for Auto-check (track + knob) | Better visual feedback than checkbox |
+| 09-03 | Neutral Share button with SVG icon | Consistent header button styling |
 
 ### Roadmap Evolution
 
@@ -158,5 +161,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 09-01 - FAB with download dialog and optimistic UI
+Stopped at: Completed 09-03 - Consolidated Settings menu, removed Toolbar
 Resume file: None
