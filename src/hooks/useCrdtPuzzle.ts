@@ -102,6 +102,7 @@ export function useCrdtPuzzle(
   options?: UseCrdtPuzzleOptions
 ): UseCrdtPuzzleReturn {
   const { puzzle, onPuzzleReceived } = options ?? {};
+
   // Store reference for access in callbacks and external store
   const storeRef = useRef<PuzzleStore | null>(null);
   const sessionRef = useRef<P2PSession | null>(null);
@@ -110,6 +111,16 @@ export function useCrdtPuzzle(
   const connectionStateRef = useRef<ConnectionState>('disconnected');
   const awarenessRef = useRef<Awareness | null>(null);
   const subscribersRef = useRef(new Set<() => void>());
+
+  // Use refs for puzzle sync to avoid triggering effect re-runs
+  const puzzleRef = useRef(puzzle);
+  const onPuzzleReceivedRef = useRef(onPuzzleReceived);
+  // Track if we've already called onPuzzleReceived to avoid duplicate calls
+  const puzzleReceivedCalledRef = useRef(false);
+
+  // Keep refs updated
+  puzzleRef.current = puzzle;
+  onPuzzleReceivedRef.current = onPuzzleReceived;
 
   // Subscribe function for useSyncExternalStore
   const subscribe = useCallback((callback: () => void) => {
@@ -136,7 +147,9 @@ export function useCrdtPuzzle(
   const connectionState = useSyncExternalStore(subscribe, getConnectionStateSnapshot, getConnectionStateSnapshot);
   const awareness = useSyncExternalStore(subscribe, getAwarenessSnapshot, getAwarenessSnapshot);
 
-  // Lifecycle management: create/destroy store on puzzleId change
+  // Lifecycle management: create/destroy store on puzzleId/roomId change
+  // NOTE: puzzle and onPuzzleReceived are accessed via refs to avoid re-running
+  // this effect when puzzle state changes (which would destroy the P2P session)
   useEffect(() => {
     // Reset refs for new puzzle (synchronous, no setState in effect body)
     readyRef.current = false;
@@ -144,6 +157,8 @@ export function useCrdtPuzzle(
     // Set initial connection state: 'connecting' if roomId provided, 'disconnected' otherwise
     connectionStateRef.current = roomId ? 'connecting' : 'disconnected';
     awarenessRef.current = null;
+    // Reset puzzle received tracking for new session
+    puzzleReceivedCalledRef.current = false;
     notifySubscribers();
 
     // Track connection state unsubscribe function for cleanup
@@ -182,9 +197,9 @@ export function useCrdtPuzzle(
 
       // Create P2P session if roomId is provided (AFTER IndexedDB ready)
       if (roomId) {
-        // If we have a puzzle, store it in CRDT for sharing to peers
-        if (puzzle) {
-          setPuzzleInCrdt(store.doc, puzzle);
+        // If we have a puzzle (via ref), store it in CRDT for sharing to peers
+        if (puzzleRef.current) {
+          setPuzzleInCrdt(store.doc, puzzleRef.current);
         }
 
         const session = await createP2PSession(store, roomId);
@@ -198,23 +213,23 @@ export function useCrdtPuzzle(
             notifySubscribers();
           });
 
-          // Subscribe to puzzle sync for recipients
-          if (onPuzzleReceived) {
-            // Check if puzzle already exists in CRDT (sync may have happened already)
-            const existingPuzzle = getPuzzleFromCrdt(store.doc);
-            if (existingPuzzle) {
-              console.debug('[useCrdtPuzzle] Puzzle already in CRDT, notifying recipient');
-              onPuzzleReceived(existingPuzzle);
-            }
-
-            // Also subscribe to future changes (in case sync happens after connect)
-            puzzleSyncUnsubscribe = observePuzzleInCrdt(store.doc, (syncedPuzzle) => {
-              if (syncedPuzzle) {
-                console.debug('[useCrdtPuzzle] Puzzle received from CRDT sync');
-                onPuzzleReceived(syncedPuzzle);
-              }
-            });
+          // Subscribe to puzzle sync for recipients (using ref)
+          // Check if puzzle already exists in CRDT (sync may have happened already)
+          const existingPuzzle = getPuzzleFromCrdt(store.doc);
+          if (existingPuzzle && onPuzzleReceivedRef.current && !puzzleReceivedCalledRef.current) {
+            console.debug('[useCrdtPuzzle] Puzzle already in CRDT, notifying recipient');
+            puzzleReceivedCalledRef.current = true;
+            onPuzzleReceivedRef.current(existingPuzzle);
           }
+
+          // Also subscribe to future changes (in case sync happens after connect)
+          puzzleSyncUnsubscribe = observePuzzleInCrdt(store.doc, (syncedPuzzle) => {
+            if (syncedPuzzle && onPuzzleReceivedRef.current && !puzzleReceivedCalledRef.current) {
+              console.debug('[useCrdtPuzzle] Puzzle received from CRDT sync');
+              puzzleReceivedCalledRef.current = true;
+              onPuzzleReceivedRef.current(syncedPuzzle);
+            }
+          });
 
           notifySubscribers(); // Notify about awareness change
         } else {
@@ -253,7 +268,16 @@ export function useCrdtPuzzle(
       store.destroy();
       storeRef.current = null;
     };
-  }, [puzzleId, roomId, puzzle, onPuzzleReceived, notifySubscribers]);
+  }, [puzzleId, roomId, notifySubscribers]);
+
+  // Separate effect to store puzzle in CRDT when it changes
+  // This doesn't recreate the session, just updates the CRDT
+  useEffect(() => {
+    const store = storeRef.current;
+    if (store && puzzle && roomId) {
+      setPuzzleInCrdt(store.doc, puzzle);
+    }
+  }, [puzzle, roomId]);
 
   // Entry manipulation methods
   const setEntry = useCallback((row: number, col: number, value: string) => {
