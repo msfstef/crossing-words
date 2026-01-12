@@ -9,13 +9,14 @@
  */
 
 .solve-layout {
-  display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  grid-template-areas:
-    "header"
-    "grid"
-    "clue-bar"
-    "keyboard";
+  /* CSS variables for layout calculations */
+  --header-height: 48px;
+  --clue-bar-height: 52px;
+  --keyboard-height: 160px;
+  --grid-padding: 8px;
+
+  display: flex;
+  flex-direction: column;
   /* Fallback for browsers without dvh support */
   height: 100vh;
   height: 100dvh; /* Dynamic viewport height for mobile */
@@ -25,38 +26,38 @@
 }
 
 .solve-layout__header {
-  grid-area: header;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  min-height: var(--header-height);
+  overflow: hidden; /* Prevent header overflow */
 }
 
 .solve-layout__grid {
-  grid-area: grid;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0.5rem;
-  min-height: 0; /* Allow shrinking in grid */
-  /* Enable container queries for responsive grid sizing */
-  container-type: size;
+  padding: var(--grid-padding);
+  min-height: 0; /* Critical: allow flex child to shrink below content size */
 }
 
 /* Reduce author margin on mobile to save space */
 .solve-layout__grid .puzzle-author {
   margin-bottom: 0.25rem;
   font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .solve-layout__clue-bar {
-  grid-area: clue-bar;
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  padding: 0 0.5rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .solve-layout__keyboard {
-  grid-area: keyboard;
+  flex: 0 0 auto;
 }
 
 /* When keyboard is not present, don't leave empty space */

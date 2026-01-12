@@ -1,10 +1,12 @@
 .toolbar {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  background: transparent;
   border-radius: 8px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .toolbar-group {
@@ -15,11 +17,12 @@
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 8px 16px;
+  padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .toolbar-button:hover {
@@ -58,15 +61,28 @@
 .toolbar-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
 }
 
 .toolbar-toggle input {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
+}
+
+/* Mobile: hide auto-check label, show only checkbox */
+@media (max-width: 420px) {
+  .toolbar-toggle span {
+    display: none;
+  }
+
+  .toolbar-button {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
 }

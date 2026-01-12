@@ -15,16 +15,16 @@
 
     display: grid;
     gap: var(--grid-gap);
-    /* Size based on smallest dimension to fit container while maintaining square */
-    /* Use cqmin (container query min) for square sizing within available space */
-    --grid-size: min(100cqmin, 400px);
-    width: var(--grid-size);
-    height: var(--grid-size);
-    max-width: var(--grid-size);
-    max-height: var(--grid-size);
+    /* Square grid that fits within parent - uses min of width/height */
+    width: 100%;
+    max-width: 400px;
+    max-height: 100%;
+    aspect-ratio: 1;
     background-color: var(--grid-bg);
     padding: 2px;
     border-radius: 4px;
+    /* Ensure grid shrinks to fit available space */
+    flex-shrink: 1;
 }
 
 .crossword-cell {
