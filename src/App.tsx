@@ -5,6 +5,7 @@ import { ClueBar } from './components/ClueBar';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
 import { Toolbar } from './components/Toolbar';
+import { SettingsMenu } from './components/SettingsMenu';
 import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
 import { CrosswordKeyboard } from './components/Keyboard';
@@ -535,16 +536,19 @@ function App() {
 
   // Build toolbar content for header menu
   const toolbarContent = puzzle && ready ? (
-    <Toolbar
-      onCheckLetter={checkLetter}
-      onCheckWord={checkWord}
-      onCheckPuzzle={checkPuzzle}
-      onRevealLetter={revealLetter}
-      onRevealWord={revealWord}
-      onRevealPuzzle={revealPuzzle}
-      autoCheckEnabled={autoCheckEnabled}
-      onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
-    />
+    <>
+      <Toolbar
+        onCheckLetter={checkLetter}
+        onCheckWord={checkWord}
+        onCheckPuzzle={checkPuzzle}
+        onRevealLetter={revealLetter}
+        onRevealWord={revealWord}
+        onRevealPuzzle={revealPuzzle}
+        autoCheckEnabled={autoCheckEnabled}
+        onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+      />
+      <SettingsMenu />
+    </>
   ) : null;
 
   // Build grid content

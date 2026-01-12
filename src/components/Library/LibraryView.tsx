@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PuzzleCard } from './PuzzleCard';
 import { FilePicker } from '../FilePicker';
 import { PuzzleDownloader } from '../PuzzleDownloader';
+import { SettingsMenu } from '../SettingsMenu';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import {
   listAllPuzzles,
@@ -183,6 +184,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         <div className="library-actions">
           <FilePicker onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
           <PuzzleDownloader onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
+          <SettingsMenu />
         </div>
       </header>
 
