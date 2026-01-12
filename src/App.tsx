@@ -361,28 +361,31 @@ function App() {
     selectedCell,
   });
 
-  // Track previous entry for auto-check comparison
-  const prevEntryRef = useRef<string | undefined>(undefined);
+  // Track previous entries for auto-check comparison
+  const prevEntriesRef = useRef<Map<string, string>>(new Map());
 
   // Auto-check on entry change (when enabled)
+  // Watches all entry changes, not just selected cell, since cursor auto-advances
   useEffect(() => {
-    if (!autoCheckEnabled || !selectedCell || !puzzle || !errorsMap) return;
+    if (!autoCheckEnabled || !puzzle || !errorsMap) return;
 
-    const key = `${selectedCell.row},${selectedCell.col}`;
-    const entry = userEntries.get(key);
-
-    // Only check if entry changed and cell is not already verified
-    if (entry && entry !== prevEntryRef.current && !verifiedCells.has(key)) {
-      const cell = puzzle.grid[selectedCell.row][selectedCell.col];
-      if (entry !== cell.letter) {
-        errorsMap.set(key, true);
-      } else {
-        errorsMap.delete(key);
+    // Find cells where entry changed
+    userEntries.forEach((entry, key) => {
+      const prevEntry = prevEntriesRef.current.get(key);
+      if (entry !== prevEntry && !verifiedCells.has(key)) {
+        const [row, col] = key.split(',').map(Number);
+        const cell = puzzle.grid[row][col];
+        if (entry !== cell.letter) {
+          errorsMap.set(key, true);
+        } else {
+          errorsMap.delete(key);
+        }
       }
-    }
+    });
 
-    prevEntryRef.current = entry;
-  }, [autoCheckEnabled, selectedCell, userEntries, puzzle, verifiedCells, errorsMap]);
+    // Update previous entries ref
+    prevEntriesRef.current = new Map(userEntries);
+  }, [autoCheckEnabled, userEntries, puzzle, verifiedCells, errorsMap]);
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
