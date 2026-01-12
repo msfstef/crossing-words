@@ -131,8 +131,8 @@ export function CrosswordGrid({
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
-  // Cell size state - starts with default, updates via ResizeObserver
-  const [cellSize, setCellSize] = useState(30);
+  // Cell size state - starts with 0 (hidden), updates via ResizeObserver
+  const [cellSize, setCellSize] = useState(0);
 
   // ResizeObserver to track container size and recalculate cell size
   useEffect(() => {
@@ -156,6 +156,9 @@ export function CrosswordGrid({
 
     return () => observer.disconnect();
   }, [puzzle.width, puzzle.height]);
+
+  // Don't render grid until we've measured (prevents flash of wrong size)
+  const isReady = cellSize > 0;
 
   /**
    * Check if a cell is part of the currently selected word
@@ -194,7 +197,11 @@ export function CrosswordGrid({
     <div
       ref={containerRef}
       className="crossword-grid-container"
-      style={{ '--cell-size': `${cellSize}px` } as React.CSSProperties}
+      style={{
+        '--cell-size': `${cellSize}px`,
+        // Hide until measured to prevent flash of wrong size
+        opacity: isReady ? 1 : 0,
+      } as React.CSSProperties}
     >
       <div
         className="crossword-grid"
