@@ -63,8 +63,19 @@
     background-color: var(--color-cell-selected);
 }
 
+/* Custom selection styling when in collaborative mode (uses inline styles for color) */
+.crossword-cell.cell--selected-custom {
+    /* Outline and background applied via inline style with user's color */
+    position: relative;
+}
+
 .crossword-cell.cell--in-word {
     background-color: var(--color-cell-word);
+}
+
+/* Custom word highlight in collaborative mode (uses inline styles for color) */
+.crossword-cell.cell--in-word-custom {
+    /* Background applied via inline style with user's color */
 }
 
 .clue-number {

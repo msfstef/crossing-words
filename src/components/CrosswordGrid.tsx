@@ -36,6 +36,8 @@ interface CrosswordGridProps {
   onCellClick: (row: number, col: number) => void;
   /** Collaborators to show word highlights for */
   collaborators?: Collaborator[];
+  /** Local user's color for selection styling (matches what collaborators see) */
+  localUserColor?: string;
   /** Set of verified cell keys ("row,col") */
   verifiedCells?: Set<string>;
   /** Set of error cell keys ("row,col") */
@@ -126,6 +128,7 @@ export function CrosswordGrid({
   currentWord,
   onCellClick,
   collaborators = [],
+  localUserColor,
   verifiedCells = new Set(),
   errorCells = new Set(),
 }: CrosswordGridProps) {
@@ -253,11 +256,17 @@ export function CrosswordGrid({
         const isVerified = verifiedCells.has(key);
         const hasError = errorCells.has(key);
 
+        // Determine if local user has a color (in collaborative mode)
+        const hasLocalColor = Boolean(localUserColor);
+
         const cellClasses = [
           "crossword-cell",
           cell.isBlack ? "cell--black" : "cell--white",
-          isSelected ? "cell--selected" : "",
-          inWord && !isSelected ? "cell--in-word" : "",
+          // Use custom selection styling when we have local color, otherwise fall back to CSS
+          isSelected && !hasLocalColor ? "cell--selected" : "",
+          isSelected && hasLocalColor ? "cell--selected-custom" : "",
+          inWord && !isSelected && !hasLocalColor ? "cell--in-word" : "",
+          inWord && !isSelected && hasLocalColor ? "cell--in-word-custom" : "",
           hasCollaboratorHighlight ? "cell--collaborator" : "",
           hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
           isVerified ? "cell--verified" : "",
@@ -266,16 +275,32 @@ export function CrosswordGrid({
           .filter(Boolean)
           .join(" ");
 
-        // Build inline style for collaborator highlighting
-        // Word highlight = subtle background, cursor = visible outline (doesn't affect layout)
-        const cellStyle: React.CSSProperties = {
-          ...(hasCollaboratorHighlight ? { backgroundColor: hexToRgba(collaboratorColor, 0.25) } : {}),
-          ...(hasCollaboratorCursor ? {
-            outline: `3px solid ${cursorColor}`,
-            outlineOffset: '-3px',
-            zIndex: 5,
-          } : {}),
-        };
+        // Build inline style for highlighting
+        // Local user: Uses their collaborator color for consistency
+        // Collaborators: Subtle styling so they don't distract from local user
+        const cellStyle: React.CSSProperties = {};
+
+        // Local user's word highlight (subtle background)
+        if (inWord && !isSelected && localUserColor) {
+          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
+        }
+        // Local user's selected cell (prominent outline)
+        if (isSelected && localUserColor) {
+          cellStyle.outline = `3px solid ${localUserColor}`;
+          cellStyle.outlineOffset = '-3px';
+          cellStyle.zIndex = 10; // Above collaborator cursors
+          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.15);
+        }
+        // Collaborator word highlight (very subtle)
+        if (hasCollaboratorHighlight) {
+          cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
+        }
+        // Collaborator cursor (subtle outline)
+        if (hasCollaboratorCursor) {
+          cellStyle.outline = `2px solid ${hexToRgba(cursorColor, 0.5)}`;
+          cellStyle.outlineOffset = '-2px';
+          cellStyle.zIndex = 5;
+        }
 
         return (
           <div

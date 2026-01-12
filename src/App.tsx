@@ -11,6 +11,7 @@ import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
+import { useLocalUser } from './collaboration/useLocalUser';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
@@ -404,6 +405,8 @@ function App() {
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
+  // Get local user info for consistent styling with what collaborators see
+  const localUser = useLocalUser(awareness);
 
   // Track online/offline status
   const isOnline = useOnlineStatus();
@@ -597,6 +600,7 @@ function App() {
             currentWord={currentWord}
             onCellClick={handleCellClick}
             collaborators={collaborators}
+            localUserColor={localUser.color}
             verifiedCells={verifiedCells}
             errorCells={errorCells}
           />
