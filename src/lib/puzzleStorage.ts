@@ -5,6 +5,7 @@
  * Uses a simple key-value store pattern with a single "currentPuzzle" key.
  */
 
+import * as Y from 'yjs';
 import type { Puzzle } from '../types/puzzle';
 
 const DB_NAME = 'crossing-words-puzzles';
@@ -402,13 +403,12 @@ export async function deletePuzzle(puzzleId: string): Promise<void> {
 }
 
 /**
- * Gets the progress for a puzzle by checking if the CRDT database has data.
- * Returns filled=-1 when progress exists but exact count is unknown.
- * This is efficient because we don't need to decode Yjs updates.
+ * Gets the progress for a puzzle by decoding the CRDT state.
+ * Counts actual filled cells from the Yjs 'entries' map.
  *
  * @param puzzleId - The puzzle ID to check progress for
  * @param puzzle - The puzzle to calculate total fillable cells from
- * @returns Object with filled and total counts (filled=-1 means "some progress")
+ * @returns Object with filled and total counts
  */
 export async function getPuzzleProgress(
   puzzleId: string,
@@ -438,7 +438,7 @@ export async function getPuzzleProgress(
       }
     }
 
-    // Open the database and check for updates
+    // Open the database and decode Yjs updates
     return new Promise((resolve) => {
       const request = indexedDB.open(dbName);
 
@@ -457,20 +457,36 @@ export async function getPuzzleProgress(
             return;
           }
 
-          // Count entries in the updates store
+          // Get all updates from the store
           const transaction = db.transaction('updates', 'readonly');
           const store = transaction.objectStore('updates');
-          const countRequest = store.count();
+          const getAllRequest = store.getAll();
 
-          countRequest.onsuccess = () => {
-            const count = countRequest.result;
+          getAllRequest.onsuccess = () => {
+            const updates = getAllRequest.result as Uint8Array[];
             db.close();
-            // If there are updates, we have progress (use -1 to indicate unknown count)
-            console.debug('[puzzleStorage] Puzzle', puzzleId, 'has', count, 'update(s)');
-            resolve({ filled: count > 0 ? -1 : 0, total });
+
+            if (updates.length === 0) {
+              resolve({ filled: 0, total });
+              return;
+            }
+
+            // Create a temporary Y.Doc and apply all updates
+            const doc = new Y.Doc();
+            for (const update of updates) {
+              Y.applyUpdate(doc, update);
+            }
+
+            // Count entries in the 'entries' map
+            const entries = doc.getMap<string>('entries');
+            const filled = entries.size;
+
+            console.debug('[puzzleStorage] Puzzle', puzzleId, 'has', filled, 'filled cells');
+            doc.destroy();
+            resolve({ filled, total });
           };
 
-          countRequest.onerror = () => {
+          getAllRequest.onerror = () => {
             db.close();
             resolve({ filled: 0, total });
           };

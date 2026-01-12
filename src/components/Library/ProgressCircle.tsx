@@ -19,8 +19,7 @@ export function ProgressCircle({
   // viewBox is 36x36, circle radius is 16, center at 18,18
   const radius = 16;
   const circumference = 2 * Math.PI * radius; // ~100.53
-  const normalizedCircumference = 100; // Use 100 for easier percentage math
-  const strokeDashoffset = normalizedCircumference - (percentage / 100) * normalizedCircumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   if (isComplete) {
     return (
@@ -76,7 +75,7 @@ export function ProgressCircle({
         r="16"
         fill="none"
         strokeWidth="3"
-        strokeDasharray={normalizedCircumference}
+        strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         strokeLinecap="round"
       />

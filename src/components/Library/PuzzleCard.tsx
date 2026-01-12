@@ -25,9 +25,8 @@ export function PuzzleCard({
   const { filled, total } = progress;
 
   // Calculate percentage
-  // filled = -1 means "has progress but unknown count"
   const isComplete = filled === total && total > 0;
-  const percentage = filled > 0 ? Math.round((filled / total) * 100) : (filled === -1 ? 50 : 0);
+  const percentage = total > 0 ? Math.round((filled / total) * 100) : 0;
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger onOpen
