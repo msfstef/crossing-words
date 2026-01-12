@@ -43,6 +43,10 @@ interface PuzzleStateHook {
   doc: Y.Doc | null;
   /** Raw entries map for useVerification hook */
   entriesMap: Y.Map<string> | null;
+  /** Whether auto-check mode is enabled (synced via CRDT) */
+  autoCheckEnabled: boolean;
+  /** Toggle auto-check mode (synced via CRDT) */
+  setAutoCheck: (enabled: boolean) => void;
 }
 
 /**
@@ -75,6 +79,8 @@ export function usePuzzleState(
     errorsMap,
     doc,
     entriesMap,
+    autoCheckEnabled,
+    setAutoCheck,
   } = useCrdtPuzzle(puzzleId, roomId, {
     puzzle: options?.puzzle,
     onPuzzleReceived: options?.onPuzzleReceived,
@@ -498,5 +504,7 @@ export function usePuzzleState(
     errorsMap,
     doc,
     entriesMap,
+    autoCheckEnabled,
+    setAutoCheck,
   };
 }

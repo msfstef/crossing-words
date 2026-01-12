@@ -110,3 +110,22 @@ export function getVerifiedMap(doc: Y.Doc): VerifiedMap {
 export function getErrorsMap(doc: Y.Doc): ErrorsMap {
   return doc.getMap<boolean>('errors');
 }
+
+/**
+ * Type alias for the settings map.
+ * Stores shared puzzle settings like auto-check mode.
+ */
+export type SettingsMap = Y.Map<boolean | string | number>;
+
+/**
+ * Gets the shared settings map from a Y.Doc.
+ *
+ * The settings map stores puzzle-wide settings that sync across peers:
+ * - autoCheck: boolean - Whether auto-check mode is enabled
+ *
+ * @param doc - The Y.Doc instance
+ * @returns The shared Y.Map for settings
+ */
+export function getSettingsMap(doc: Y.Doc): SettingsMap {
+  return doc.getMap<boolean | string | number>('settings');
+}

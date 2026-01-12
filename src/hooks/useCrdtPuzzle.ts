@@ -19,7 +19,7 @@ import {
   getPuzzleFromCrdt,
   observePuzzleInCrdt,
 } from '../collaboration/puzzleSync';
-import { getVerifiedMap, getErrorsMap, type VerifiedMap, type ErrorsMap } from '../crdt/puzzleDoc';
+import { getVerifiedMap, getErrorsMap, getSettingsMap, type VerifiedMap, type ErrorsMap, type SettingsMap } from '../crdt/puzzleDoc';
 import type { Puzzle } from '../types/puzzle';
 
 interface UseCrdtPuzzleOptions {
@@ -58,6 +58,10 @@ interface UseCrdtPuzzleReturn {
   doc: Y.Doc | null;
   /** Raw entries Y.Map for useVerification hook */
   entriesMap: Y.Map<string> | null;
+  /** Whether auto-check mode is enabled (synced via CRDT) */
+  autoCheckEnabled: boolean;
+  /** Toggle auto-check mode (synced via CRDT) */
+  setAutoCheck: (enabled: boolean) => void;
 }
 
 // Empty map constant for initial state
@@ -135,6 +139,10 @@ export function useCrdtPuzzle(
   const verifiedMapRef = useRef<VerifiedMap | null>(null);
   const errorsMapRef = useRef<ErrorsMap | null>(null);
 
+  // Settings state refs
+  const settingsMapRef = useRef<SettingsMap | null>(null);
+  const autoCheckRef = useRef<boolean>(false);
+
   // Use refs for puzzle sync to avoid triggering effect re-runs
   const puzzleRef = useRef(puzzle);
   const onPuzzleReceivedRef = useRef(onPuzzleReceived);
@@ -169,6 +177,7 @@ export function useCrdtPuzzle(
   const getErrorsMapSnapshot = useCallback(() => errorsMapRef.current, []);
   const getDocSnapshot = useCallback(() => storeRef.current?.doc ?? null, []);
   const getEntriesMapSnapshot = useCallback(() => storeRef.current?.entries ?? null, []);
+  const getAutoCheckSnapshot = useCallback(() => autoCheckRef.current, []);
 
   // Use useSyncExternalStore for entries, ready state, connection state, and awareness
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -181,6 +190,7 @@ export function useCrdtPuzzle(
   const errorsMap = useSyncExternalStore(subscribe, getErrorsMapSnapshot, getErrorsMapSnapshot);
   const doc = useSyncExternalStore(subscribe, getDocSnapshot, getDocSnapshot);
   const entriesMap = useSyncExternalStore(subscribe, getEntriesMapSnapshot, getEntriesMapSnapshot);
+  const autoCheckEnabled = useSyncExternalStore(subscribe, getAutoCheckSnapshot, getAutoCheckSnapshot);
 
   // Lifecycle management: create/destroy store on puzzleId/roomId change
   // NOTE: puzzle and onPuzzleReceived are accessed via refs to avoid re-running
@@ -197,6 +207,9 @@ export function useCrdtPuzzle(
     errorsSnapshotRef.current = EMPTY_SET;
     verifiedMapRef.current = null;
     errorsMapRef.current = null;
+    // Reset settings state
+    settingsMapRef.current = null;
+    autoCheckRef.current = false;
     // Reset puzzle received tracking for new session
     puzzleReceivedCalledRef.current = false;
     notifySubscribers();
@@ -219,6 +232,10 @@ export function useCrdtPuzzle(
     verifiedMapRef.current = verifiedMapInstance;
     errorsMapRef.current = errorsMapInstance;
 
+    // Get settings map from store doc
+    const settingsMapInstance = getSettingsMap(store.doc);
+    settingsMapRef.current = settingsMapInstance;
+
     // Observer to sync Y.Map changes to React state
     const observer = () => {
       // Convert Y.Map to regular Map for React
@@ -235,6 +252,12 @@ export function useCrdtPuzzle(
     // Observer to sync errors map changes to React state
     const errorsObserver = () => {
       errorsSnapshotRef.current = new Set(errorsMapInstance.keys());
+      notifySubscribers();
+    };
+
+    // Observer to sync settings map changes to React state
+    const settingsObserver = () => {
+      autoCheckRef.current = settingsMapInstance.get('autoCheck') === true;
       notifySubscribers();
     };
 
@@ -260,12 +283,14 @@ export function useCrdtPuzzle(
       snapshotRef.current = new Map(store.entries.entries());
       verifiedSnapshotRef.current = new Set(verifiedMapInstance.keys());
       errorsSnapshotRef.current = new Set(errorsMapInstance.keys());
+      autoCheckRef.current = settingsMapInstance.get('autoCheck') === true;
 
       // Set up observer for future changes
       store.entries.observe(observer);
       store.entries.observe(entryClearErrorObserver);
       verifiedMapInstance.observe(verifiedObserver);
       errorsMapInstance.observe(errorsObserver);
+      settingsMapInstance.observe(settingsObserver);
       observerAttached = true;
 
       // Create P2P session if roomId is provided (AFTER IndexedDB ready)
@@ -340,10 +365,13 @@ export function useCrdtPuzzle(
         store.entries.unobserve(entryClearErrorObserver);
         verifiedMapInstance.unobserve(verifiedObserver);
         errorsMapInstance.unobserve(errorsObserver);
+        settingsMapInstance.unobserve(settingsObserver);
       }
       // Clear verification refs
       verifiedMapRef.current = null;
       errorsMapRef.current = null;
+      // Clear settings refs
+      settingsMapRef.current = null;
       store.destroy();
       storeRef.current = null;
     };
@@ -380,6 +408,12 @@ export function useCrdtPuzzle(
     return entries.get(key);
   }, [entries]);
 
+  const setAutoCheck = useCallback((enabled: boolean) => {
+    const settingsMap = settingsMapRef.current;
+    if (!settingsMap) return;
+    settingsMap.set('autoCheck', enabled);
+  }, []);
+
   return {
     entries,
     ready,
@@ -395,5 +429,7 @@ export function useCrdtPuzzle(
     errorsMap,
     doc,
     entriesMap,
+    autoCheckEnabled,
+    setAutoCheck,
   };
 }

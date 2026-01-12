@@ -337,10 +337,9 @@ function App() {
     errorsMap,
     doc,
     entriesMap,
+    autoCheckEnabled,
+    setAutoCheck,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
-
-  // Auto-check mode state (local only - personal preference, not synced)
-  const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
 
   // Use verification hook for check/reveal actions
   const {
@@ -479,7 +478,7 @@ function App() {
             onRevealWord={revealWord}
             onRevealPuzzle={revealPuzzle}
             autoCheckEnabled={autoCheckEnabled}
-            onAutoCheckToggle={() => setAutoCheckEnabled(!autoCheckEnabled)}
+            onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
           />
         )}
 
