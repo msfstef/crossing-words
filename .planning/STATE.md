@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 9 of 9 (UI Refinements)
-Plan: 4 of 5 complete (09-01 FAB + 09-02 Progress + 09-03 Toolbar + 09-04 Clue Bar)
-Status: In progress
-Last activity: 2026-01-12 — Completed 09-04: Clue bar improvements and theme fixes
+Plan: 5 of 5 complete (all plans)
+Status: Phase complete
+Last activity: 2026-01-12 — Completed 09-05: Puzzle title above grid
 
-Progress: █████████░ 98%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
@@ -148,6 +148,8 @@ Recent decisions affecting current work:
 | 09-04 | Auto-shrink font 15px→13px for overflow | Long clues fit without truncation |
 | 09-04 | No visual feedback on clue bar tap | Clean, minimal interaction style |
 | 09-04 | Nav buttons styled like keyboard keys | Consistent button styling across app |
+| 09-05 | Puzzle title above grid only, not in header | Single source of truth, cleaner header |
+| 09-05 | Dark mode cell-word highlight #454570 | Distinct from grid gap #3a3a5a |
 
 ### Roadmap Evolution
 
@@ -166,5 +168,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 09-04 - Clue bar improvements and theme fixes
+Stopped at: Completed 09-05 - Puzzle title above grid, Phase 9 complete
 Resume file: None
