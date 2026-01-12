@@ -16,6 +16,7 @@
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-simple-keyboard": "^3.8.141",
     "sonner": "^2.0.7",
     "xd-crossword-tools": "^12.1.2",
     "y-indexeddb": "^9.0.12",
