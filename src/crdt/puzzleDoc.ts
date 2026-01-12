@@ -15,6 +15,27 @@ import * as Y from 'yjs';
 export type EntriesMap = Y.Map<string>;
 
 /**
+ * Type for cell verification status.
+ * - 'checked': Cell was verified by user using check action
+ * - 'revealed': Cell letter was revealed by user
+ */
+export type VerifiedType = 'checked' | 'revealed';
+
+/**
+ * Type alias for the verified cells map.
+ * Keys are in "row,col" format (matching entries).
+ * Values indicate how the cell was verified.
+ */
+export type VerifiedMap = Y.Map<VerifiedType>;
+
+/**
+ * Type alias for the error cells map.
+ * Keys are in "row,col" format (matching entries).
+ * Values are true for cells marked as incorrect.
+ */
+export type ErrorsMap = Y.Map<boolean>;
+
+/**
  * Creates a new Y.Doc instance for a puzzle.
  *
  * Each puzzle should have its own Y.Doc to enable:
@@ -60,4 +81,32 @@ export function createPuzzleDoc(puzzleId: string): Y.Doc {
  */
 export function getEntriesMap(doc: Y.Doc): EntriesMap {
   return doc.getMap<string>('entries');
+}
+
+/**
+ * Gets the shared verified map from a Y.Doc.
+ *
+ * The verified map tracks which cells have been verified (checked or revealed).
+ * Once a cell is verified, it cannot be edited or re-checked.
+ *
+ * @param doc - The Y.Doc instance
+ * @returns The shared Y.Map for verified cells
+ */
+export function getVerifiedMap(doc: Y.Doc): VerifiedMap {
+  return doc.getMap<VerifiedType>('verified');
+}
+
+/**
+ * Gets the shared errors map from a Y.Doc.
+ *
+ * The errors map tracks which cells have been marked as incorrect
+ * by the check action. Errors are cleared when:
+ * - The cell is corrected and re-checked
+ * - The cell is revealed
+ *
+ * @param doc - The Y.Doc instance
+ * @returns The shared Y.Map for error cells
+ */
+export function getErrorsMap(doc: Y.Doc): ErrorsMap {
+  return doc.getMap<boolean>('errors');
 }
