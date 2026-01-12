@@ -11,6 +11,7 @@ import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
 import {
@@ -403,6 +404,9 @@ function App() {
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
 
+  // Track online/offline status
+  const isOnline = useOnlineStatus();
+
   // Detect touch device for virtual keyboard display
   // Uses pointer: coarse media query which matches touch devices
   const [isTouchDevice, setIsTouchDevice] = useState(() => {
@@ -611,6 +615,7 @@ function App() {
             menuContent={toolbarContent}
             connectionState={connectionState}
             isP2PSession={Boolean(roomId)}
+            isOnline={isOnline}
           />
         }
         grid={gridContent}

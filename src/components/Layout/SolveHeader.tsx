@@ -22,6 +22,8 @@ interface SolveHeaderProps {
   connectionState: ConnectionState;
   /** Whether we're in a P2P session */
   isP2PSession: boolean;
+  /** Whether the device is online */
+  isOnline: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export function SolveHeader({
   menuContent,
   connectionState,
   isP2PSession,
+  isOnline,
 }: SolveHeaderProps) {
   return (
     <header className="solve-header">
@@ -83,8 +86,15 @@ export function SolveHeader({
         </div>
       )}
 
-      {/* Connection indicator - only show in P2P mode */}
-      {isP2PSession && (
+      {/* Offline indicator - only show when offline */}
+      {!isOnline && (
+        <div className="solve-header__offline" title="You are offline">
+          <span className="solve-header__offline-text">Offline</span>
+        </div>
+      )}
+
+      {/* Connection indicator - only show in P2P mode and when online */}
+      {isP2PSession && isOnline && (
         <div
           className={`solve-header__connection solve-header__connection--${connectionState}`}
           title={`${connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}`}

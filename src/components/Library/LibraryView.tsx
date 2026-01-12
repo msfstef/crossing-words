@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PuzzleCard } from './PuzzleCard';
 import { FilePicker } from '../FilePicker';
 import { PuzzleDownloader } from '../PuzzleDownloader';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import {
   listAllPuzzles,
   deletePuzzle,
@@ -86,6 +87,7 @@ function formatDateKey(dateKey: string): string {
 export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [puzzles, setPuzzles] = useState<PuzzleWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const isOnline = useOnlineStatus();
 
   // Load all puzzles on mount
   const loadPuzzles = useCallback(async () => {
@@ -170,7 +172,14 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   return (
     <div className="library-view">
       <header className="library-header">
-        <h1 className="library-title">Crossing Words</h1>
+        <div className="library-header__left">
+          <h1 className="library-title">Crossing Words</h1>
+          {!isOnline && (
+            <div className="library-offline" title="You are offline - downloading won't work">
+              <span className="library-offline__text">Offline</span>
+            </div>
+          )}
+        </div>
         <div className="library-actions">
           <FilePicker onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
           <PuzzleDownloader onPuzzleLoaded={handlePuzzleLoaded} onError={onError} />
