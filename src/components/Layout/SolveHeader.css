@@ -204,3 +204,25 @@
     max-width: 80px;
   }
 }
+
+/* Compact header on portrait mobile to save space for grid */
+@media (max-height: 700px) {
+  .solve-header {
+    height: 48px;
+  }
+
+  .solve-header__back {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .solve-header__share {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .solve-header__title {
+    font-size: 0.875rem;
+  }
+}

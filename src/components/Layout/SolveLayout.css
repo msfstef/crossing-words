@@ -16,6 +16,8 @@
     "grid"
     "clue-bar"
     "keyboard";
+  /* Fallback for browsers without dvh support */
+  height: 100vh;
   height: 100dvh; /* Dynamic viewport height for mobile */
   width: 100%;
   overflow: hidden;
@@ -24,6 +26,7 @@
 
 .solve-layout__header {
   grid-area: header;
+  flex-shrink: 0;
 }
 
 .solve-layout__grid {
@@ -37,6 +40,12 @@
   min-height: 0; /* Allow shrinking in grid */
   /* Enable container queries for responsive grid sizing */
   container-type: size;
+}
+
+/* Reduce author margin on mobile to save space */
+.solve-layout__grid .puzzle-author {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
 }
 
 .solve-layout__clue-bar {
