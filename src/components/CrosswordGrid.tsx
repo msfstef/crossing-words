@@ -1,7 +1,31 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
 import "./CrosswordGrid.css";
+
+/**
+ * Calculate optimal cell size to fit puzzle within container bounds.
+ * Returns cell size in pixels, clamped between min and max.
+ */
+function calculateCellSize(
+  containerWidth: number,
+  containerHeight: number,
+  cols: number,
+  rows: number,
+): number {
+  const gap = 2; // --grid-gap value
+  const padding = 4; // grid padding (2px each side)
+  const totalGapX = (cols - 1) * gap + padding;
+  const totalGapY = (rows - 1) * gap + padding;
+
+  const maxCellWidth = (containerWidth - totalGapX) / cols;
+  const maxCellHeight = (containerHeight - totalGapY) / rows;
+
+  const cellSize = Math.min(maxCellWidth, maxCellHeight);
+
+  // Clamp between 16px (readable minimum) and 36px (comfortable maximum)
+  return Math.max(16, Math.min(cellSize, 36));
+}
 
 interface CrosswordGridProps {
   puzzle: Puzzle;
@@ -92,7 +116,8 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
- * CrosswordGrid renders the puzzle grid with cells that can display letters
+ * CrosswordGrid renders the puzzle grid with cells that can display letters.
+ * Uses ResizeObserver to dynamically calculate cell size based on available space.
  */
 export function CrosswordGrid({
   puzzle,
@@ -104,6 +129,34 @@ export function CrosswordGrid({
   verifiedCells = new Set(),
   errorCells = new Set(),
 }: CrosswordGridProps) {
+  // Container ref for measuring available space
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Cell size state - starts with default, updates via ResizeObserver
+  const [cellSize, setCellSize] = useState(30);
+
+  // ResizeObserver to track container size and recalculate cell size
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateCellSize = () => {
+      const { width, height } = container.getBoundingClientRect();
+      const newSize = calculateCellSize(width, height, puzzle.width, puzzle.height);
+      setCellSize(newSize);
+    };
+
+    // Initial calculation
+    updateCellSize();
+
+    // Observe for size changes
+    const observer = new ResizeObserver(() => {
+      updateCellSize();
+    });
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [puzzle.width, puzzle.height]);
+
   /**
    * Check if a cell is part of the currently selected word
    */
@@ -139,12 +192,17 @@ export function CrosswordGrid({
 
   return (
     <div
-      className="crossword-grid"
-      style={{
-        gridTemplateColumns: `repeat(${puzzle.width}, var(--cell-size))`,
-        gridTemplateRows: `repeat(${puzzle.height}, var(--cell-size))`,
-      }}
+      ref={containerRef}
+      className="crossword-grid-container"
+      style={{ '--cell-size': `${cellSize}px` } as React.CSSProperties}
     >
+      <div
+        className="crossword-grid"
+        style={{
+          gridTemplateColumns: `repeat(${puzzle.width}, var(--cell-size))`,
+          gridTemplateRows: `repeat(${puzzle.height}, var(--cell-size))`,
+        }}
+      >
       {puzzle.grid.flat().map((cell) => {
         const key = `${cell.row},${cell.col}`;
         const isSelected =
@@ -197,6 +255,7 @@ export function CrosswordGrid({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
