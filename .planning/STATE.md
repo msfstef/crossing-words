@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 8 in progress — Theme system complete
+**Current focus:** Phase 8 in progress — Library view complete
 
 ## Current Position
 
 Phase: 8 of 8 (Polish & PWA)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-12 — Completed 08-01-PLAN.md (Theme System)
+Last activity: 2026-01-12 — Completed 08-02-PLAN.md (Library View)
 
 Progress: █████████░ 96%
 
@@ -36,11 +36,11 @@ Progress: █████████░ 96%
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
-| 8. Polish & PWA | 1 | 8 min | 8 min |
+| 8. Polish & PWA | 2 | 23 min | 12 min |
 
 **Recent Trend:**
-- Last 5 plans: 8, 3, 7, 43, 8 min
-- Trend: Phase 8 started with theme infrastructure
+- Last 5 plans: 3, 7, 43, 8, 15 min
+- Trend: Library view added as home screen
 
 ## Accumulated Context
 
@@ -120,6 +120,10 @@ Recent decisions affecting current work:
 | 08-01 | Light theme as structural :root default | Dark applied by blocking script if needed |
 | 08-01 | Blocking script in <head> before scripts | Prevents flash of wrong theme (FART) |
 | 08-01 | useSyncExternalStore for theme subscription | Consistent pattern for React 18 |
+| 08-02 | Separate puzzles-meta store | Efficient listing without loading full puzzle data |
+| 08-02 | puzzleId from sanitized title | Consistent ID generation across import paths |
+| 08-02 | Library as default view | Transforms app from puzzle-first to library-first UX |
+| 08-02 | Back button in header | Clear navigation between library and solve views |
 
 ### Roadmap Evolution
 
@@ -137,5 +141,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 08-01-PLAN.md - Theme system
+Stopped at: Completed 08-02-PLAN.md - Library view
 Resume file: None
