@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-11)
 
 **Core value:** Seamless real-time sync — the instant collaboration experience must feel magical, like Google Docs for crosswords.
-**Current focus:** Phase 8 in progress — Unified layout complete
+**Current focus:** Phase 8 in progress — Mobile keyboard complete
 
 ## Current Position
 
 Phase: 8 of 8 (Polish & PWA)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-12 — Completed 08-03-PLAN.md (Unified Layout)
+Last activity: 2026-01-12 — Completed 08-04-PLAN.md (Mobile Virtual Keyboard)
 
-Progress: █████████░ 96%
+Progress: █████████░ 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 14 min
-- Total execution time: 5.18 hours
+- Total execution time: 5.68 hours
 
 **By Phase:**
 
@@ -36,11 +36,11 @@ Progress: █████████░ 96%
 | 6. Collaboration | 4 | 60 min | 15 min |
 | 6.1 CF Worker Signaling | 1 | 8 min | 8 min |
 | 7. Check/Reveal | 3 | 53 min | 18 min |
-| 8. Polish & PWA | 3 | 41 min | 14 min |
+| 8. Polish & PWA | 4 | 71 min | 18 min |
 
 **Recent Trend:**
-- Last 5 plans: 7, 43, 8, 15, 18 min
-- Trend: Unified layout with compact header and clue navigation
+- Last 5 plans: 43, 8, 15, 18, 30 min
+- Trend: Mobile virtual keyboard with iOS viewport fixes
 
 ## Accumulated Context
 
@@ -128,6 +128,11 @@ Recent decisions affecting current work:
 | 08-03 | 100dvh for full viewport | Dynamic viewport height handles mobile browser chrome |
 | 08-03 | Compact direction labels (A/D) | Space-efficient clue display |
 | 08-03 | Slot-based layout composition | ReactNode props for layout areas |
+| 08-04 | react-simple-keyboard | Mature library, customizable, touch-optimized |
+| 08-04 | pointer: coarse for touch detection | More accurate than viewport width |
+| 08-04 | Flexbox over CSS Grid for SolveLayout | Better iOS Safari shrinking behavior |
+| 08-04 | No container queries | Limited iOS Safari support, use percentage sizing |
+| 08-04 | typeLetter/handleBackspace methods | Clean separation of keyboard input from DOM events |
 
 ### Roadmap Evolution
 
@@ -145,5 +150,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 08-03-PLAN.md - Unified layout
+Stopped at: Completed 08-04-PLAN.md - Mobile virtual keyboard
 Resume file: None
