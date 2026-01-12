@@ -442,7 +442,8 @@ function App() {
 
   /**
    * Handle opening a puzzle from the library.
-   * Generates and sets timeline immediately for P2P readiness.
+   * Checks for existing timeline (returning to puzzle) or generates new one.
+   * This enables session resumption - closing and reopening puts you back in the same P2P room.
    */
   const handleOpenPuzzle = useCallback((loadedPuzzle: Puzzle, loadedPuzzleId: string) => {
     setPuzzle(loadedPuzzle);
@@ -450,13 +451,20 @@ function App() {
     setActiveView('solve');
     setError(null);
 
-    // Generate timeline for this puzzle session
-    const newTimelineId = generateTimelineId();
-    setTimelineId(newTimelineId);
+    // Check for existing timeline (returning to puzzle)
+    const existingTimeline = getCurrentTimeline(loadedPuzzleId);
 
-    // Store mapping and update URL
-    saveTimelineMapping(loadedPuzzleId, newTimelineId);
-    updateUrlHash(loadedPuzzleId, newTimelineId);
+    if (existingTimeline) {
+      // Rejoin existing timeline
+      setTimelineId(existingTimeline);
+      updateUrlHash(loadedPuzzleId, existingTimeline);
+    } else {
+      // New puzzle session - generate timeline
+      const newTimelineId = generateTimelineId();
+      setTimelineId(newTimelineId);
+      saveTimelineMapping(loadedPuzzleId, newTimelineId);
+      updateUrlHash(loadedPuzzleId, newTimelineId);
+    }
 
     // Persist as current puzzle
     saveCurrentPuzzle(loadedPuzzle).catch((err) => {
