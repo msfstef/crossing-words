@@ -429,34 +429,35 @@ function App() {
 
   /**
    * Handle Share button click.
-   * Generates timeline ID if needed and opens the share dialog.
+   * Timeline is already generated when opening puzzle, so just build URL and show dialog.
    */
   const handleShare = useCallback(() => {
-    if (!puzzle || !puzzleId) return;
-
-    // Generate timeline ID if we don't have one yet
-    let currentTimelineId = timelineId;
-    if (!currentTimelineId) {
-      currentTimelineId = generateTimelineId();
-      setTimelineId(currentTimelineId);
-      // Update URL hash so current user is also in the room
-      updateUrlHash(puzzleId, currentTimelineId);
-    }
+    if (!puzzle || !puzzleId || !timelineId) return;
 
     // Build share URL and open dialog
-    const url = buildShareUrl(puzzleId, currentTimelineId);
+    const url = buildShareUrl(puzzleId, timelineId);
     setShareUrl(url);
     setShowShareDialog(true);
   }, [puzzle, puzzleId, timelineId]);
 
   /**
    * Handle opening a puzzle from the library.
+   * Generates and sets timeline immediately for P2P readiness.
    */
   const handleOpenPuzzle = useCallback((loadedPuzzle: Puzzle, loadedPuzzleId: string) => {
     setPuzzle(loadedPuzzle);
     setActivePuzzleId(loadedPuzzleId);
     setActiveView('solve');
     setError(null);
+
+    // Generate timeline for this puzzle session
+    const newTimelineId = generateTimelineId();
+    setTimelineId(newTimelineId);
+
+    // Store mapping and update URL
+    saveTimelineMapping(loadedPuzzleId, newTimelineId);
+    updateUrlHash(loadedPuzzleId, newTimelineId);
+
     // Persist as current puzzle
     saveCurrentPuzzle(loadedPuzzle).catch((err) => {
       console.error('Failed to save puzzle:', err);
