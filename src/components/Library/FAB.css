@@ -1,0 +1,162 @@
+/* Floating Action Button component styles */
+
+.fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 100;
+  /* Safe area for iPhone notch devices */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Main FAB button */
+.fab__main {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.fab__main:hover {
+  background-color: var(--color-accent-hover, #d03050);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.fab__main:active {
+  transform: scale(0.95);
+}
+
+.fab__main:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.fab__icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+  transition: transform 200ms ease;
+}
+
+/* Rotate icon when expanded */
+.fab--expanded .fab__icon {
+  transform: rotate(45deg);
+}
+
+/* Options container */
+.fab__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.fab--expanded .fab__options {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Individual option buttons */
+.fab__option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease;
+}
+
+.fab__option:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+.fab__option:active {
+  transform: scale(0.98);
+}
+
+.fab__option:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.fab__option-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.fab__option-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Backdrop when expanded (optional, subtle) */
+.fab--expanded::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .fab {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+
+  .fab__main {
+    width: 52px;
+    height: 52px;
+  }
+
+  .fab__icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* When keyboard is visible, move FAB up */
+@media (max-height: 500px) {
+  .fab {
+    bottom: 0.5rem;
+  }
+
+  .fab__main {
+    width: 48px;
+    height: 48px;
+  }
+}
