@@ -43,16 +43,17 @@ const ICE_SERVERS: RTCIceServer[] = [
 ];
 
 /**
- * Get signaling servers based on environment.
- * Development uses local signaling server (y-webrtc bin/server.js).
- * Production uses Cloudflare Worker signaling server.
+ * Get signaling servers from environment variable or default to production.
+ * Set VITE_SIGNALING_SERVER to override (e.g., ws://localhost:4444 for local testing).
+ * Defaults to production Cloudflare Worker signaling server.
  */
 function getSignalingServers(): string[] {
-  if (import.meta.env.DEV) {
-    return ['ws://localhost:4444'];
+  const customServer = import.meta.env.VITE_SIGNALING_SERVER;
+  if (customServer) {
+    return [customServer];
   }
 
-  // Production: Cloudflare Worker signaling
+  // Default: Cloudflare Worker signaling (works in both dev and prod)
   return ['wss://crossing-words-proxy.msfstef.workers.dev/signaling'];
 }
 
