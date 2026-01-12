@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "signal": "node node_modules/y-webrtc/bin/server.js"
   },
   "dependencies": {
     "distinct-colors": "^3.0.0",
