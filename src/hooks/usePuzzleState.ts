@@ -10,6 +10,13 @@ interface CurrentClue {
   text: string;
 }
 
+interface PuzzleStateHookOptions {
+  /** Puzzle to store in CRDT for sharing (sharer provides this) */
+  puzzle?: Puzzle | null;
+  /** Callback when puzzle is received from CRDT (recipient receives via this) */
+  onPuzzleReceived?: (puzzle: Puzzle) => void;
+}
+
 interface PuzzleStateHook {
   userEntries: Map<string, string>;
   selectedCell: { row: number; col: number } | null;
@@ -32,9 +39,15 @@ interface PuzzleStateHook {
  * @param puzzle - The puzzle data
  * @param puzzleId - Unique identifier for the puzzle
  * @param roomId - Optional room ID for P2P collaboration
+ * @param options - Optional puzzle sync options for sharing/receiving puzzle data
  */
-export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string): PuzzleStateHook {
-  // Use CRDT-backed entries with optional P2P sync
+export function usePuzzleState(
+  puzzle: Puzzle,
+  puzzleId: string,
+  roomId?: string,
+  options?: PuzzleStateHookOptions
+): PuzzleStateHook {
+  // Use CRDT-backed entries with optional P2P sync and puzzle sharing
   const {
     entries: userEntries,
     ready,
@@ -42,7 +55,10 @@ export function usePuzzleState(puzzle: Puzzle, puzzleId: string, roomId?: string
     clearEntry,
     connectionState,
     awareness,
-  } = useCrdtPuzzle(puzzleId, roomId);
+  } = useCrdtPuzzle(puzzleId, roomId, {
+    puzzle: options?.puzzle,
+    onPuzzleReceived: options?.onPuzzleReceived,
+  });
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [direction, setDirection] = useState<'across' | 'down'>('across');
 

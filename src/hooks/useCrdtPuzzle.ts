@@ -6,12 +6,26 @@
  * - Syncing Y.Map changes to React state via observers
  * - Exposing entry manipulation methods
  * - Optional P2P sync via WebRTC when roomId is provided
+ * - Syncing puzzle metadata to/from CRDT for sharing
  */
 
 import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import type { Awareness } from 'y-protocols/awareness';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
 import { createP2PSession, type P2PSession, type ConnectionState } from '../crdt/webrtcProvider';
+import {
+  setPuzzleInCrdt,
+  getPuzzleFromCrdt,
+  observePuzzleInCrdt,
+} from '../collaboration/puzzleSync';
+import type { Puzzle } from '../types/puzzle';
+
+interface UseCrdtPuzzleOptions {
+  /** Puzzle to store in CRDT for sharing (sharer provides this) */
+  puzzle?: Puzzle | null;
+  /** Callback when puzzle is received from CRDT (recipient receives via this) */
+  onPuzzleReceived?: (puzzle: Puzzle) => void;
+}
 
 interface UseCrdtPuzzleReturn {
   /** Current entries map (React state mirror of Y.Map) */
@@ -44,8 +58,14 @@ const EMPTY_MAP = new Map<string, string>();
  * When roomId is provided, creates a P2P session for collaborative solving.
  * The P2P session is created AFTER IndexedDB loads to prevent empty state sync.
  *
+ * Puzzle sync: When options.puzzle is provided, it's stored in the CRDT for
+ * sharing with peers. When options.onPuzzleReceived is provided, the hook
+ * calls it when puzzle data is received from a peer (for recipients who
+ * don't have the puzzle locally).
+ *
  * @param puzzleId - Unique identifier for the puzzle
  * @param roomId - Optional room ID for P2P collaboration
+ * @param options - Optional puzzle sync options
  * @returns Object containing entries, ready state, roomId, and entry manipulation methods
  *
  * @example
@@ -55,6 +75,14 @@ const EMPTY_MAP = new Map<string, string>();
  *
  * // With P2P sync
  * const { entries, ready, roomId, setEntry } = useCrdtPuzzle('nyt-2024-01-15', 'my-room');
+ *
+ * // With puzzle sharing (for sharer)
+ * const { entries } = useCrdtPuzzle('nyt-2024-01-15', 'my-room', { puzzle: myPuzzle });
+ *
+ * // With puzzle receiving (for recipient without puzzle)
+ * const { entries } = useCrdtPuzzle('nyt-2024-01-15', 'my-room', {
+ *   onPuzzleReceived: (puzzle) => setPuzzle(puzzle)
+ * });
  *
  * if (!ready) return <div>Loading...</div>;
  *
@@ -68,7 +96,12 @@ const EMPTY_MAP = new Map<string, string>();
  * clearEntry(3, 7);
  * ```
  */
-export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleReturn {
+export function useCrdtPuzzle(
+  puzzleId: string,
+  roomId?: string,
+  options?: UseCrdtPuzzleOptions
+): UseCrdtPuzzleReturn {
+  const { puzzle, onPuzzleReceived } = options ?? {};
   // Store reference for access in callbacks and external store
   const storeRef = useRef<PuzzleStore | null>(null);
   const sessionRef = useRef<P2PSession | null>(null);
@@ -115,6 +148,8 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
 
     // Track connection state unsubscribe function for cleanup
     let connectionUnsubscribe: (() => void) | null = null;
+    // Track puzzle sync observer for cleanup
+    let puzzleSyncUnsubscribe: (() => void) | null = null;
 
     // Create new store for this puzzle
     const store = createPuzzleStore(puzzleId);
@@ -147,6 +182,11 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
 
       // Create P2P session if roomId is provided (AFTER IndexedDB ready)
       if (roomId) {
+        // If we have a puzzle, store it in CRDT for sharing to peers
+        if (puzzle) {
+          setPuzzleInCrdt(store.doc, puzzle);
+        }
+
         const session = await createP2PSession(store, roomId);
         // Check again that store is still current after async operation
         if (storeRef.current === store) {
@@ -157,6 +197,25 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
             connectionStateRef.current = state;
             notifySubscribers();
           });
+
+          // Subscribe to puzzle sync for recipients
+          if (onPuzzleReceived) {
+            // Check if puzzle already exists in CRDT (sync may have happened already)
+            const existingPuzzle = getPuzzleFromCrdt(store.doc);
+            if (existingPuzzle) {
+              console.debug('[useCrdtPuzzle] Puzzle already in CRDT, notifying recipient');
+              onPuzzleReceived(existingPuzzle);
+            }
+
+            // Also subscribe to future changes (in case sync happens after connect)
+            puzzleSyncUnsubscribe = observePuzzleInCrdt(store.doc, (syncedPuzzle) => {
+              if (syncedPuzzle) {
+                console.debug('[useCrdtPuzzle] Puzzle received from CRDT sync');
+                onPuzzleReceived(syncedPuzzle);
+              }
+            });
+          }
+
           notifySubscribers(); // Notify about awareness change
         } else {
           // Store changed while we were creating session, clean up
@@ -171,6 +230,11 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
 
     // Cleanup on unmount or puzzleId/roomId change
     return () => {
+      // Unsubscribe from puzzle sync
+      if (puzzleSyncUnsubscribe) {
+        puzzleSyncUnsubscribe();
+        puzzleSyncUnsubscribe = null;
+      }
       // Unsubscribe from connection state changes
       if (connectionUnsubscribe) {
         connectionUnsubscribe();
@@ -189,7 +253,7 @@ export function useCrdtPuzzle(puzzleId: string, roomId?: string): UseCrdtPuzzleR
       store.destroy();
       storeRef.current = null;
     };
-  }, [puzzleId, roomId, notifySubscribers]);
+  }, [puzzleId, roomId, puzzle, onPuzzleReceived, notifySubscribers]);
 
   // Entry manipulation methods
   const setEntry = useCallback((row: number, col: number, value: string) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
@@ -10,7 +10,7 @@ import { JoinDialog } from './components/JoinDialog';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { samplePuzzle } from './lib/samplePuzzle';
-import { loadCurrentPuzzle, saveCurrentPuzzle } from './lib/puzzleStorage';
+import { loadCurrentPuzzle, saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
 import {
   parseShareUrl,
   parseLegacyRoomUrl,
@@ -79,6 +79,14 @@ function App() {
     () => getSessionFromHash().timelineId ?? null
   );
 
+  // Track the puzzle ID from URL (for joining sessions where we don't have the puzzle)
+  const [urlPuzzleId, setUrlPuzzleId] = useState<string | null>(
+    () => getSessionFromHash().puzzleIdFromUrl ?? null
+  );
+
+  // Track if we're waiting for a puzzle from a sharer
+  const [waitingForPuzzle, setWaitingForPuzzle] = useState(false);
+
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -94,15 +102,41 @@ function App() {
     localEntryCount: 0,
   });
 
-  // Load saved puzzle on startup
+  // Load saved puzzle on startup, considering URL parameters
   useEffect(() => {
-    loadCurrentPuzzle().then((savedPuzzle) => {
+    const loadPuzzle = async () => {
+      const session = getSessionFromHash();
+
+      // If URL has a puzzle ID, check if we have it or need to wait for it
+      if (session.puzzleIdFromUrl && session.timelineId) {
+        // Try to load this specific puzzle from storage
+        const storedPuzzle = await loadPuzzleById(session.puzzleIdFromUrl);
+        if (storedPuzzle) {
+          // We have the puzzle - use it
+          setPuzzle(storedPuzzle);
+          setUrlPuzzleId(null); // Clear URL puzzle ID since we found it
+          return;
+        }
+
+        // We don't have this puzzle - we'll need to wait for it from the sharer
+        // For now, set the puzzle ID from URL so the CRDT hook can connect
+        // and receive the puzzle via sync
+        setWaitingForPuzzle(true);
+        // Keep urlPuzzleId set so we know what room to join
+        return;
+      }
+
+      // Normal flow: load saved puzzle or use sample
+      const savedPuzzle = await loadCurrentPuzzle();
       setPuzzle(savedPuzzle ?? samplePuzzle);
-    });
+    };
+
+    loadPuzzle();
   }, []);
 
   // Generate stable puzzle ID for CRDT storage
-  const puzzleId = puzzle ? getPuzzleId(puzzle) : '';
+  // Use URL puzzle ID when waiting for a puzzle from sharer
+  const puzzleId = waitingForPuzzle && urlPuzzleId ? urlPuzzleId : (puzzle ? getPuzzleId(puzzle) : '');
 
   // Listen for hash changes to detect shared timeline from URL
   useEffect(() => {
@@ -127,8 +161,21 @@ function App() {
   // Process pending URL timeline when puzzle is loaded
   // This checks for conflicts and shows dialog if needed
   useEffect(() => {
-    // Skip if no pending timeline, no puzzle, or already active
-    if (!pendingUrlTimeline || !puzzleId || pendingUrlTimeline === timelineId) {
+    // Skip if no pending timeline or already active
+    if (!pendingUrlTimeline || pendingUrlTimeline === timelineId) {
+      return;
+    }
+
+    // If we're waiting for a puzzle from the sharer, just join immediately
+    // (no local progress to worry about)
+    if (waitingForPuzzle && urlPuzzleId) {
+      setTimelineId(pendingUrlTimeline);
+      setPendingUrlTimeline(null);
+      return;
+    }
+
+    // Skip if no puzzle ID yet (still loading)
+    if (!puzzleId) {
       return;
     }
 
@@ -166,7 +213,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [pendingUrlTimeline, puzzleId, timelineId]);
+  }, [pendingUrlTimeline, puzzleId, timelineId, waitingForPuzzle, urlPuzzleId]);
 
   /**
    * Handle merge choice from JoinDialog.
@@ -240,6 +287,37 @@ function App() {
   // Only create P2P session when timelineId is present
   const roomId = puzzleId && timelineId ? `${puzzleId}:${timelineId}` : undefined;
 
+  /**
+   * Handle receiving puzzle data from CRDT sync.
+   * Called when joining a shared session where we don't have the puzzle locally.
+   */
+  const handlePuzzleReceived = useCallback((receivedPuzzle: Puzzle) => {
+    console.log('[App] Received puzzle from CRDT:', receivedPuzzle.title);
+
+    // Update puzzle state
+    setPuzzle(receivedPuzzle);
+    setWaitingForPuzzle(false);
+    setUrlPuzzleId(null);
+
+    // Save the received puzzle for future use
+    const newPuzzleId = getPuzzleId(receivedPuzzle);
+    savePuzzle(newPuzzleId, receivedPuzzle).catch((err) => {
+      console.error('Failed to save received puzzle:', err);
+    });
+    // Also save as current puzzle
+    saveCurrentPuzzle(receivedPuzzle).catch((err) => {
+      console.error('Failed to save current puzzle:', err);
+    });
+  }, []);
+
+  // Memoize puzzle sync options to avoid unnecessary effect re-runs
+  const puzzleSyncOptions = useMemo(() => ({
+    // Provide puzzle for sharing when we have one (and not waiting for one)
+    puzzle: waitingForPuzzle ? null : puzzle,
+    // Provide callback for receiving when we're waiting for a puzzle
+    onPuzzleReceived: waitingForPuzzle ? handlePuzzleReceived : undefined,
+  }), [puzzle, waitingForPuzzle, handlePuzzleReceived]);
+
   const {
     userEntries,
     selectedCell,
@@ -251,7 +329,7 @@ function App() {
     ready,
     connectionState,
     awareness,
-  } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId);
+  } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Track collaborators and show join/leave toasts (toasts handled inside hook)
   const collaborators = useCollaborators(awareness);
@@ -386,7 +464,12 @@ function App() {
       )}
 
       <main className="puzzle-container" key={puzzle?.title ?? 'loading'}>
-        {!puzzle ? (
+        {waitingForPuzzle ? (
+          <div className="puzzle-loading">
+            <p>Joining shared session...</p>
+            <p className="puzzle-loading__subtitle">Waiting for puzzle data from host</p>
+          </div>
+        ) : !puzzle ? (
           <div className="puzzle-loading">Loading...</div>
         ) : (
           <>

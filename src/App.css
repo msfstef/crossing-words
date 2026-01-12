@@ -143,6 +143,13 @@
   padding: 2rem;
   color: #888;
   font-size: 0.875rem;
+  text-align: center;
+}
+
+.puzzle-loading__subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
 }
 
 /* Connection indicator */

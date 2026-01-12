@@ -142,3 +142,80 @@ export async function clearCurrentPuzzle(): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Saves a puzzle by its ID for later retrieval.
+ * Used to store puzzles received via P2P sharing.
+ *
+ * @param puzzleId - The puzzle ID (used as storage key)
+ * @param puzzle - The puzzle to save
+ */
+export async function savePuzzle(puzzleId: string, puzzle: Puzzle): Promise<void> {
+  try {
+    const db = await openDatabase();
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const request = store.put(puzzle, `puzzle:${puzzleId}`);
+
+      request.onerror = () => {
+        console.error('[puzzleStorage] Failed to save puzzle by ID:', request.error);
+        reject(request.error);
+      };
+
+      request.onsuccess = () => {
+        console.debug('[puzzleStorage] Saved puzzle by ID:', puzzleId, puzzle.title);
+        resolve();
+      };
+
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('[puzzleStorage] Error saving puzzle by ID:', error);
+    throw error;
+  }
+}
+
+/**
+ * Loads a puzzle by its ID.
+ * Used to retrieve puzzles stored via P2P sharing.
+ *
+ * @param puzzleId - The puzzle ID to load
+ * @returns The puzzle if found, null otherwise
+ */
+export async function loadPuzzleById(puzzleId: string): Promise<Puzzle | null> {
+  try {
+    const db = await openDatabase();
+    const transaction = db.transaction(STORE_NAME, 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(`puzzle:${puzzleId}`);
+
+      request.onerror = () => {
+        console.error('[puzzleStorage] Failed to load puzzle by ID:', request.error);
+        reject(request.error);
+      };
+
+      request.onsuccess = () => {
+        const puzzle = request.result as Puzzle | undefined;
+        if (puzzle) {
+          console.debug('[puzzleStorage] Loaded puzzle by ID:', puzzleId, puzzle.title);
+        } else {
+          console.debug('[puzzleStorage] No puzzle found for ID:', puzzleId);
+        }
+        resolve(puzzle ?? null);
+      };
+
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('[puzzleStorage] Error loading puzzle by ID:', error);
+    return null;
+  }
+}
