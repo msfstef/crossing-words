@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 9 of 9 (UI Refinements)
-Plan: 3 of 5 complete (09-01 FAB + 09-02 Progress + 09-03 Toolbar Consolidation)
+Plan: 4 of 5 complete (09-01 FAB + 09-02 Progress + 09-03 Toolbar + 09-04 Clue Bar)
 Status: In progress
-Last activity: 2026-01-12 — Completed 09-03: Consolidated Settings menu, removed Toolbar
+Last activity: 2026-01-12 — Completed 09-04: Clue bar improvements and theme fixes
 
-Progress: █████████░ 97%
+Progress: █████████░ 98%
 
 ## Performance Metrics
 
@@ -143,6 +143,11 @@ Recent decisions affecting current work:
 | 09-03 | Consolidated Check/Reveal/Auto-check into Settings | Reduces toolbar clutter, single menu for all actions |
 | 09-03 | Toggle switch for Auto-check (track + knob) | Better visual feedback than checkbox |
 | 09-03 | Neutral Share button with SVG icon | Consistent header button styling |
+| 09-04 | Fixed 56px clue bar height (fits 2 lines) | Consistent height, no layout jumps |
+| 09-04 | Number and text wrap as one string | Natural wrapping behavior |
+| 09-04 | Auto-shrink font 15px→13px for overflow | Long clues fit without truncation |
+| 09-04 | No visual feedback on clue bar tap | Clean, minimal interaction style |
+| 09-04 | Nav buttons styled like keyboard keys | Consistent button styling across app |
 
 ### Roadmap Evolution
 
@@ -161,5 +166,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 09-03 - Consolidated Settings menu, removed Toolbar
+Stopped at: Completed 09-04 - Clue bar improvements and theme fixes
 Resume file: None
