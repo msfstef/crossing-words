@@ -2,19 +2,16 @@
 .crossword-grid {
     --grid-gap: 2px;
     --transition-duration: 120ms;
+    /* Fixed cell size with responsive clamping */
+    --cell-size: clamp(24px, 6vmin, 36px);
 
     display: grid;
     gap: var(--grid-gap);
-    /* Square grid that fits within parent - uses min of width/height */
-    width: 100%;
-    max-width: 400px;
-    max-height: 100%;
-    aspect-ratio: 1;
+    /* Grid centers within parent */
+    justify-content: center;
     background-color: var(--color-border);
     padding: 2px;
     border-radius: 4px;
-    /* Ensure grid shrinks to fit available space */
-    flex-shrink: 1;
 }
 
 .crossword-cell {
@@ -22,7 +19,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 1;
+    /* Fixed size from grid variable, no aspect-ratio needed */
+    width: var(--cell-size);
+    height: var(--cell-size);
     border: 1px solid var(--color-border);
     user-select: none;
     transition:
@@ -64,7 +63,8 @@
 }
 
 .cell-letter {
-    font-size: 1rem;
+    /* Scale font with cell size, clamped with rem for accessibility */
+    font-size: clamp(0.7rem, calc(var(--cell-size) * 0.55), 1.2rem);
     font-weight: 600;
     text-transform: uppercase;
     color: var(--color-text);

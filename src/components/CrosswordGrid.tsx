@@ -141,8 +141,8 @@ export function CrosswordGrid({
     <div
       className="crossword-grid"
       style={{
-        gridTemplateColumns: `repeat(${puzzle.width}, 1fr)`,
-        gridTemplateRows: `repeat(${puzzle.height}, 1fr)`,
+        gridTemplateColumns: `repeat(${puzzle.width}, var(--cell-size))`,
+        gridTemplateRows: `repeat(${puzzle.height}, var(--cell-size))`,
       }}
     >
       {puzzle.grid.flat().map((cell) => {
