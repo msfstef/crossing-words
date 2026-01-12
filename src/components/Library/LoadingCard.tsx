@@ -25,6 +25,9 @@ export function LoadingCard({ title, source }: LoadingCardProps) {
           <span className="loading-card__status">Downloading...</span>
         </div>
       </div>
+
+      {/* Spacer to match PuzzleCard delete button width for smooth transition */}
+      <div className="loading-card__spacer" aria-hidden="true" />
     </div>
   );
 }

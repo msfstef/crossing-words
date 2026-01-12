@@ -56,8 +56,11 @@
 .loading-card__progress {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   flex-shrink: 0;
+  /* Match PuzzleCard progress circle area width for smooth transition */
+  min-width: 32px;
 }
 
 .loading-card__spinner {
@@ -79,6 +82,13 @@
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color-text-muted);
+}
+
+/* Spacer to match PuzzleCard delete button width */
+.loading-card__spacer {
+  width: 1.75rem; /* Same as .puzzle-card__delete */
+  height: 1.75rem;
+  flex-shrink: 0;
 }
 
 /* Mobile adjustments */

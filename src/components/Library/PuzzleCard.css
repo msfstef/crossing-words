@@ -64,6 +64,10 @@
 
 .puzzle-card__progress {
   flex-shrink: 0;
+  /* Match LoadingCard progress area for smooth transition */
+  min-width: 32px;
+  display: flex;
+  justify-content: center;
 }
 
 .puzzle-card__delete {
