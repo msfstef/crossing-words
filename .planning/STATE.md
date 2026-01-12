@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-11)
 ## Current Position
 
 Phase: 10 of 10 (Gameplay Flow Improvements)
-Plan: 1 of 3 in current phase
+Plan: 1 of 3 in current phase (+ 1 FIX plan)
 Status: In progress
-Last activity: 2026-01-12 — Completed 10-01-PLAN.md
+Last activity: 2026-01-12 — Completed 10-01-FIX.md (UAT fixes for cell sizing)
 
 Progress: █████████░ 97%
 
@@ -155,6 +155,9 @@ Recent decisions affecting current work:
 | 10-01 | Letter font scales with calc(--cell-size * 0.55) | Proportional to cell |
 | 10-01 | Clue number z-index 1, letter z-index 2 | Proper layering hierarchy |
 | 10-01 | Verified dot reduced to 4px | Subtle, behind letter |
+| 10-01-FIX | ResizeObserver for dynamic cell sizing | CSS clamp can't factor puzzle dimensions |
+| 10-01-FIX | Cell size min 16px, max 36px | Lower min allows large puzzles to fit |
+| 10-01-FIX | Container wrapper pattern | Provides sizing context for ResizeObserver |
 
 ### Roadmap Evolution
 
@@ -174,5 +177,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-12
-Stopped at: Completed 10-01-PLAN.md (fixed cell sizing)
+Stopped at: Completed 10-01-FIX.md (UAT fixes for cell sizing)
 Resume file: None
