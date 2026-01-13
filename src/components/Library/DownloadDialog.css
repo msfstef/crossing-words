@@ -48,8 +48,7 @@
   color: var(--color-text-muted);
 }
 
-.download-dialog__select,
-.download-dialog__date {
+.download-dialog__select {
   padding: 0.625rem 0.75rem;
   font-size: 0.9375rem;
   color: var(--color-text);
@@ -62,27 +61,14 @@
     background-color 150ms ease;
 }
 
-.download-dialog__select:hover,
-.download-dialog__date:hover {
+.download-dialog__select:hover {
   border-color: var(--color-accent);
 }
 
-.download-dialog__select:focus,
-.download-dialog__date:focus {
+.download-dialog__select:focus {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
-}
-
-/* Date input color scheme fix for dark theme */
-.download-dialog__date::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  cursor: pointer;
-}
-
-/* Light theme fix */
-:root:not(.dark) .download-dialog__date::-webkit-calendar-picker-indicator {
-  filter: none;
 }
 
 .download-dialog__actions {

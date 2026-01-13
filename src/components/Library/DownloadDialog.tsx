@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
+import { DatePicker } from './DatePicker';
 import './DownloadDialog.css';
 
 interface DownloadDialogProps {
@@ -14,19 +15,19 @@ interface DownloadDialogProps {
  */
 export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogProps) {
   const [sourceId, setSourceId] = useState(PUZZLE_SOURCES[0]?.id || '');
-  const [date, setDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    return today;
   });
 
   if (!isOpen) return null;
 
-  const handleDownload = () => {
-    const source = PUZZLE_SOURCES.find((s) => s.id === sourceId);
-    if (!source || !date) return;
+  const selectedSource = PUZZLE_SOURCES.find((s) => s.id === sourceId);
 
-    // Use noon to avoid timezone edge cases
-    const puzzleDate = new Date(date + 'T12:00:00');
-    onDownload(sourceId, source.name, puzzleDate);
+  const handleDownload = () => {
+    if (!selectedSource || !selectedDate) return;
+    onDownload(sourceId, selectedSource.name, selectedDate);
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -67,16 +68,11 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
           </div>
 
           <div className="download-dialog__field">
-            <label htmlFor="date-input" className="download-dialog__label">
-              Date
-            </label>
-            <input
-              id="date-input"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="download-dialog__date"
-              max={new Date().toISOString().split('T')[0]}
+            <label className="download-dialog__label">Date</label>
+            <DatePicker
+              value={selectedDate}
+              onChange={setSelectedDate}
+              availableDays={selectedSource?.availableDays}
             />
           </div>
         </div>
@@ -93,7 +89,7 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
             type="button"
             className="download-dialog__button download-dialog__button--primary"
             onClick={handleDownload}
-            disabled={!sourceId || !date}
+            disabled={!sourceId || !selectedDate}
           >
             Download
           </button>
