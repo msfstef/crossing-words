@@ -69,6 +69,8 @@ export interface P2PSession {
   connectionState: ConnectionState;
   /** Subscribe to connection state changes. Returns unsubscribe function. */
   onConnectionChange: (callback: (state: ConnectionState) => void) => () => void;
+  /** Force reconnection to peers (useful after sleep/wake cycles) */
+  reconnect: () => void;
   /** Cleanup function to destroy the session */
   destroy: () => void;
 }
@@ -207,6 +209,11 @@ export async function createP2PSession(
       return () => {
         subscribers.delete(callback);
       };
+    },
+    reconnect: () => {
+      console.debug(`[webrtcProvider] Forcing reconnection for room: ${roomId}`);
+      provider.disconnect();
+      provider.connect();
     },
     destroy: () => {
       console.debug(`[webrtcProvider] Destroying P2P session for room: ${roomId}`);
