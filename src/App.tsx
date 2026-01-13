@@ -4,12 +4,14 @@ import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
+import { SuccessDialog } from './components/SuccessDialog';
 import { SettingsMenu } from './components/SettingsMenu';
 import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
 import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
+import { useCompletionDetection } from './hooks/useCompletionDetection';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
@@ -372,6 +374,7 @@ function App() {
     revealLetter,
     revealWord,
     revealPuzzle,
+    verifyAllCells,
   } = useVerification({
     puzzle: puzzle ?? samplePuzzle,
     entries: userEntries,
@@ -382,6 +385,24 @@ function App() {
     currentWord,
     selectedCell,
   });
+
+  // Completion detection - only active when puzzle is loaded and ready
+  const { justCompleted } = useCompletionDetection({
+    puzzle: puzzle ?? samplePuzzle,
+    userEntries,
+    disabled: !puzzle || !ready,
+  });
+
+  // Success dialog state
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // Show success dialog and verify all cells when puzzle is completed
+  useEffect(() => {
+    if (justCompleted) {
+      verifyAllCells();
+      setShowSuccessDialog(true);
+    }
+  }, [justCompleted, verifyAllCells]);
 
   // Track previous entries for auto-check comparison
   const prevEntriesRef = useRef<Map<string, string>>(new Map());
@@ -664,6 +685,18 @@ function App() {
         onMerge={handleJoinMerge}
         onStartFresh={handleJoinStartFresh}
         onCancel={handleJoinCancel}
+      />
+
+      {/* Success dialog for puzzle completion */}
+      <SuccessDialog
+        isOpen={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        onBackToLibrary={() => {
+          setShowSuccessDialog(false);
+          handleBackToLibrary();
+        }}
+        puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
+        collaboratorCount={collaborators.length}
       />
 
       {/* Toast notifications */}

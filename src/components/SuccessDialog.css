@@ -1,0 +1,238 @@
+/* SuccessDialog component styles */
+
+.success-dialog {
+  /* Reset browser defaults */
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  /* Center in viewport */
+  margin: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* Backdrop styling */
+.success-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.success-dialog__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 2rem 2rem 1.75rem;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  min-width: 280px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Close button */
+.success-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.success-dialog__close:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text);
+}
+
+.success-dialog__close:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Checkmark icon */
+.success-dialog__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 0.25rem;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+.success-dialog__icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* Heading */
+.success-dialog__heading {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+/* Puzzle title */
+.success-dialog__puzzle-title {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.4;
+}
+
+/* Multiplayer note */
+.success-dialog__multiplayer-note {
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  margin: 0;
+  text-align: center;
+}
+
+/* Action buttons */
+.success-dialog__actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 0.5rem;
+}
+
+.success-dialog__button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease;
+}
+
+.success-dialog__button:active {
+  transform: scale(0.98);
+}
+
+.success-dialog__button:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Secondary button */
+.success-dialog__button--secondary {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.success-dialog__button--secondary:hover {
+  background-color: var(--color-bg);
+  border-color: var(--color-text-muted);
+}
+
+/* Primary button */
+.success-dialog__button--primary {
+  background-color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+}
+
+.success-dialog__button--primary:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 400px) {
+  .success-dialog__content {
+    padding: 1.75rem 1.25rem 1.5rem;
+    min-width: unset;
+    width: calc(100vw - 2rem);
+  }
+
+  .success-dialog__actions {
+    max-width: 100%;
+    flex-direction: column;
+  }
+
+  .success-dialog__icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .success-dialog__icon svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Animation */
+.success-dialog[open] {
+  animation: success-dialog-appear 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.success-dialog[open]::backdrop {
+  animation: backdrop-appear 150ms ease-out;
+}
+
+@keyframes success-dialog-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes backdrop-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Checkmark icon animation */
+.success-dialog[open] .success-dialog__icon svg {
+  animation: checkmark-draw 400ms ease-out 100ms both;
+}
+
+@keyframes checkmark-draw {
+  from {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+  }
+  to {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 0;
+  }
+}

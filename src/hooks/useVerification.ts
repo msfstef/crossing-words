@@ -157,6 +157,25 @@ export function useVerification({
     });
   }, [puzzle, entriesMap, verifiedMap, errorsMap, doc]);
 
+  // Verify all cells as checked (for completion)
+  const verifyAllCells = useCallback(() => {
+    doc.transact(() => {
+      for (let row = 0; row < puzzle.height; row++) {
+        for (let col = 0; col < puzzle.width; col++) {
+          const cell = puzzle.grid[row][col];
+          if (cell.isBlack || !cell.letter) continue;
+
+          const key = `${row},${col}`;
+          // Skip if already verified
+          if (verifiedMap.has(key)) continue;
+
+          verifiedMap.set(key, 'checked');
+          errorsMap.delete(key);
+        }
+      }
+    });
+  }, [puzzle, verifiedMap, errorsMap, doc]);
+
   return {
     checkLetter,
     checkWord,
@@ -164,5 +183,6 @@ export function useVerification({
     revealLetter,
     revealWord,
     revealPuzzle,
+    verifyAllCells,
   };
 }
