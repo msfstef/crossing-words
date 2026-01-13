@@ -12,15 +12,42 @@ type SourceConfig = {
   getUrl: (date: Date) => string;
 };
 
+function formatDateYYMMDD(date: Date): string {
+  const yy = String(date.getUTCFullYear()).slice(-2);
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  return `${yy}${mm}${dd}`;
+}
+
 const SOURCES: Record<string, SourceConfig> = {
   universal: {
     getUrl: (date: Date) => {
-      const yy = String(date.getUTCFullYear()).slice(-2);
-      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(date.getUTCDate()).padStart(2, '0');
-      const dateStr = `${yy}${mm}${dd}`;
-      // Martin Herbach's .puz archive (reliable source for Universal crossword)
+      const dateStr = formatDateYYMMDD(date);
       return `https://herbach.dnsalias.com/uc/uc${dateStr}.puz`;
+    },
+  },
+  'wapo-sunday': {
+    getUrl: (date: Date) => {
+      const dateStr = formatDateYYMMDD(date);
+      return `https://herbach.dnsalias.com/WaPo/wp${dateStr}.puz`;
+    },
+  },
+  wsj: {
+    getUrl: (date: Date) => {
+      const dateStr = formatDateYYMMDD(date);
+      return `https://herbach.dnsalias.com/wsj/wsj${dateStr}.puz`;
+    },
+  },
+  'universal-sunday': {
+    getUrl: (date: Date) => {
+      const dateStr = formatDateYYMMDD(date);
+      return `https://herbach.dnsalias.com/uc/ucs${dateStr}.puz`;
+    },
+  },
+  jonesin: {
+    getUrl: (date: Date) => {
+      const dateStr = formatDateYYMMDD(date);
+      return `https://herbach.dnsalias.com/Jonesin/jz${dateStr}.puz`;
     },
   },
 };

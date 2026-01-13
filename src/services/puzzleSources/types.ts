@@ -8,7 +8,7 @@ export interface PuzzleSource {
   description: string;
   format: 'puz' | 'jpz' | 'ipuz';
   requiresAuth: boolean;
-  availableDays: 'daily' | 'weekdays' | 'sunday-only';
+  availableDays: 'daily' | 'weekdays' | 'weekdays-only' | 'sunday-only' | 'thursday-only';
   /** Construct direct URL for a given date (for direct fetch attempt) */
   getDirectUrl: (date: Date) => string;
 }
