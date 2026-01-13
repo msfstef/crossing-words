@@ -22,6 +22,7 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     format: 'puz',
     requiresAuth: false,
     availableDays: 'daily',
+    requiresProxy: true,
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
       // Martin Herbach's .puz archive (reliable source for Universal crossword)
@@ -35,6 +36,7 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     format: 'puz',
     requiresAuth: false,
     availableDays: 'sunday-only',
+    requiresProxy: true,
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
       // Martin Herbach's .puz archive for Washington Post Sunday crossword
@@ -48,6 +50,7 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     format: 'puz',
     requiresAuth: false,
     availableDays: 'weekdays-only',
+    requiresProxy: true,
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
       // Martin Herbach's .puz archive for WSJ crossword
@@ -61,6 +64,7 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     format: 'puz',
     requiresAuth: false,
     availableDays: 'sunday-only',
+    requiresProxy: true,
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
       // Martin Herbach's .puz archive for Universal Sunday crossword
@@ -74,6 +78,7 @@ export const PUZZLE_SOURCES: PuzzleSource[] = [
     format: 'puz',
     requiresAuth: false,
     availableDays: 'thursday-only',
+    requiresProxy: true,
     getDirectUrl: (date: Date) => {
       const dateStr = formatDateYYMMDD(date);
       // Martin Herbach's .puz archive for Jonesin' crossword

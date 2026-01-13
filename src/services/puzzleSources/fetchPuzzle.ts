@@ -71,18 +71,20 @@ export async function fetchPuzzle(
     throw new Error('Invalid source selected');
   }
 
-  // Try direct fetch first
-  const directUrl = source.getDirectUrl(date);
-  const directResult = await tryDirectFetch(directUrl);
+  // Skip direct fetch for sources that require proxy (CORS-blocked)
+  if (!source.requiresProxy) {
+    const directUrl = source.getDirectUrl(date);
+    const directResult = await tryDirectFetch(directUrl);
 
-  if (directResult) {
-    console.log(`[fetchPuzzle] Direct fetch succeeded for ${sourceId}`);
-    return directResult;
+    if (directResult) {
+      console.log(`[fetchPuzzle] Direct fetch succeeded for ${sourceId}`);
+      return directResult;
+    }
+
+    console.log(
+      `[fetchPuzzle] Direct fetch failed for ${sourceId}, trying proxy...`
+    );
   }
 
-  // Fall back to proxy
-  console.log(
-    `[fetchPuzzle] Direct fetch failed for ${sourceId}, trying proxy...`
-  );
   return fetchViaProxy(sourceId, date);
 }
