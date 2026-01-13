@@ -34,6 +34,7 @@ export function ClueBar({
   onToggleDirection,
 }: ClueBarProps) {
   const textRef = useRef<HTMLSpanElement>(null);
+  const prevClueTextRef = useRef<string | null>(null);
   const [fontSize, setFontSize] = useState<string>(DEFAULT_FONT_SIZE);
 
   // Measure text and shrink font if needed to fit in 2 lines
@@ -41,18 +42,30 @@ export function ClueBar({
   useLayoutEffect(() => {
     if (!clue || !textRef.current) return;
 
+    // Create a stable clue identifier based on content, not object reference
+    const clueKey = `${clue.number}-${clue.direction}-${clue.text}`;
+
+    // Skip if clue content hasn't actually changed
+    if (prevClueTextRef.current === clueKey) return;
+    prevClueTextRef.current = clueKey;
+
     const el = textRef.current;
 
-    // Temporarily set to default size for measurement (direct DOM manipulation)
+    // Temporarily set to default size for measurement
     el.style.fontSize = DEFAULT_FONT_SIZE;
 
     // Measure at default size
     const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
     const maxHeight = lineHeight * 2; // 2 lines
     const needsSmallFont = el.scrollHeight > maxHeight + 2;
+    const targetSize = needsSmallFont ? SMALL_FONT_SIZE : DEFAULT_FONT_SIZE;
 
-    // Set the correct size - React will apply this on re-render before paint
-    setFontSize(needsSmallFont ? SMALL_FONT_SIZE : DEFAULT_FONT_SIZE);
+    // Apply correct size directly to DOM - this ensures correct size even if
+    // React doesn't re-render (e.g., when state value hasn't changed)
+    el.style.fontSize = targetSize;
+
+    // Also update state for consistency with React's controlled style
+    setFontSize(targetSize);
   }, [clue]);
 
   if (!clue) {
