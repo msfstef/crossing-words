@@ -576,6 +576,13 @@ export function usePuzzleState(
         return;
       }
 
+      // Handle Space bar - toggle direction
+      if (key === ' ') {
+        event.preventDefault();
+        toggleDirection();
+        return;
+      }
+
       // Handle Arrow keys
       let deltaRow = 0;
       let deltaCol = 0;
@@ -603,7 +610,7 @@ export function usePuzzleState(
         setSelectedCell(nextCell);
       }
     },
-    [selectedCell, userEntries, direction, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells]
+    [selectedCell, userEntries, direction, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells, toggleDirection]
   );
 
   // Compute current word and clue
