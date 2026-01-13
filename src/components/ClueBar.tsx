@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useLayoutEffect, useState } from 'react';
 import './ClueBar.css';
 
 interface ClueBarProps {
@@ -19,6 +19,9 @@ interface ClueBarProps {
   onToggleDirection?: () => void;
 }
 
+const DEFAULT_FONT_SIZE = '0.9375rem';
+const SMALL_FONT_SIZE = '0.8125rem';
+
 /**
  * ClueBar displays the current clue with prev/next navigation buttons
  */
@@ -31,30 +34,25 @@ export function ClueBar({
   onToggleDirection,
 }: ClueBarProps) {
   const textRef = useRef<HTMLSpanElement>(null);
-  const [fontSize, setFontSize] = useState<string>('0.9375rem');
+  const [fontSize, setFontSize] = useState<string>(DEFAULT_FONT_SIZE);
 
   // Measure text and shrink font if needed to fit in 2 lines
-  useEffect(() => {
+  // Use useLayoutEffect to measure and set size BEFORE paint (prevents flicker)
+  useLayoutEffect(() => {
     if (!clue || !textRef.current) return;
 
-    // Reset to default size first
-    setFontSize('0.9375rem');
+    const el = textRef.current;
 
-    // Use requestAnimationFrame to measure after render
-    requestAnimationFrame(() => {
-      const el = textRef.current;
-      if (!el) return;
+    // Temporarily set to default size for measurement (direct DOM manipulation)
+    el.style.fontSize = DEFAULT_FONT_SIZE;
 
-      // Check if content is clipped (scrollHeight > clientHeight means overflow)
-      // With -webkit-line-clamp, we can check if the text was truncated
-      const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
-      const maxHeight = lineHeight * 2; // 2 lines
+    // Measure at default size
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    const maxHeight = lineHeight * 2; // 2 lines
+    const needsSmallFont = el.scrollHeight > maxHeight + 2;
 
-      if (el.scrollHeight > maxHeight + 2) {
-        // Content overflows, try smaller font
-        setFontSize('0.8125rem'); // 13px
-      }
-    });
+    // Set the correct size - React will apply this on re-render before paint
+    setFontSize(needsSmallFont ? SMALL_FONT_SIZE : DEFAULT_FONT_SIZE);
   }, [clue]);
 
   if (!clue) {
