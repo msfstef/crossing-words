@@ -105,6 +105,31 @@
   line-height: 1.4;
 }
 
+/* Duration display */
+.success-dialog__duration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  margin: 0.25rem 0 0;
+}
+
+.success-dialog__duration-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.success-dialog__duration-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
 /* Multiplayer note */
 .success-dialog__multiplayer-note {
   font-size: 0.8125rem;

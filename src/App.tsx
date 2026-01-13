@@ -12,6 +12,7 @@ import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
+import { usePlayTime } from './hooks/usePlayTime';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
@@ -387,10 +388,16 @@ function App() {
   });
 
   // Completion detection - only active when puzzle is loaded and ready
-  const { justCompleted } = useCompletionDetection({
+  const { isComplete, justCompleted } = useCompletionDetection({
     puzzle: puzzle ?? samplePuzzle,
     userEntries,
     disabled: !puzzle || !ready,
+  });
+
+  // Play time tracking - syncs per-client duration to CRDT with max-wins semantics
+  const { formattedDuration } = usePlayTime({
+    doc,
+    enabled: ready && puzzle !== null && !isComplete,
   });
 
   // Success dialog state
@@ -697,6 +704,7 @@ function App() {
         }}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
         collaboratorCount={collaborators.length}
+        duration={formattedDuration}
       />
 
       {/* Toast notifications */}

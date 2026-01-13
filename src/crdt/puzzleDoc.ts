@@ -118,6 +118,13 @@ export function getErrorsMap(doc: Y.Doc): ErrorsMap {
 export type SettingsMap = Y.Map<boolean | string | number>;
 
 /**
+ * Type alias for the durations map.
+ * Keys are stable client IDs (UUID stored in localStorage).
+ * Values are durations in milliseconds.
+ */
+export type DurationsMap = Y.Map<number>;
+
+/**
  * Gets the shared settings map from a Y.Doc.
  *
  * The settings map stores puzzle-wide settings that sync across peers:
@@ -128,4 +135,18 @@ export type SettingsMap = Y.Map<boolean | string | number>;
  */
 export function getSettingsMap(doc: Y.Doc): SettingsMap {
   return doc.getMap<boolean | string | number>('settings');
+}
+
+/**
+ * Gets the shared durations map from a Y.Doc.
+ *
+ * The durations map stores per-client play time in milliseconds.
+ * Each client stores their own duration, and to get the total play time
+ * across all players, compute Math.max of all values.
+ *
+ * @param doc - The Y.Doc instance
+ * @returns The shared Y.Map for durations
+ */
+export function getDurationsMap(doc: Y.Doc): DurationsMap {
+  return doc.getMap<number>('durations');
 }

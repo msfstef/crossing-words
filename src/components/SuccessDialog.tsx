@@ -19,6 +19,8 @@ interface SuccessDialogProps {
   puzzleTitle: string;
   /** Number of collaborators (for multiplayer message) */
   collaboratorCount?: number;
+  /** Formatted play time duration (e.g., "5:23") */
+  duration?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export function SuccessDialog({
   onBackToLibrary,
   puzzleTitle,
   collaboratorCount = 0,
+  duration,
 }: SuccessDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -130,6 +133,13 @@ export function SuccessDialog({
         <h2 className="success-dialog__heading">Puzzle Complete!</h2>
 
         <p className="success-dialog__puzzle-title">{puzzleTitle}</p>
+
+        {duration && (
+          <div className="success-dialog__duration">
+            <span className="success-dialog__duration-label">Time</span>
+            <span className="success-dialog__duration-value">{duration}</span>
+          </div>
+        )}
 
         {isMultiplayer && (
           <p className="success-dialog__multiplayer-note">
