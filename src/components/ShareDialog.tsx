@@ -10,7 +10,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { shareSession, type ShareResult } from '../collaboration/sessionUrl';
+import {
+  shareSession,
+  copyToClipboard,
+  type ShareResult,
+} from '../collaboration/sessionUrl';
 import './ShareDialog.css';
 
 interface ShareDialogProps {
@@ -129,6 +133,15 @@ export function ShareDialog({
     }
   }, [shareUrl, puzzleTitle, onClose]);
 
+  const handleUrlInputClick = useCallback(
+    async (e: React.MouseEvent<HTMLInputElement>) => {
+      (e.target as HTMLInputElement).select();
+      const success = await copyToClipboard(shareUrl);
+      showCopyFeedback(success ? 'copied' : 'failed');
+    },
+    [shareUrl]
+  );
+
   const showCopyFeedback = (result: ShareResult) => {
     // Clear any existing timeout
     if (copyTimeoutRef.current) {
@@ -178,9 +191,10 @@ export function ShareDialog({
           <QRCodeSVG
             value={shareUrl}
             size={200}
-            level="M"
-            bgColor="#1a1a2e"
-            fgColor="#ffffff"
+            level="H"
+            marginSize={4}
+            bgColor="#ffffff"
+            fgColor="#000000"
           />
         </div>
 
@@ -190,8 +204,8 @@ export function ShareDialog({
             readOnly
             value={shareUrl}
             className="share-dialog__url-input"
-            onClick={(e) => (e.target as HTMLInputElement).select()}
-            aria-label="Share URL"
+            onClick={handleUrlInputClick}
+            aria-label="Share URL - tap to copy"
           />
         </div>
 

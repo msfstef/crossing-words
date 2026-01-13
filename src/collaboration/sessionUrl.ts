@@ -112,6 +112,57 @@ export function parseLegacyRoomUrl(): string | undefined {
 }
 
 /**
+ * Copy text to clipboard with cross-platform fallbacks.
+ *
+ * Uses multiple strategies to maximize compatibility:
+ * 1. Modern Clipboard API (navigator.clipboard.writeText)
+ * 2. Safari workaround (navigator.clipboard.write with ClipboardItem)
+ * 3. Legacy fallback (document.execCommand)
+ *
+ * @param text - The text to copy to clipboard
+ * @returns Promise resolving to true if successful, false otherwise
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  // Try modern Clipboard API first
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Continue to fallbacks
+    }
+  }
+
+  // Safari workaround: write() with ClipboardItem and Promise-based Blob
+  if (navigator.clipboard?.write) {
+    try {
+      const blob = new Blob([text], { type: 'text/plain' });
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'text/plain': Promise.resolve(blob) }),
+      ]);
+      return true;
+    } catch {
+      // Continue to legacy fallback
+    }
+  }
+
+  // Legacy fallback: execCommand (deprecated but widely supported)
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+  document.body.appendChild(textarea);
+  try {
+    textarea.select();
+    const success = document.execCommand('copy');
+    return success;
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+/**
  * Result type for shareSession function.
  */
 export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed';
@@ -158,13 +209,9 @@ export async function shareSession(url: string, title: string): Promise<ShareRes
     }
   }
 
-  // Fallback: copy to clipboard
-  try {
-    await navigator.clipboard.writeText(url);
-    return 'copied';
-  } catch {
-    return 'failed';
-  }
+  // Fallback: copy to clipboard using robust cross-platform function
+  const success = await copyToClipboard(url);
+  return success ? 'copied' : 'failed';
 }
 
 /**
