@@ -65,3 +65,24 @@
 .solve-layout__keyboard:empty {
   display: none;
 }
+
+/* Desktop layout: center content vertically instead of pushing to bottom */
+@media (min-width: 768px) {
+  .solve-layout {
+    justify-content: center;
+  }
+
+  .solve-layout__grid {
+    flex: 0 1 auto;
+  }
+
+  .solve-layout__clue-bar {
+    margin-top: 1rem;
+  }
+
+  .solve-layout__keyboard {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+  }
+}

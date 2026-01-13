@@ -86,3 +86,14 @@
     font-size: 18px;
   }
 }
+
+/* Desktop keyboard styling */
+@media (min-width: 768px) {
+  .crossword-keyboard {
+    max-width: 500px;
+  }
+
+  .crossword-keyboard-theme.simple-keyboard {
+    border-radius: 8px;
+  }
+}

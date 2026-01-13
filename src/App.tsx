@@ -763,7 +763,7 @@ function App() {
           />
         }
         keyboard={
-          isTouchDevice && puzzle && ready ? (
+          puzzle && ready ? (
             <CrosswordKeyboard
               onKeyPress={typeLetter}
               onBackspace={handleBackspace}
