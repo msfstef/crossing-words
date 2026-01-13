@@ -802,8 +802,11 @@ function App() {
         }}
         onBackToLibrary={() => {
           setShowSuccessDialog(false);
-          cleanupDialogState('success');
+          // Navigate to library via React state and clear URL hash
           handleBackToLibrary();
+          // Go back 2 entries in history (past dialog and solve entries) to library
+          // This prevents browser back from returning to puzzle with stale hash
+          window.history.go(-2);
         }}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
         collaboratorCount={collaborators.length}
