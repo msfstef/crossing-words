@@ -105,27 +105,20 @@ export function useCompletionDetection({
   // Track if we've ever seen an incomplete state (synchronously during render)
   // This ensures we catch the incomplete state even if reveal happens immediately.
   //
-  // IMPORTANT: We use TWO conditions to prevent false triggers when opening
-  // already-complete puzzles:
+  // IMPORTANT: We use "isStable" to prevent false triggers when opening
+  // already-complete puzzles. isStable ensures we only track after the first
+  // render where enabled=true, giving time for the initial CRDT sync.
   //
-  // 1. "isStable" - Only track after the first render where enabled=true.
-  //    This gives time for the initial CRDT sync to React state.
-  //
-  // 2. "userEntries.size > 0" - Only track if there are actual entries.
-  //    During CRDT loading, entries may briefly be empty even though the
-  //    puzzle is complete. By requiring entries, we ensure we only track
-  //    when the user has actually started solving.
-  //
-  // Together, these conditions mean:
+  // This means:
   // - Loading complete puzzle: entries go 0→N (complete), never tracks, no dialog
-  // - Manual solving: user types → entries>0 + incomplete → tracks → complete → dialog!
-  // - Reveal after typing: entries>0 + incomplete → tracks → reveal → dialog!
-  // - Reveal on empty puzzle: entries go 0→N (complete), never tracks, no dialog
-  //   (This is acceptable - immediate reveal on empty puzzle isn't a "completion")
+  //   (isStable is false on first render when CRDT syncs)
+  // - Manual solving: user types → incomplete → tracks → complete → dialog!
+  // - Reveal after typing: incomplete → tracks → reveal → dialog!
+  // - Reveal on empty puzzle: incomplete on first stable render → tracks → reveal → dialog!
   const isEnabled = !disabled;
   const isStable = wasEnabledRef.current; // Were we enabled last render?
 
-  if (isStable && !isFilledCorrectly && userEntries.size > 0) {
+  if (isStable && !isFilledCorrectly) {
     hasSeenIncompleteRef.current = true;
   }
 
