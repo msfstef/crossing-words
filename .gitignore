@@ -25,3 +25,8 @@ dist-ssr
 
 # Cloudflare Workers
 .wrangler/
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+.playwright-mcp/
