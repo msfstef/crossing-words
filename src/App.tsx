@@ -396,6 +396,7 @@ function App() {
     typeLetter,
     handleBackspace,
     toggleDirection,
+    handleSwipeNavigation,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Use verification hook for check/reveal actions
@@ -728,6 +729,8 @@ function App() {
             localUserColor={localUser.color}
             verifiedCells={verifiedCells}
             errorCells={errorCells}
+            onSwipe={handleSwipeNavigation}
+            isTouchDevice={isTouchDevice}
           />
         </>
       )}
