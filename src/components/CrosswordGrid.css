@@ -47,6 +47,7 @@
 .crossword-cell.cell--white {
     background-color: var(--color-cell-bg);
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .crossword-cell.cell--white:hover {
