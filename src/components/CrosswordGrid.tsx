@@ -28,6 +28,52 @@ function calculateCellSize(
   return Math.max(16, Math.min(cellSize, 36));
 }
 
+/**
+ * Calculate initial cell size estimate from viewport dimensions.
+ * Uses known layout constants to provide a starting value that eliminates
+ * the flash of 0-size grid. ResizeObserver corrects any discrepancy.
+ */
+function getInitialCellSize(
+  cols: number,
+  rows: number,
+  isTouchDevice: boolean
+): number {
+  // SSR fallback
+  if (typeof window === 'undefined') {
+    return 30;
+  }
+
+  // Layout constants from SolveLayout.css
+  const HEADER_HEIGHT = 48;
+  const CLUE_BAR_HEIGHT = 52;
+  const CLUE_BAR_PADDING = 8; // 0.25rem * 2
+  const KEYBOARD_HEIGHT = 160;
+  const GRID_PADDING = 16; // 8px each side
+
+  // Title and author above grid (estimates from CSS)
+  const TITLE_HEIGHT = 24; // ~1.25rem
+  const AUTHOR_HEIGHT = 16; // ~0.75rem + margin
+  const ABOVE_GRID_MARGIN = 8; // margins between elements
+
+  // Calculate available space
+  let availableHeight = window.innerHeight
+    - HEADER_HEIGHT
+    - CLUE_BAR_HEIGHT
+    - CLUE_BAR_PADDING
+    - GRID_PADDING
+    - TITLE_HEIGHT
+    - AUTHOR_HEIGHT
+    - ABOVE_GRID_MARGIN;
+
+  if (isTouchDevice) {
+    availableHeight -= KEYBOARD_HEIGHT;
+  }
+
+  const availableWidth = window.innerWidth - GRID_PADDING;
+
+  return calculateCellSize(availableWidth, availableHeight, cols, rows);
+}
+
 interface CrosswordGridProps {
   puzzle: Puzzle;
   userEntries: Map<string, string>;
@@ -124,7 +170,8 @@ function hexToRgba(hex: string, alpha: number): string {
 
 /**
  * CrosswordGrid renders the puzzle grid with cells that can display letters.
- * Uses ResizeObserver to dynamically calculate cell size based on available space.
+ * Cell size is pre-calculated from viewport dimensions for instant rendering,
+ * then refined via ResizeObserver to match actual container dimensions.
  */
 export function CrosswordGrid({
   puzzle,
@@ -147,11 +194,15 @@ export function CrosswordGrid({
     onSwipe: onSwipe ?? (() => {}),
     enabled: isTouchDevice && Boolean(onSwipe),
   });
-  // Cell size state - starts with 0 (hidden), updates via ResizeObserver
-  const [cellSize, setCellSize] = useState(0);
+  // Cell size state - initialize with estimate from viewport dimensions
+  // ResizeObserver corrects any discrepancy after mount
+  const [cellSize, setCellSize] = useState(() =>
+    getInitialCellSize(puzzle.width, puzzle.height, isTouchDevice)
+  );
 
-  // useLayoutEffect to measure before first paint (prevents flash)
-  // ResizeObserver handles subsequent size changes
+  // useLayoutEffect to correct initial estimate and handle dynamic resizing
+  // Initial estimate from getInitialCellSize is usually accurate,
+  // but ResizeObserver ensures we match actual container dimensions
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -173,9 +224,6 @@ export function CrosswordGrid({
 
     return () => observer.disconnect();
   }, [puzzle.width, puzzle.height]);
-
-  // Don't render grid until we've measured (prevents flash of wrong size)
-  const isReady = cellSize > 0;
 
   /**
    * Check if a cell is part of the currently selected word
@@ -236,8 +284,6 @@ export function CrosswordGrid({
       className="crossword-grid-container"
       style={{
         '--cell-size': `${cellSize}px`,
-        // Hide until measured to prevent flash of wrong size
-        opacity: isReady ? 1 : 0,
       } as React.CSSProperties}
       {...swipeHandlers}
     >
