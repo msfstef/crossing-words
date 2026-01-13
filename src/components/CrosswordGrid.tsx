@@ -284,20 +284,21 @@ export function CrosswordGrid({
         if (inWord && !isSelected && localUserColor) {
           cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
         }
-        // Local user's selected cell (prominent outline)
+        // Local user's selected cell (prominent outline with glow)
         if (isSelected && localUserColor) {
           cellStyle.outline = `3px solid ${localUserColor}`;
           cellStyle.outlineOffset = '-3px';
+          cellStyle.boxShadow = `0 0 0 2px ${hexToRgba(localUserColor, 0.4)}, inset 0 0 8px ${hexToRgba(localUserColor, 0.3)}`;
           cellStyle.zIndex = 10; // Above collaborator cursors
-          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.15);
+          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
         }
         // Collaborator word highlight (very subtle)
         if (hasCollaboratorHighlight) {
           cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
         }
-        // Collaborator cursor (subtle outline)
+        // Collaborator cursor (subtle outline, blends with their highlight)
         if (hasCollaboratorCursor) {
-          cellStyle.outline = `2px solid ${hexToRgba(cursorColor, 0.5)}`;
+          cellStyle.outline = `2px solid ${hexToRgba(cursorColor, 0.35)}`;
           cellStyle.outlineOffset = '-2px';
           cellStyle.zIndex = 5;
         }
