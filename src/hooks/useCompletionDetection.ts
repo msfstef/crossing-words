@@ -54,9 +54,12 @@ export function useCompletionDetection({
 }: UseCompletionDetectionOptions): UseCompletionDetectionReturn {
   // Track whether we've already triggered justCompleted
   const [hasTriggered, setHasTriggered] = useState(false);
-  // Track the previous completion state to detect transitions
-  const prevCompleteRef = useRef<boolean | null>(null);
+  // Track if we've ever seen the puzzle in an incomplete state
+  // This is updated synchronously during render to avoid timing issues with effects
+  const hasSeenIncompleteRef = useRef<boolean>(false);
   const puzzleIdRef = useRef<string>('');
+  // Track if we were enabled on the previous render (used to detect first render after ready)
+  const wasEnabledRef = useRef<boolean>(false);
 
   // Generate a stable puzzle identifier
   const puzzleId = puzzle.title;
@@ -87,40 +90,65 @@ export function useCompletionDetection({
   }, [fillableCells, userEntries, disabled]);
 
   // Reset state when puzzle changes
+  if (puzzleIdRef.current !== puzzleId) {
+    puzzleIdRef.current = puzzleId;
+    hasSeenIncompleteRef.current = false;
+    wasEnabledRef.current = false;
+    // Note: setHasTriggered is handled in effect below to avoid setState during render
+  }
+
+  // Reset hasTriggered when puzzle changes (must be in effect, not during render)
   useEffect(() => {
-    if (puzzleIdRef.current !== puzzleId) {
-      puzzleIdRef.current = puzzleId;
-      prevCompleteRef.current = null;
-      setHasTriggered(false);
-    }
+    setHasTriggered(false);
   }, [puzzleId]);
 
-  // Detect transition from incomplete to complete
-  // justCompleted is true only when:
-  // 1. We have a previous state (not first observation)
-  // 2. Previous state was NOT complete
-  // 3. Current state IS complete
-  // 4. We haven't already triggered
-  const wasIncomplete = prevCompleteRef.current === false;
-  const justCompleted = wasIncomplete && isFilledCorrectly && !hasTriggered;
+  // Track if we've ever seen an incomplete state (synchronously during render)
+  // This ensures we catch the incomplete state even if reveal happens immediately.
+  //
+  // IMPORTANT: We use TWO conditions to prevent false triggers when opening
+  // already-complete puzzles:
+  //
+  // 1. "isStable" - Only track after the first render where enabled=true.
+  //    This gives time for the initial CRDT sync to React state.
+  //
+  // 2. "userEntries.size > 0" - Only track if there are actual entries.
+  //    During CRDT loading, entries may briefly be empty even though the
+  //    puzzle is complete. By requiring entries, we ensure we only track
+  //    when the user has actually started solving.
+  //
+  // Together, these conditions mean:
+  // - Loading complete puzzle: entries go 0→N (complete), never tracks, no dialog
+  // - Manual solving: user types → entries>0 + incomplete → tracks → complete → dialog!
+  // - Reveal after typing: entries>0 + incomplete → tracks → reveal → dialog!
+  // - Reveal on empty puzzle: entries go 0→N (complete), never tracks, no dialog
+  //   (This is acceptable - immediate reveal on empty puzzle isn't a "completion")
+  const isEnabled = !disabled;
+  const isStable = wasEnabledRef.current; // Were we enabled last render?
 
-  // Update the previous state ref and trigger state after render
+  if (isStable && !isFilledCorrectly && userEntries.size > 0) {
+    hasSeenIncompleteRef.current = true;
+  }
+
+  // Update for next render
+  wasEnabledRef.current = isEnabled;
+
+  // Detect completion:
+  // justCompleted is true when:
+  // 1. We've seen the puzzle in an incomplete state at some point
+  // 2. The puzzle IS now complete
+  // 3. We haven't already triggered
+  //
+  // This approach avoids timing issues with effects - if the puzzle was already
+  // complete when first loaded, hasSeenIncompleteRef will be false and we won't trigger.
+  // If the puzzle was incomplete and becomes complete (via typing or reveal), we trigger.
+  const justCompleted = hasSeenIncompleteRef.current && isFilledCorrectly && !hasTriggered;
+
+  // Mark as triggered when completion is detected
   useEffect(() => {
-    // If this is our first observation (prevCompleteRef is null), just record the state
-    // Don't trigger dialog for already-complete puzzles
-    if (prevCompleteRef.current === null) {
-      prevCompleteRef.current = isFilledCorrectly;
-      return;
-    }
-
-    // If we just completed, mark as triggered
-    if (!prevCompleteRef.current && isFilledCorrectly && !hasTriggered) {
+    if (justCompleted) {
       setHasTriggered(true);
     }
-
-    // Update previous state
-    prevCompleteRef.current = isFilledCorrectly;
-  }, [isFilledCorrectly, hasTriggered]);
+  }, [justCompleted]);
 
   // Reset function for external use
   const resetCompletion = () => {
