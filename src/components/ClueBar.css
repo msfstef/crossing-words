@@ -106,6 +106,7 @@
 /* Tappable content for direction toggle - no visual feedback */
 .clue-bar__content--tappable {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .clue-bar__content--tappable:focus {
