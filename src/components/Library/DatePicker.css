@@ -77,6 +77,32 @@
   }
 }
 
+/* Upward-opening dropdown variant */
+.datepicker__dropdown--upward {
+  top: auto;
+  bottom: calc(100% + 6px);
+  animation: datepicker-slide-in-upward 150ms ease-out;
+}
+
+@keyframes datepicker-slide-in-upward {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Constrain dropdown height on small viewports */
+@media (max-height: 500px) {
+  .datepicker__dropdown {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+}
+
 /* Header with Navigation */
 .datepicker__header {
   display: flex;

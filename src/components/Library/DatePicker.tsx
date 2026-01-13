@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import './DatePicker.css';
 
 type AvailableDays =
@@ -77,13 +77,50 @@ export function DatePicker({
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => value || new Date());
+  const [openUpward, setOpenUpward] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDayOfMonth = getFirstDayOfMonth(viewYear, viewMonth);
+
+  // Calculate dropdown direction based on available viewport space
+  useLayoutEffect(() => {
+    if (!isOpen || !containerRef.current || !dropdownRef.current) return;
+
+    const container = containerRef.current;
+    const dropdown = dropdownRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const dropdownHeight = dropdown.offsetHeight;
+
+    // Space below the trigger button
+    const spaceBelow = window.innerHeight - containerRect.bottom;
+    // Space above the trigger button
+    const spaceAbove = containerRect.top;
+
+    // Add some padding to account for margins
+    const padding = 16;
+
+    // Determine if dropdown fits in each direction
+    const fitsBelow = spaceBelow >= dropdownHeight + padding;
+    const fitsAbove = spaceAbove >= dropdownHeight + padding;
+
+    // Decision logic:
+    // 1. If fits below, open downward (default)
+    // 2. If doesn't fit below but fits above, open upward
+    // 3. If neither fits, open in direction with more space
+    if (fitsBelow) {
+      setOpenUpward(false);
+    } else if (fitsAbove) {
+      setOpenUpward(true);
+    } else {
+      // Neither fits - choose direction with more space
+      setOpenUpward(spaceAbove > spaceBelow);
+    }
+  }, [isOpen]);
 
   // Close on outside click
   useEffect(() => {
@@ -196,7 +233,12 @@ export function DatePicker({
       </button>
 
       {isOpen && (
-        <div className="datepicker__dropdown" role="dialog" aria-modal="true">
+        <div
+          ref={dropdownRef}
+          className={`datepicker__dropdown ${openUpward ? 'datepicker__dropdown--upward' : ''}`}
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="datepicker__header">
             <button
               type="button"
