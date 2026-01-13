@@ -2,12 +2,31 @@
 
 A cross-platform, peer-to-peer multiplayer crossword application where people can solve crosswords together simultaneously and collaboratively.
 
-## Goals
+**[Try it now at msfstef.dev/crossing-words](https://msfstef.dev/crossing-words/)**
 
-- **Cross-platform**: Run on web, desktop, and mobile
-- **Peer-to-peer**: No central server required for gameplay
-- **Real-time collaboration**: Multiple players solving the same puzzle simultaneously
-- **Collaborative**: Work together to complete crosswords as a team
+## Features
+
+- **Real-time collaboration** - Solve puzzles together with friends, seeing each other's inputs instantly
+- **Peer-to-peer sync** - No central server storing your data; puzzle state syncs directly between devices
+- **Cross-platform** - Works on any device with a modern browser (desktop, tablet, mobile)
+- **Offline-capable** - Install as a PWA and solve puzzles offline; changes sync when you reconnect
+- **Multiple puzzle sources** - Download puzzles from Universal Crossword, Washington Post, Wall Street Journal, and more
+
+## How It Works
+
+Crossing Words uses WebRTC for peer-to-peer communication, allowing puzzle state to sync directly between collaborators without going through a central server. The app uses CRDTs (Conflict-free Replicated Data Types) via Yjs to handle concurrent edits gracefully.
+
+### Network Considerations
+
+Since the app relies on WebRTC for peer-to-peer connections:
+
+- **Firewalls & VPNs** - Strict corporate firewalls or VPNs may block WebRTC connections, preventing collaboration from working
+- **NAT traversal** - The app uses a TURN relay server as fallback, but some network configurations may still cause issues
+- **Local-only mode** - If P2P connections fail, you can still solve puzzles locally; they'll sync when connectivity is restored
+
+## Built with Claude Code
+
+This project was built entirely using [Claude Code](https://claude.ai/code), Anthropic's agentic coding tool. From initial scaffolding to feature implementation, bug fixes, and documentation - every line of code was written through conversational AI pair programming.
 
 ## Development
 
