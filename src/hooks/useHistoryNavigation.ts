@@ -101,6 +101,13 @@ export function useHistoryNavigation({
 
       // Handle view navigation
       if (state?.type === 'library' || !state) {
+        // Check if URL has a hash indicating a solve session
+        // If so, don't navigate to library - let the hashchange handler process it
+        const hash = window.location.hash;
+        if (hash && hash.includes('puzzle=') && hash.includes('timeline=')) {
+          handlingPopstateRef.current = false;
+          return;
+        }
         onNavigateToLibrary();
       }
       // If state is 'solve', the view should already be solve (forward navigation)

@@ -104,6 +104,12 @@ function App() {
     Boolean(initialSession.timelineId && initialSession.puzzleIdFromUrl)
   );
 
+  // Track if initial session load is complete (needed to avoid race condition)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(
+    // If no URL session, we're already done with initial load
+    !initialSession.timelineId || !initialSession.puzzleIdFromUrl
+  );
+
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -142,6 +148,8 @@ function App() {
           setWaitingForPuzzle(true);
         }
       }
+      // Mark initial load as complete so pending timeline processing can proceed
+      setInitialLoadComplete(true);
     };
 
     handleSharedSession();
@@ -153,9 +161,10 @@ function App() {
 
   // Listen for hash changes to detect shared timeline from URL
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleHashChange = async () => {
       const session = getSessionFromHash();
       const newTimeline = session.timelineId ?? null;
+      const newPuzzleId = session.puzzleIdFromUrl ?? null;
 
       // If timeline is already active or being processed, skip
       if (newTimeline === timelineId || newTimeline === pendingUrlTimeline) {
@@ -166,17 +175,38 @@ function App() {
       if (newTimeline) {
         setPendingUrlTimeline(newTimeline);
         setActiveView('solve');
+
+        // If coming from library view (no puzzle loaded), also load the puzzle
+        if (newPuzzleId && !puzzle) {
+          const storedPuzzle = await loadPuzzleById(newPuzzleId);
+          if (storedPuzzle) {
+            setPuzzle(storedPuzzle);
+            setActivePuzzleId(newPuzzleId);
+          } else {
+            // We don't have this puzzle - wait for it from sharer
+            setActivePuzzleId(newPuzzleId);
+            setUrlPuzzleId(newPuzzleId);
+            setWaitingForPuzzle(true);
+          }
+        }
       }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [timelineId, pendingUrlTimeline]);
+  }, [timelineId, pendingUrlTimeline, puzzle]);
 
   // Process pending URL timeline when puzzle is loaded
   // This checks for conflicts and shows dialog if needed
   useEffect(() => {
     // Skip if no pending timeline or already active
     if (!pendingUrlTimeline || pendingUrlTimeline === timelineId) {
+      return;
+    }
+
+    // Wait for initial load to complete before processing
+    // This avoids race condition where we join immediately before knowing
+    // if we have local progress for the puzzle
+    if (!initialLoadComplete) {
       return;
     }
 
@@ -227,7 +257,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [pendingUrlTimeline, puzzleId, timelineId, waitingForPuzzle, urlPuzzleId]);
+  }, [pendingUrlTimeline, puzzleId, timelineId, waitingForPuzzle, urlPuzzleId, initialLoadComplete]);
 
   /**
    * Handle merge choice from JoinDialog.
@@ -494,13 +524,13 @@ function App() {
     if (!wasOpen && isOpen) {
       pushDialog('join');
     }
-    // Clean up dialog state when JoinDialog closes via handler (not back button)
-    if (wasOpen && !isOpen) {
-      cleanupDialogState('join');
-    }
+    // Note: We don't call cleanupDialogState for JoinDialog because the handlers
+    // (handleJoinMerge, handleJoinStartFresh, handleJoinCancel) already manage
+    // the URL hash and state. Calling history.back() would restore the old URL
+    // with the hash, which would re-trigger the dialog.
 
     prevJoinDialogOpenRef.current = isOpen;
-  }, [joinDialogState.isOpen, pushDialog, cleanupDialogState]);
+  }, [joinDialogState.isOpen, pushDialog]);
 
   // Detect touch device for virtual keyboard display
   // Uses pointer: coarse media query which matches touch devices
