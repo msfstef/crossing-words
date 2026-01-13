@@ -579,14 +579,6 @@ function App() {
         <div className="puzzle-loading">Loading puzzle state...</div>
       ) : (
         <>
-          {/* Connecting banner - inside grid area */}
-          {roomId && connectionState === 'connecting' && (
-            <div className="connecting-banner">
-              <span className="connecting-banner__spinner" />
-              <span>Connecting to collaborators...</span>
-            </div>
-          )}
-
           {error && (
             <div className="error-banner">
               <span className="error-banner__message">{error}</span>

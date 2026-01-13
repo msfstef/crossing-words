@@ -66,10 +66,15 @@ export function SolveHeader({
 
       {/* Connection indicator - show in P2P mode */}
       {isP2PSession && (
-        <div
-          className={`solve-header__connection solve-header__connection--${connectionState}`}
-          title={`${connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}`}
-        />
+        <div className={`solve-header__connection solve-header__connection--${connectionState}`}>
+          {connectionState === 'connecting' && (
+            <>
+              <span className="solve-header__connection-spinner" />
+              <span>Connecting</span>
+            </>
+          )}
+          {connectionState === 'connected' && <span>Connected</span>}
+        </div>
       )}
 
       {/* Share button - neutral styling with share icon */}
