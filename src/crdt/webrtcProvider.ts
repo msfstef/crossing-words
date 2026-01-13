@@ -293,31 +293,60 @@ export async function createP2PSession(
   // Set up awareness
   cleanupAwareness = setupAwareness(currentAwareness);
 
-  // Track if WebRTC connected successfully
-  let webrtcConnected = false;
+  // Track if we have actual peer connections (not just signaling)
+  // The y-webrtc 'status' event fires for signaling connection, not peer connections
+  // We need to check awareness for actual peers to detect if WebRTC is working
+  let hasPeers = false;
+  let signalingConnected = false;
 
-  // Listen to WebRTC provider status
-  webrtcProvider.on('status', (event: { connected: boolean }) => {
-    if (event.connected) {
-      webrtcConnected = true;
-      // Cancel fallback timeout if connected
+  // Check for actual peers via awareness
+  // If other clients appear in awareness, WebRTC is actually working
+  const checkForPeers = () => {
+    const peerCount = currentAwareness.getStates().size - 1; // Exclude self
+    if (peerCount > 0 && !hasPeers) {
+      hasPeers = true;
+      console.debug(`[P2P] Found ${peerCount} peer(s) via awareness`);
+      // Cancel fallback timeout since we have actual peers
       if (fallbackTimeout) {
         clearTimeout(fallbackTimeout);
         fallbackTimeout = null;
       }
       updateConnectionState('connected');
+    }
+  };
+
+  // Listen for awareness changes to detect peers
+  currentAwareness.on('change', checkForPeers);
+  // Also check immediately in case peers are already present
+  checkForPeers();
+
+  // Listen to WebRTC provider status (signaling connection)
+  webrtcProvider.on('status', (event: { connected: boolean }) => {
+    if (event.connected) {
+      signalingConnected = true;
+      console.debug('[P2P] Signaling connected, waiting for peers...');
+      // Don't update connection state yet - wait for actual peers
+      // Only update to 'connected' if we already have peers
+      if (hasPeers) {
+        updateConnectionState('connected');
+      }
     } else {
-      // Only update to disconnected if we were previously connected
-      // (not during initial connecting phase)
-      if (webrtcConnected) {
+      signalingConnected = false;
+      // Only update to disconnected if we had peers before
+      if (hasPeers) {
         updateConnectionState('disconnected');
       }
     }
   });
 
   // Set up fallback timeout
+  // Trigger fallback if no actual peers discovered after timeout
+  // (regardless of signaling connection status)
   fallbackTimeout = setTimeout(() => {
-    if (!webrtcConnected && !isDestroyed) {
+    if (!hasPeers && !isDestroyed) {
+      console.debug('[P2P] No peers discovered after timeout, signaling connected:', signalingConnected);
+      // Clean up awareness listener before fallback
+      currentAwareness.off('change', checkForPeers);
       createWebsocketFallback();
     }
   }, WEBRTC_FALLBACK_TIMEOUT);
@@ -352,6 +381,8 @@ export async function createP2PSession(
       console.debug(`[P2P] Destroying session for room: ${roomId}`);
       isDestroyed = true;
       if (fallbackTimeout) clearTimeout(fallbackTimeout);
+      // Clean up peer check listener
+      currentAwareness.off('change', checkForPeers);
       if (cleanupAwareness) cleanupAwareness();
       connectionSubscribers.clear();
       transportSubscribers.clear();

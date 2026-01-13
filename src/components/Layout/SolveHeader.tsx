@@ -70,15 +70,17 @@ export function SolveHeader({
         </div>
       )}
 
-      {/* Offline indicator - only show when offline */}
-      {!isOnline && (
+      {/* Offline indicator - only show when offline AND not connected via P2P
+          navigator.onLine is unreliable (especially with VPNs), so if P2P is
+          connected, trust that over the browser's online status */}
+      {!isOnline && !(isP2PSession && connectionState === 'connected') && (
         <div className="solve-header__offline" title="You are offline">
           <span className="solve-header__offline-text">Offline</span>
         </div>
       )}
 
-      {/* Connection indicator - only show in P2P mode and when online */}
-      {isP2PSession && isOnline && (
+      {/* Connection indicator - show in P2P mode (regardless of navigator.onLine) */}
+      {isP2PSession && (
         <div
           className="solve-header__connection-wrapper"
           title={`${connectionState === 'connected' ? (transportType === 'webrtc' ? 'P2P Connected' : 'Relay Connected') : connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}`}
