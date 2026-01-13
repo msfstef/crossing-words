@@ -56,3 +56,38 @@ npx playwright test e2e/collaboration.spec.ts
 ```
 
 Note: Playwright tests automatically start the signaling server via `playwright.config.ts`.
+
+## Deployment
+
+The app consists of two components that need to be deployed:
+
+### 1. Frontend (GitHub Pages)
+
+The frontend is automatically deployed to GitHub Pages when changes are pushed to `main`.
+
+- **URL**: `https://msfstef.dev/crossing-words/`
+- **Workflow**: `.github/workflows/deploy.yml`
+
+### 2. Proxy/Signaling Server (Cloudflare Workers)
+
+The Cloudflare Worker provides:
+- WebRTC signaling server for peer-to-peer collaboration
+- CORS proxy for fetching puzzles
+
+**Important**: The proxy MUST be deployed for peer-to-peer collaboration to work in production.
+
+#### Required GitHub Secrets
+
+Set these in your GitHub repository settings:
+- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with Workers Deploy permission
+- `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+
+#### Manual Deployment
+
+```bash
+cd proxy
+npm install
+wrangler deploy
+```
+
+See [`proxy/README.md`](./proxy/README.md) for detailed deployment instructions.
