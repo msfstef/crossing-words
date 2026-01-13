@@ -93,6 +93,10 @@ interface CrosswordGridProps {
   onSwipe?: (direction: SwipeDirection) => void;
   /** Whether the device supports touch */
   isTouchDevice?: boolean;
+  /** Set of cells from referenced clues (whole word highlight) - "row,col" format */
+  referencedClueCells?: Set<string>;
+  /** Set of cells from letter-range references (individual cell highlight) - "row,col" format */
+  letterReferenceCells?: Set<string>;
 }
 
 /**
@@ -185,6 +189,8 @@ export function CrosswordGrid({
   errorCells = new Set(),
   onSwipe,
   isTouchDevice = false,
+  referencedClueCells = new Set(),
+  letterReferenceCells = new Set(),
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
@@ -316,6 +322,12 @@ export function CrosswordGrid({
         const isVerified = verifiedCells.has(key);
         const hasError = errorCells.has(key);
 
+        // Check clue reference highlights
+        // Whole-clue references: only show when not in current word (avoid visual conflict)
+        // Letter-specific references: show even in current word (for "letters X-Y here" patterns)
+        const isReferencedClue = referencedClueCells.has(key) && !inWord && !isSelected;
+        const isReferencedLetter = letterReferenceCells.has(key);
+
         // Determine if local user has a color (in collaborative mode)
         const hasLocalColor = Boolean(localUserColor);
 
@@ -331,6 +343,9 @@ export function CrosswordGrid({
           hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
           isVerified ? "cell--verified" : "",
           hasError ? "cell--error" : "",
+          // Clue reference highlights (champagne/gold color)
+          isReferencedClue ? "cell--referenced-clue" : "",
+          isReferencedLetter ? "cell--referenced-letter" : "",
         ]
           .filter(Boolean)
           .join(" ");

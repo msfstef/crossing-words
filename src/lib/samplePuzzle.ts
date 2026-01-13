@@ -101,9 +101,9 @@ export const samplePuzzle: Puzzle = {
   grid: createGrid(),
   clues: {
     across: [
-      { number: 1, direction: 'across', text: 'Celestial body', row: 0, col: 0, length: 4 },
-      { number: 4, direction: 'across', text: 'Not high', row: 1, col: 2, length: 3 },
-      { number: 5, direction: 'across', text: 'Troubles', row: 2, col: 0, length: 4 },
+      { number: 1, direction: 'across', text: 'Celestial body (See 1-Down)', row: 0, col: 0, length: 4 },
+      { number: 4, direction: 'across', text: 'Not high (letters 2-3 of 2-Down)', row: 1, col: 2, length: 3 },
+      { number: 5, direction: 'across', text: 'Troubles (letters 1-2 here spell a word)', row: 2, col: 0, length: 4 },
       { number: 6, direction: 'across', text: 'Beats', row: 4, col: 1, length: 4 },
     ],
     down: [

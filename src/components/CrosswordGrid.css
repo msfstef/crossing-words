@@ -149,3 +149,32 @@
     /* Position relative needed for z-index to work */
     position: relative;
 }
+
+/* ============================================================================
+ * Clue Reference Highlights
+ * Shows cells referenced by the current clue (e.g., "See 17-Across")
+ * Uses champagne/gold color to differentiate from current word (terracotta)
+ * ============================================================================ */
+
+/* Whole clue reference - subtle background highlight */
+.cell--referenced-clue {
+    background-color: var(--color-warning-bg) !important;
+}
+
+/* Letter-specific reference - more prominent with outline */
+/* Works for both external references AND self-references ("letters X-Y here") */
+.cell--referenced-letter {
+    background-color: color-mix(in srgb, var(--color-warning) 25%, transparent) !important;
+    outline: 2px solid var(--color-warning) !important;
+    outline-offset: -2px;
+    position: relative;
+    z-index: 3;
+}
+
+/* Ensure letter reference outline shows even when cell is in current word */
+/* This handles "letters X-Y here" self-references */
+.crossword-cell.cell--in-word.cell--referenced-letter,
+.crossword-cell.cell--selected.cell--referenced-letter {
+    outline: 2px solid var(--color-warning) !important;
+    outline-offset: -2px;
+}

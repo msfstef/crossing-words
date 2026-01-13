@@ -10,6 +10,7 @@ import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
 import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
+import { useClueReferences } from './hooks/useClueReferences';
 import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
 import { usePlayTime } from './hooks/usePlayTime';
@@ -399,6 +400,19 @@ function App() {
     handleSwipeNavigation,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
+  // Build set of current word cells for reference highlight exclusion
+  const currentWordCells = useMemo(() => {
+    if (!currentWord) return new Set<string>();
+    return new Set(currentWord.map((cell) => `${cell.row},${cell.col}`));
+  }, [currentWord]);
+
+  // Use clue reference hook for highlighting referenced clues
+  const { referencedClueCells, letterReferenceCells } = useClueReferences({
+    puzzle,
+    currentClue,
+    currentWordCells,
+  });
+
   // Use verification hook for check/reveal actions
   const {
     checkLetter,
@@ -731,6 +745,8 @@ function App() {
             errorCells={errorCells}
             onSwipe={handleSwipeNavigation}
             isTouchDevice={isTouchDevice}
+            referencedClueCells={referencedClueCells}
+            letterReferenceCells={letterReferenceCells}
           />
         </>
       )}

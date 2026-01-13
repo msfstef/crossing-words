@@ -13,7 +13,7 @@
  * - contextual: Contextual references (sounds like, part of)
  */
 
-export { PatternRegistry, createDefaultRegistry } from './registry';
+export { PatternRegistry, createDefaultRegistry, getDefaultRegistry, resetDefaultRegistry } from './registry';
 export { createPatternMatcher, normalizeDirection } from './helpers';
 
 // Export all individual pattern matchers for custom configurations

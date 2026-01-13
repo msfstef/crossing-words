@@ -39,7 +39,8 @@ export const selfLetterSinglePattern: PatternMatcher = createPatternMatcher({
 
 /**
  * Self-reference letter range
- * Matches: "(In this answer, note letters 4-8)", "(... letters 2-6)"
+ * Matches: "(In this answer, note letters 4-8)", "(... letters 2-6)", "letters 1-2 here"
+ * Does NOT match when followed by "of N-Across/Down" (that's external reference)
  */
 export const selfLetterRangePattern: PatternMatcher = createPatternMatcher({
   id: 'self-letter-range',
@@ -47,7 +48,8 @@ export const selfLetterRangePattern: PatternMatcher = createPatternMatcher({
   category: 'letter-reference',
   highlightType: 'letter-range',
   priority: 20,
-  regex: /(?:\.\.\.|…)?\s*\(?(?:[Nn]ote\s+)?(?:the\s+)?letters?\s+(\d+)\s*[-–]\s*(\d+)(?:\s+here)?\)?/gi,
+  // Negative lookahead to avoid matching "letters 2-3 of 2-Down" (external reference)
+  regex: /(?:\.\.\.|…)?\s*\(?(?:[Nn]ote\s+)?(?:the\s+)?letters?\s+(\d+)\s*[-–]\s*(\d+)(?:\s+here)?(?!\s+of\s+\d+\s*[-–]?\s*(?:Across|Down|A|D))\)?/gi,
   extractReferences: (match, context) => {
     const startLetter = parseInt(match[1], 10);
     const endLetter = parseInt(match[2], 10);
