@@ -14,3 +14,13 @@ class_name = "SignalingRoom"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["SignalingRoom"]
+
+# v2 was WebsocketSync, now deleted
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["WebsocketSync"]
+
+# v3: Delete WebsocketSync (no longer needed)
+[[migrations]]
+tag = "v3"
+deleted_classes = ["WebsocketSync"]
