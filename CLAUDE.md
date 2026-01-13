@@ -12,6 +12,30 @@ Always try to evaluate your work using the Playwright MCP or Chrome extension fo
 
 <!-- TODO: Add build, test, and lint commands once the project structure is established -->
 
+### Worktree Isolation
+
+When working in a git worktree, other worktrees may be running dev servers or Playwright tests concurrently. To avoid conflicts:
+
+**Dev Server Port**: Before starting a dev server, check if the default port (usually 5173 for Vite) is already in use:
+```bash
+lsof -i :5173
+```
+If occupied, use a different port:
+```bash
+npm run dev -- --port 5174  # or any available port
+```
+
+**Playwright Browser Isolation**: Always launch Playwright with an isolated browser context to avoid conflicts with other worktrees running tests simultaneously. When using the Playwright MCP, each session automatically gets its own browser instance, but be aware that:
+- Multiple worktrees may be testing the same app on different ports
+- Always verify which port your dev server is running on before navigating
+- Use `browser_close` to clean up browser instances when done testing
+
+**Quick port availability check**:
+```bash
+# Find all dev servers running in worktrees
+lsof -i :5173-5180 | grep LISTEN
+```
+
 ## Architecture
 
 <!-- TODO: Document high-level architecture once implemented -->
