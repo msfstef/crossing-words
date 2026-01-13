@@ -78,28 +78,6 @@
   background-color: var(--color-bg-tertiary);
 }
 
-/* Offline indicator */
-.solve-header__offline {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  flex-shrink: 0;
-}
-
-.solve-header__offline::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: var(--color-error);
-  border-radius: 50%;
-}
-
-.solve-header__offline-text {
-  display: inline;
-}
-
 /* Connection indicator */
 .solve-header__connection {
   width: 10px;

@@ -12,7 +12,6 @@ import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useLocalUser } from './collaboration/useLocalUser';
-import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
 import {
@@ -415,9 +414,6 @@ function App() {
   // Get local user info for consistent styling with what collaborators see
   const localUser = useLocalUser(awareness);
 
-  // Track online/offline status
-  const isOnline = useOnlineStatus();
-
   // Detect touch device for virtual keyboard display
   // Uses pointer: coarse media query which matches touch devices
   const [isTouchDevice, setIsTouchDevice] = useState(() => {
@@ -637,7 +633,6 @@ function App() {
             settingsMenu={settingsMenuContent}
             connectionState={connectionState}
             isP2PSession={Boolean(roomId)}
-            isOnline={isOnline}
           />
         }
         grid={gridContent}

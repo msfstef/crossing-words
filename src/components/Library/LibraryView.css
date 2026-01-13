@@ -33,27 +33,6 @@
   margin: 0;
 }
 
-/* Offline indicator */
-.library-offline {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.library-offline::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: var(--color-error);
-  border-radius: 50%;
-}
-
-.library-offline__text {
-  display: inline;
-}
-
 .library-actions {
   display: flex;
   align-items: center;

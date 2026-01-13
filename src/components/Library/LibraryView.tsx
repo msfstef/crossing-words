@@ -4,7 +4,6 @@ import { LoadingCard } from './LoadingCard';
 import { FAB } from './FAB';
 import { DownloadDialog } from './DownloadDialog';
 import { SettingsMenu } from '../SettingsMenu';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
 import { fetchPuzzle } from '../../services/puzzleSources/fetchPuzzle';
 import { importPuzzle } from '../../lib/puzzleImport';
@@ -115,7 +114,6 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [ghostEntries, setGhostEntries] = useState<GhostEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
-  const isOnline = useOnlineStatus();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load all puzzles on mount
@@ -280,11 +278,6 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
       <header className="library-header">
         <div className="library-header__left">
           <h1 className="library-title">Crossing Words</h1>
-          {!isOnline && (
-            <div className="library-offline" title="You are offline - downloading won't work">
-              <span className="library-offline__text">Offline</span>
-            </div>
-          )}
         </div>
         <div className="library-actions">
           <SettingsMenu />
