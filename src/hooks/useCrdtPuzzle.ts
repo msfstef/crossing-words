@@ -13,7 +13,7 @@ import { useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import type { Awareness } from 'y-protocols/awareness';
 import { createPuzzleStore, PuzzleStore } from '../crdt/puzzleStore';
-import { createP2PSession, type P2PSession, type ConnectionState, type TransportType } from '../crdt/webrtcProvider';
+import { createP2PSession, type P2PSession, type ConnectionState } from '../crdt/webrtcProvider';
 import {
   setPuzzleInCrdt,
   getPuzzleFromCrdt,
@@ -44,8 +44,6 @@ interface UseCrdtPuzzleReturn {
   roomId: string | undefined;
   /** P2P connection state ('disconnected' when no roomId) */
   connectionState: ConnectionState;
-  /** P2P transport type ('webrtc' or 'websocket') */
-  transportType: TransportType;
   /** Yjs Awareness for presence tracking (null when not in P2P mode) */
   awareness: Awareness | null;
   /** Set of verified cell keys ("row,col") */
@@ -132,7 +130,6 @@ export function useCrdtPuzzle(
   const readyRef = useRef(false);
   const snapshotRef = useRef<Map<string, string>>(EMPTY_MAP);
   const connectionStateRef = useRef<ConnectionState>('disconnected');
-  const transportTypeRef = useRef<TransportType>('webrtc');
   const awarenessRef = useRef<Awareness | null>(null);
   const subscribersRef = useRef(new Set<() => void>());
 
@@ -173,7 +170,6 @@ export function useCrdtPuzzle(
   const getSnapshot = useCallback(() => snapshotRef.current, []);
   const getReadySnapshot = useCallback(() => readyRef.current, []);
   const getConnectionStateSnapshot = useCallback(() => connectionStateRef.current, []);
-  const getTransportTypeSnapshot = useCallback(() => transportTypeRef.current, []);
   const getAwarenessSnapshot = useCallback(() => awarenessRef.current, []);
   const getVerifiedSnapshot = useCallback(() => verifiedSnapshotRef.current, []);
   const getErrorsSnapshot = useCallback(() => errorsSnapshotRef.current, []);
@@ -187,7 +183,6 @@ export function useCrdtPuzzle(
   const entries = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const ready = useSyncExternalStore(subscribe, getReadySnapshot, getReadySnapshot);
   const connectionState = useSyncExternalStore(subscribe, getConnectionStateSnapshot, getConnectionStateSnapshot);
-  const transportType = useSyncExternalStore(subscribe, getTransportTypeSnapshot, getTransportTypeSnapshot);
   const awareness = useSyncExternalStore(subscribe, getAwarenessSnapshot, getAwarenessSnapshot);
   const verifiedCells = useSyncExternalStore(subscribe, getVerifiedSnapshot, getVerifiedSnapshot);
   const errorCells = useSyncExternalStore(subscribe, getErrorsSnapshot, getErrorsSnapshot);
@@ -206,7 +201,6 @@ export function useCrdtPuzzle(
     snapshotRef.current = EMPTY_MAP;
     // Set initial connection state: 'connecting' if roomId provided, 'disconnected' otherwise
     connectionStateRef.current = roomId ? 'connecting' : 'disconnected';
-    transportTypeRef.current = 'webrtc';
     awarenessRef.current = null;
     // Reset verification state
     verifiedSnapshotRef.current = EMPTY_SET;
@@ -220,9 +214,8 @@ export function useCrdtPuzzle(
     puzzleReceivedCalledRef.current = false;
     notifySubscribers();
 
-    // Track connection state and transport type unsubscribe functions for cleanup
+    // Track connection state unsubscribe function for cleanup
     let connectionUnsubscribe: (() => void) | null = null;
-    let transportUnsubscribe: (() => void) | null = null;
     // Track puzzle sync observer for cleanup
     let puzzleSyncUnsubscribe: (() => void) | null = null;
 
@@ -318,12 +311,6 @@ export function useCrdtPuzzle(
             notifySubscribers();
           });
 
-          // Subscribe to transport type changes
-          transportUnsubscribe = session.onTransportChange((type) => {
-            transportTypeRef.current = type;
-            notifySubscribers();
-          });
-
           // Subscribe to puzzle sync for recipients (using ref)
           // Check if puzzle already exists in CRDT (sync may have happened already)
           const existingPuzzle = getPuzzleFromCrdt(store.doc);
@@ -365,11 +352,6 @@ export function useCrdtPuzzle(
       if (connectionUnsubscribe) {
         connectionUnsubscribe();
         connectionUnsubscribe = null;
-      }
-      // Unsubscribe from transport type changes
-      if (transportUnsubscribe) {
-        transportUnsubscribe();
-        transportUnsubscribe = null;
       }
       // Destroy P2P session first (before store)
       if (sessionRef.current) {
@@ -440,7 +422,6 @@ export function useCrdtPuzzle(
     getEntry,
     roomId,
     connectionState,
-    transportType,
     awareness,
     verifiedCells,
     errorCells,

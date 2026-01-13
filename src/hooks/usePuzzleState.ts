@@ -3,7 +3,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import type { Puzzle, Clue } from '../types/puzzle';
 import { useCrdtPuzzle } from './useCrdtPuzzle';
-import type { ConnectionState, TransportType } from '../crdt/webrtcProvider';
+import type { ConnectionState } from '../crdt/webrtcProvider';
 import type { VerifiedMap, ErrorsMap } from '../crdt/puzzleDoc';
 
 interface CurrentClue {
@@ -29,8 +29,6 @@ interface PuzzleStateHook {
   currentClue: CurrentClue | null;
   ready: boolean;
   connectionState: ConnectionState;
-  /** P2P transport type ('webrtc' or 'websocket') */
-  transportType: TransportType;
   /** Yjs Awareness for presence tracking (null when not in P2P mode) */
   awareness: Awareness | null;
   /** Set of verified cell keys ("row,col") */
@@ -88,7 +86,6 @@ export function usePuzzleState(
     setEntry,
     clearEntry,
     connectionState,
-    transportType,
     awareness,
     verifiedCells,
     errorCells,
@@ -691,7 +688,6 @@ export function usePuzzleState(
     currentClue: wordAndClue?.clue ?? null,
     ready,
     connectionState,
-    transportType,
     awareness,
     verifiedCells,
     errorCells,

@@ -4,29 +4,13 @@ compatibility_date = "2024-01-01"
 account_id = "fed2683481f4e710185cbeaac94262e2"
 
 [vars]
-# Additional allowed origins (comma-separated), added to hardcoded list
-# Set to "*" to allow all origins (not recommended for production)
-ALLOWED_ORIGINS = ""
+ALLOWED_ORIGINS = "*"
 
 # Durable Objects for WebSocket signaling
 [[durable_objects.bindings]]
 name = "SIGNALING_ROOM"
 class_name = "SignalingRoom"
 
-# Durable Objects for WebSocket sync fallback (y-websocket)
-# Memory-only (no SQLite) - automatically cleaned on eviction
-[[durable_objects.bindings]]
-name = "WEBSOCKET_SYNC"
-class_name = "WebsocketSync"
-
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["SignalingRoom"]
-
-# v2: Add WebsocketSync
-# Note: Using new_sqlite_classes for Cloudflare free plan compatibility
-# The DO uses memory-only storage (no SQLite reads/writes), but the class
-# must be declared as sqlite_class for free tier
-[[migrations]]
-tag = "v2"
-new_sqlite_classes = ["WebsocketSync"]

@@ -347,7 +347,6 @@ function App() {
     handleKeyDown,
     ready,
     connectionState,
-    transportType,
     awareness,
     verifiedCells,
     errorCells,
@@ -637,7 +636,6 @@ function App() {
             collaborators={collaborators}
             settingsMenu={settingsMenuContent}
             connectionState={connectionState}
-            transportType={transportType}
             isP2PSession={Boolean(roomId)}
             isOnline={isOnline}
           />
