@@ -27,40 +27,51 @@
   font-style: italic;
 }
 
-/* Navigation buttons - styled like keyboard keys */
+/* Navigation buttons - refined icon buttons */
 .clue-bar__nav-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  font-size: 0.875rem;
+  padding: 0;
   color: var(--color-text);
-  background-color: var(--color-keyboard-key);
-  border: none;
-  border-radius: 6px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-subtle, var(--color-border));
+  border-radius: 8px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 0.1s ease;
+  transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .clue-bar__nav-btn:hover:not(:disabled) {
-  background-color: var(--color-keyboard-key-active);
+  background: var(--color-border);
+  border-color: var(--color-border);
 }
 
 .clue-bar__nav-btn:active:not(:disabled) {
-  background-color: var(--color-keyboard-key-active);
+  transform: scale(0.96);
 }
 
 .clue-bar__nav-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+}
+
+.clue-bar__nav-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .clue-bar__nav-btn:focus {
   outline: none;
+}
+
+/* Navigation icon */
+.clue-bar__nav-icon {
+  width: 16px;
+  height: 16px;
 }
 
 /* Clue content */

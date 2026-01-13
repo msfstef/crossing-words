@@ -76,7 +76,9 @@ export function ClueBar({
         disabled={!hasPrev}
         aria-label="Previous clue"
       >
-        ◀
+        <svg className="clue-bar__nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
       </button>
 
       <div
@@ -108,7 +110,9 @@ export function ClueBar({
         disabled={!hasNext}
         aria-label="Next clue"
       >
-        ▶
+        <svg className="clue-bar__nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
       </button>
     </div>
   );

@@ -25,8 +25,8 @@
   align-items: center;
   gap: 1rem;
   padding: 2rem 1.5rem;
-  background-color: #1a1a2e;
-  border: 1px solid #333;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   min-width: 320px;
@@ -37,7 +37,7 @@
 .join-dialog__heading {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--color-text);
   margin: 0;
   text-align: center;
 }
@@ -45,7 +45,7 @@
 /* Puzzle title */
 .join-dialog__puzzle-title {
   font-size: 0.875rem;
-  color: #888;
+  color: var(--color-text-muted);
   margin: 0;
   text-align: center;
   font-style: italic;
@@ -54,7 +54,7 @@
 /* Message and question */
 .join-dialog__message {
   font-size: 0.9375rem;
-  color: #e0e0e0;
+  color: var(--color-text);
   margin: 0.5rem 0 0 0;
   text-align: center;
   line-height: 1.5;
@@ -62,7 +62,7 @@
 
 .join-dialog__question {
   font-size: 0.875rem;
-  color: #aaa;
+  color: var(--color-text-muted);
   margin: 0.25rem 0 0.5rem 0;
   text-align: center;
 }
@@ -83,8 +83,8 @@
   align-items: flex-start;
   gap: 0.25rem;
   padding: 0.875rem 1rem;
-  background-color: #2a2a3e;
-  border: 1px solid #444;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
   transition:
@@ -96,37 +96,40 @@
 }
 
 .join-dialog__option:hover {
-  background-color: #3a3a4e;
-  border-color: #555;
+  background-color: var(--color-border);
+  border-color: var(--color-text-muted);
 }
 
 .join-dialog__option:active {
   transform: scale(0.98);
-  background-color: #252538;
+}
+
+.join-dialog__option:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .join-dialog__option:focus {
-  outline: 2px solid #e94560;
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Option title and description */
 .join-dialog__option-title {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--color-text);
 }
 
 .join-dialog__option-description {
   font-size: 0.8125rem;
-  color: #888;
+  color: var(--color-text-muted);
   line-height: 1.4;
 }
 
 /* Merge option - primary action */
 .join-dialog__option--merge {
-  background-color: #e94560;
-  border-color: #e94560;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .join-dialog__option--merge .join-dialog__option-title {
@@ -138,38 +141,38 @@
 }
 
 .join-dialog__option--merge:hover {
-  background-color: #d63855;
-  border-color: #d63855;
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .join-dialog__option--merge:active {
-  background-color: #c4304a;
+  transform: scale(0.98);
 }
 
 /* Start Fresh option - secondary */
 .join-dialog__option--fresh {
-  background-color: #2a3a4e;
-  border-color: #3a5a7e;
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border);
 }
 
 .join-dialog__option--fresh:hover {
-  background-color: #3a4a5e;
-  border-color: #4a6a8e;
+  background-color: var(--color-border);
+  border-color: var(--color-text-muted);
 }
 
-/* Cancel option - tertiary */
+/* Cancel option - tertiary/ghost */
 .join-dialog__option--cancel {
   background-color: transparent;
-  border-color: #444;
+  border-color: var(--color-border);
 }
 
 .join-dialog__option--cancel .join-dialog__option-title {
-  color: #aaa;
+  color: var(--color-text-muted);
 }
 
 .join-dialog__option--cancel:hover {
-  background-color: #2a2a3e;
-  border-color: #555;
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-text-muted);
 }
 
 /* Mobile responsiveness */

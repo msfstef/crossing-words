@@ -75,10 +75,10 @@
   text-align: center;
 }
 
-/* QR Code container */
+/* QR Code container - always white for scan contrast */
 .share-dialog__qr-container {
   padding: 1rem;
-  background-color: #ffffff;
+  background-color: #fff;
   border-radius: 8px;
   display: flex;
   align-items: center;

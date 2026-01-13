@@ -39,7 +39,9 @@ export function SolveHeader({
         onClick={onBack}
         aria-label="Back to library"
       >
-        ←
+        <svg className="solve-header__back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
       </button>
 
       {/* Spacer - header title removed, now shown above grid */}

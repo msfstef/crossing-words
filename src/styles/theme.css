@@ -4,39 +4,53 @@
  * Light theme as structural default in :root
  * Dark theme via [data-theme="dark"] selector
  * Blocking script in index.html applies correct theme before first paint
+ *
+ * Design System: Warm Minimalism
+ * - Warm neutral backgrounds
+ * - Terracotta accent
+ * - Sage verified, dusty rose error, champagne warning
  */
 
 :root {
-  /* Background colors */
-  --color-bg: #f5f5f5;
+  /* Background colors - warm paper tones */
+  --color-bg: #f8f6f3;
   --color-bg-secondary: #ffffff;
-  --color-bg-tertiary: #e8e8e8;
+  --color-bg-tertiary: #eeebe6;
 
-  /* Text colors */
-  --color-text: #1a1a2e;
-  --color-text-muted: #666666;
+  /* Text colors - warm */
+  --color-text: #2a2825;
+  --color-text-muted: #7a756e;
 
   /* Border colors */
-  --color-border: #d0d0d0;
+  --color-border: #d8d4ce;
+  --color-border-subtle: #e8e4de;
 
-  /* Accent colors */
-  --color-accent: #e94560;
-  --color-accent-hover: #d63855;
+  /* Accent colors - warm terracotta */
+  --color-accent: #b86d4a;
+  --color-accent-hover: #a55f3c;
+  --color-accent-muted: #c9917a;
+  --color-accent-bg: rgba(184, 109, 74, 0.1);
+
+  /* State colors */
+  --color-verified: #5f8a5c;
+  --color-verified-bg: rgba(95, 138, 92, 0.12);
+
+  --color-error: #a85555;
+  --color-error-bg: rgba(168, 85, 85, 0.1);
+
+  --color-warning: #a68840;
+  --color-warning-bg: rgba(166, 136, 64, 0.1);
 
   /* Crossword cell colors */
   --color-cell-bg: #ffffff;
-  --color-cell-selected: #fce588;
-  --color-cell-word: #fff3c4;
-  --color-cell-blocked: #1a1a2e;
-
-  /* Verification colors */
-  --color-verified: #22c55e;
-  --color-error: #ef4444;
+  --color-cell-selected: #f0e6d6;
+  --color-cell-word: #f7f2ea;
+  --color-cell-blocked: #2a2825;
 
   /* Keyboard colors */
-  --color-keyboard-bg: #e0e0e0;
+  --color-keyboard-bg: #e8e4de;
   --color-keyboard-key: #ffffff;
-  --color-keyboard-key-active: #d0d0d0;
+  --color-keyboard-key-active: #d8d4ce;
 }
 
 [data-theme="dark"] {
@@ -45,29 +59,38 @@
   --color-bg-secondary: #1c1c1c;
   --color-bg-tertiary: #262626;
 
-  /* Text colors */
-  --color-text: #e5e5e5;
-  --color-text-muted: #8c8c8c;
+  /* Text colors - warm off-whites */
+  --color-text: #f0ebe3;
+  --color-text-muted: #9a9590;
 
-  /* Border colors */
-  --color-border: #3d3d3d;
+  /* Border colors - subtle warmth */
+  --color-border: #3a3836;
+  --color-border-subtle: #2a2826;
 
-  /* Accent colors */
-  --color-accent: #e94560;
-  --color-accent-hover: #ff5a75;
+  /* Accent colors - warm terracotta */
+  --color-accent: #c47d5a;
+  --color-accent-hover: #d4906b;
+  --color-accent-muted: #8b5a3c;
+  --color-accent-bg: rgba(196, 125, 90, 0.15);
+
+  /* State colors - earthy, cohesive */
+  --color-verified: #7d9a7a;
+  --color-verified-bg: rgba(125, 154, 122, 0.2);
+
+  --color-error: #b87070;
+  --color-error-bg: rgba(184, 112, 112, 0.15);
+
+  --color-warning: #c9a86c;
+  --color-warning-bg: rgba(201, 168, 108, 0.15);
 
   /* Crossword cell colors - warm undertones */
-  --color-cell-bg: #1f1f1f;
+  --color-cell-bg: #1f1e1d;
   --color-cell-selected: #4a4030;
   --color-cell-word: #2e2a24;
-  --color-cell-blocked: #0a0a0a;
-
-  /* Verification colors */
-  --color-verified: #4ade80;
-  --color-error: #f87171;
+  --color-cell-blocked: #0a0a09;
 
   /* Keyboard colors */
   --color-keyboard-bg: #1c1c1c;
-  --color-keyboard-key: #333333;
-  --color-keyboard-key-active: #404040;
+  --color-keyboard-key: #333230;
+  --color-keyboard-key-active: #403e3a;
 }
