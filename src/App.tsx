@@ -13,6 +13,7 @@ import { usePuzzleState } from './hooks/usePuzzleState';
 import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
 import { usePlayTime } from './hooks/usePlayTime';
+import { useHistoryNavigation, type DialogType } from './hooks/useHistoryNavigation';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
@@ -403,14 +404,6 @@ function App() {
   // Success dialog state
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  // Show success dialog and verify all cells when puzzle is completed
-  useEffect(() => {
-    if (justCompleted) {
-      verifyAllCells();
-      setShowSuccessDialog(true);
-    }
-  }, [justCompleted, verifyAllCells]);
-
   // Track previous entries for auto-check comparison
   const prevEntriesRef = useRef<Map<string, string>>(new Map());
 
@@ -442,6 +435,73 @@ function App() {
   // Get local user info for consistent styling with what collaborators see
   const localUser = useLocalUser(awareness);
 
+  /**
+   * Handle dialog dismissal from back button navigation.
+   * This callback is invoked by useHistoryNavigation when back is pressed with a dialog open.
+   */
+  const handleDismissDialog = useCallback((dialogType: DialogType) => {
+    switch (dialogType) {
+      case 'share':
+        setShowShareDialog(false);
+        break;
+      case 'success':
+        setShowSuccessDialog(false);
+        break;
+      case 'join':
+        // Treat back button as cancel for join dialog
+        handleJoinCancel();
+        break;
+      // 'download' is handled in LibraryView
+    }
+  }, [handleJoinCancel]);
+
+  // History navigation for native-like back button behavior
+  const {
+    pushSolveView,
+    pushDialog,
+    cleanupDialogState,
+  } = useHistoryNavigation({
+    activeView,
+    puzzleId,
+    timelineId,
+    onNavigateToLibrary: useCallback(() => {
+      // Navigate to library via back button
+      clearUrlHash();
+      setTimelineId(undefined);
+      setActiveView('library');
+      setPuzzle(null);
+      setActivePuzzleId('');
+    }, []),
+    onDismissDialog: handleDismissDialog,
+  });
+
+  // Show success dialog and verify all cells when puzzle is completed
+  useEffect(() => {
+    if (justCompleted) {
+      verifyAllCells();
+      pushDialog('success');
+      setShowSuccessDialog(true);
+    }
+  }, [justCompleted, verifyAllCells, pushDialog]);
+
+  // Track JoinDialog open state for history integration
+  const prevJoinDialogOpenRef = useRef(joinDialogState.isOpen);
+  useEffect(() => {
+    const wasOpen = prevJoinDialogOpenRef.current;
+    const isOpen = joinDialogState.isOpen;
+
+    // Push dialog state when JoinDialog opens
+    if (!wasOpen && isOpen) {
+      pushDialog('join');
+    }
+    // Clean up dialog state when JoinDialog closes via handler (not back button)
+    if (wasOpen && !isOpen) {
+      cleanupDialogState('join');
+    }
+
+    prevJoinDialogOpenRef.current = isOpen;
+  }, [joinDialogState.isOpen, pushDialog, cleanupDialogState]);
+
   // Detect touch device for virtual keyboard display
   // Uses pointer: coarse media query which matches touch devices
   const [isTouchDevice, setIsTouchDevice] = useState(() => {
@@ -468,8 +528,9 @@ function App() {
     // Build share URL and open dialog
     const url = buildShareUrl(puzzleId, timelineId);
     setShareUrl(url);
+    pushDialog('share');
     setShowShareDialog(true);
-  }, [puzzle, puzzleId, timelineId]);
+  }, [puzzle, puzzleId, timelineId, pushDialog]);
 
   /**
    * Handle opening a puzzle from the library.
@@ -488,20 +549,22 @@ function App() {
     if (existingTimeline) {
       // Rejoin existing timeline
       setTimelineId(existingTimeline);
-      updateUrlHash(loadedPuzzleId, existingTimeline);
+      // Push history entry for back navigation
+      pushSolveView(loadedPuzzleId, existingTimeline);
     } else {
       // New puzzle session - generate timeline
       const newTimelineId = generateTimelineId();
       setTimelineId(newTimelineId);
       saveTimelineMapping(loadedPuzzleId, newTimelineId);
-      updateUrlHash(loadedPuzzleId, newTimelineId);
+      // Push history entry for back navigation
+      pushSolveView(loadedPuzzleId, newTimelineId);
     }
 
     // Persist as current puzzle
     saveCurrentPuzzle(loadedPuzzle).catch((err) => {
       console.error('Failed to save puzzle:', err);
     });
-  }, []);
+  }, [pushSolveView]);
 
   /**
    * Handle going back to library from solve view.
@@ -679,7 +742,10 @@ function App() {
       {/* Share dialog */}
       <ShareDialog
         isOpen={showShareDialog}
-        onClose={() => setShowShareDialog(false)}
+        onClose={() => {
+          setShowShareDialog(false);
+          cleanupDialogState('share');
+        }}
         shareUrl={shareUrl}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}
       />
@@ -697,9 +763,13 @@ function App() {
       {/* Success dialog for puzzle completion */}
       <SuccessDialog
         isOpen={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          cleanupDialogState('success');
+        }}
         onBackToLibrary={() => {
           setShowSuccessDialog(false);
+          cleanupDialogState('success');
           handleBackToLibrary();
         }}
         puzzleTitle={puzzle?.title ?? 'Crossword Puzzle'}

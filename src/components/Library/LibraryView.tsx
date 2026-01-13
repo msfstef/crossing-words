@@ -116,6 +116,39 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Track if download dialog has a history entry
+  const downloadDialogHistoryRef = useRef(false);
+
+  // Handle back button to close download dialog
+  useEffect(() => {
+    const handlePopstate = () => {
+      if (downloadDialogHistoryRef.current) {
+        downloadDialogHistoryRef.current = false;
+        setDownloadDialogOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, []);
+
+  // Open download dialog with history entry
+  const openDownloadDialog = useCallback(() => {
+    window.history.pushState({ type: 'dialog', dialogType: 'download' }, '');
+    downloadDialogHistoryRef.current = true;
+    setDownloadDialogOpen(true);
+  }, []);
+
+  // Close download dialog and clean up history if needed
+  const closeDownloadDialog = useCallback(() => {
+    setDownloadDialogOpen(false);
+    // Clean up phantom history entry if closed via X button (not back button)
+    if (downloadDialogHistoryRef.current) {
+      downloadDialogHistoryRef.current = false;
+      window.history.back();
+    }
+  }, []);
+
   // Load all puzzles on mount
   const loadPuzzles = useCallback(async () => {
     try {
@@ -220,8 +253,8 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   // Handle download with optimistic UI
   const handleDownload = useCallback(
     async (sourceId: string, sourceName: string, puzzleDate: Date) => {
-      // Close dialog immediately
-      setDownloadDialogOpen(false);
+      // Close dialog immediately and clean up history
+      closeDownloadDialog();
 
       // Create ghost entry
       const ghostId = `loading-${Date.now()}`;
@@ -265,7 +298,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         onError(err instanceof Error ? err.message : 'Failed to download puzzle');
       }
     },
-    [loadPuzzles, onError]
+    [closeDownloadDialog, loadPuzzles, onError]
   );
 
   // Combine puzzles and ghost entries
@@ -345,14 +378,14 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
 
       {/* FAB for Import/Download */}
       <FAB
-        onDownloadClick={() => setDownloadDialogOpen(true)}
+        onDownloadClick={openDownloadDialog}
         fileInputRef={fileInputRef}
       />
 
       {/* Download dialog */}
       <DownloadDialog
         isOpen={downloadDialogOpen}
-        onClose={() => setDownloadDialogOpen(false)}
+        onClose={closeDownloadDialog}
         onDownload={handleDownload}
       />
     </div>
