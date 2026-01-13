@@ -359,7 +359,7 @@ export async function listAllPuzzles(): Promise<PuzzleEntry[]> {
 
 /**
  * Deletes a puzzle from storage.
- * Removes both the puzzle data and its metadata entry.
+ * Removes the puzzle data, metadata, CRDT state database, and timeline entry.
  *
  * @param puzzleId - The puzzle ID to delete
  */
@@ -388,6 +388,28 @@ export async function deletePuzzle(puzzleId: string): Promise<void> {
       transaction.oncomplete = () => {
         console.debug('[puzzleStorage] Deleted puzzle:', puzzleId);
         db.close();
+
+        // Clean up CRDT database (y-indexeddb stores progress, entries, durations)
+        try {
+          const deleteRequest = indexedDB.deleteDatabase(`puzzle-${puzzleId}`);
+          deleteRequest.onsuccess = () => {
+            console.debug('[puzzleStorage] Deleted CRDT database:', `puzzle-${puzzleId}`);
+          };
+          deleteRequest.onerror = () => {
+            console.warn('[puzzleStorage] Failed to delete CRDT database:', deleteRequest.error);
+          };
+        } catch (e) {
+          console.warn('[puzzleStorage] Error deleting CRDT database:', e);
+        }
+
+        // Clean up timeline localStorage entry (collaborative session ID)
+        try {
+          localStorage.removeItem(`timeline:${puzzleId}`);
+          console.debug('[puzzleStorage] Deleted timeline entry:', `timeline:${puzzleId}`);
+        } catch (e) {
+          console.warn('[puzzleStorage] Error deleting timeline entry:', e);
+        }
+
         resolve();
       };
 
