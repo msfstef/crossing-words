@@ -43,7 +43,7 @@ function isGhostEntry(entry: LibraryEntry): entry is GhostEntry {
 
 /**
  * Group puzzles by date (or savedAt date if no puzzle date).
- * Returns groups sorted by date (most recent first).
+ * Groups are sorted at render time, not here.
  */
 function groupEntriesByDate(entries: LibraryEntry[]): Map<string, LibraryEntry[]> {
   const groups = new Map<string, LibraryEntry[]>();
@@ -296,7 +296,14 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
           </div>
         ) : (
           <div className="library-groups">
-            {Array.from(groupedEntries.entries()).map(([dateKey, groupEntries]) => (
+            {Array.from(groupedEntries.entries())
+              .sort(([dateA], [dateB]) => {
+                // Sort descending (most recent first)
+                const a = new Date(dateA).getTime();
+                const b = new Date(dateB).getTime();
+                return b - a;
+              })
+              .map(([dateKey, groupEntries]) => (
               <div key={dateKey} className="library-group">
                 <h2 className="library-group__date">{formatDateKey(dateKey)}</h2>
                 <div className="library-group__puzzles">
