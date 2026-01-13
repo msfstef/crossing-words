@@ -30,3 +30,4 @@ dist-ssr
 playwright-report/
 test-results/
 .playwright-mcp/
+.worktrees/
