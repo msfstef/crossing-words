@@ -80,6 +80,14 @@
     margin-top: 1rem;
   }
 
+  /* Hide keyboard on desktop by default - only show when enough height */
+  .solve-layout__keyboard {
+    display: none;
+  }
+}
+
+/* Only show desktop keyboard when there's enough vertical space */
+@media (min-width: 768px) and (min-height: 700px) {
   .solve-layout__keyboard {
     margin-top: 0.5rem;
     display: flex;
