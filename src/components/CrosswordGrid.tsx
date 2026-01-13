@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
+import { useSwipeNavigation, type SwipeDirection } from "../hooks/useSwipeNavigation";
 import "./CrosswordGrid.css";
 
 /**
@@ -42,6 +43,10 @@ interface CrosswordGridProps {
   verifiedCells?: Set<string>;
   /** Set of error cell keys ("row,col") */
   errorCells?: Set<string>;
+  /** Callback for swipe navigation (mobile only) */
+  onSwipe?: (direction: SwipeDirection) => void;
+  /** Whether the device supports touch */
+  isTouchDevice?: boolean;
 }
 
 /**
@@ -131,9 +136,17 @@ export function CrosswordGrid({
   localUserColor,
   verifiedCells = new Set(),
   errorCells = new Set(),
+  onSwipe,
+  isTouchDevice = false,
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Swipe navigation handlers (only active on touch devices)
+  const swipeHandlers = useSwipeNavigation({
+    onSwipe: onSwipe ?? (() => {}),
+    enabled: isTouchDevice && Boolean(onSwipe),
+  });
   // Cell size state - starts with 0 (hidden), updates via ResizeObserver
   const [cellSize, setCellSize] = useState(0);
 
@@ -226,6 +239,7 @@ export function CrosswordGrid({
         // Hide until measured to prevent flash of wrong size
         opacity: isReady ? 1 : 0,
       } as React.CSSProperties}
+      {...swipeHandlers}
     >
       <div
         className="crossword-grid"

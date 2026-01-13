@@ -61,6 +61,8 @@ interface PuzzleStateHook {
   handleBackspace: () => void;
   /** Toggle direction between across and down (if alternate clue exists) */
   toggleDirection: () => void;
+  /** Handle swipe navigation (for mobile touch gestures) */
+  handleSwipeNavigation: (direction: 'left' | 'right' | 'up' | 'down') => void;
 }
 
 /**
@@ -666,6 +668,216 @@ export function usePuzzleState(
     }
   }, [getClueNumbers, getCurrentClueNumber, goToClue]);
 
+  // ============================================
+  // Swipe Navigation Functions
+  // ============================================
+
+  /**
+   * Find the next across clue that starts in the same row.
+   * Used for horizontal swipe when on an across clue.
+   *
+   * @param row - The row to search in
+   * @param currentCol - Current column position (start of current clue)
+   * @param delta - Direction: +1 for right, -1 for left
+   * @returns The start position of the next clue, or null if none found
+   */
+  const findNextAcrossClueInRow = useCallback(
+    (row: number, currentCol: number, delta: number): { row: number; col: number } | null => {
+      // Get all across clues in this row
+      const cluesInRow = puzzle.clues.across.filter((c) => c.row === row);
+
+      if (delta > 0) {
+        // Moving right: find the first clue that starts after currentCol
+        const sorted = cluesInRow.sort((a, b) => a.col - b.col);
+        for (const clue of sorted) {
+          if (clue.col > currentCol) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      } else {
+        // Moving left: find the last clue that starts before currentCol
+        const sorted = cluesInRow.sort((a, b) => b.col - a.col);
+        for (const clue of sorted) {
+          if (clue.col < currentCol) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      }
+
+      return null;
+    },
+    [puzzle.clues.across]
+  );
+
+  /**
+   * Find the next across clue in the same column (searching vertically).
+   * Used for vertical swipe when on an across clue.
+   * Searches from the leftmost cell of the current clue.
+   *
+   * @param col - The column to search in (leftmost cell of current clue)
+   * @param currentRow - Current row position
+   * @param delta - Direction: +1 for down, -1 for up
+   * @returns The start position of the next clue, or null if none found
+   */
+  const findNextAcrossClueInColumn = useCallback(
+    (col: number, currentRow: number, delta: number): { row: number; col: number } | null => {
+      // Find across clues whose span includes this column
+      const cluesInColumn = puzzle.clues.across.filter(
+        (c) => c.col <= col && c.col + c.length > col
+      );
+
+      if (delta > 0) {
+        // Moving down: find the first clue that starts after currentRow
+        const sorted = cluesInColumn.sort((a, b) => a.row - b.row);
+        for (const clue of sorted) {
+          if (clue.row > currentRow) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      } else {
+        // Moving up: find the last clue that starts before currentRow
+        const sorted = cluesInColumn.sort((a, b) => b.row - a.row);
+        for (const clue of sorted) {
+          if (clue.row < currentRow) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      }
+
+      return null;
+    },
+    [puzzle.clues.across]
+  );
+
+  /**
+   * Find the next down clue that starts in the same column.
+   * Used for vertical swipe when on a down clue.
+   *
+   * @param col - The column to search in
+   * @param currentRow - Current row position (start of current clue)
+   * @param delta - Direction: +1 for down, -1 for up
+   * @returns The start position of the next clue, or null if none found
+   */
+  const findNextDownClueInColumn = useCallback(
+    (col: number, currentRow: number, delta: number): { row: number; col: number } | null => {
+      // Get all down clues in this column
+      const cluesInColumn = puzzle.clues.down.filter((c) => c.col === col);
+
+      if (delta > 0) {
+        // Moving down: find the first clue that starts after currentRow
+        const sorted = cluesInColumn.sort((a, b) => a.row - b.row);
+        for (const clue of sorted) {
+          if (clue.row > currentRow) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      } else {
+        // Moving up: find the last clue that starts before currentRow
+        const sorted = cluesInColumn.sort((a, b) => b.row - a.row);
+        for (const clue of sorted) {
+          if (clue.row < currentRow) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      }
+
+      return null;
+    },
+    [puzzle.clues.down]
+  );
+
+  /**
+   * Find the next down clue in the same row (searching horizontally).
+   * Used for horizontal swipe when on a down clue.
+   * Searches from the topmost cell of the current clue.
+   *
+   * @param row - The row to search in (topmost cell of current clue)
+   * @param currentCol - Current column position
+   * @param delta - Direction: +1 for right, -1 for left
+   * @returns The start position of the next clue, or null if none found
+   */
+  const findNextDownClueInRow = useCallback(
+    (row: number, currentCol: number, delta: number): { row: number; col: number } | null => {
+      // Find down clues whose span includes this row
+      const cluesInRow = puzzle.clues.down.filter(
+        (c) => c.row <= row && c.row + c.length > row
+      );
+
+      if (delta > 0) {
+        // Moving right: find the first clue that starts after currentCol
+        const sorted = cluesInRow.sort((a, b) => a.col - b.col);
+        for (const clue of sorted) {
+          if (clue.col > currentCol) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      } else {
+        // Moving left: find the last clue that starts before currentCol
+        const sorted = cluesInRow.sort((a, b) => b.col - a.col);
+        for (const clue of sorted) {
+          if (clue.col < currentCol) {
+            return { row: clue.row, col: clue.col };
+          }
+        }
+      }
+
+      return null;
+    },
+    [puzzle.clues.down]
+  );
+
+  /**
+   * Handle swipe navigation.
+   * Routes to appropriate navigation function based on current direction and swipe direction.
+   *
+   * @param swipeDirection - The direction of the swipe gesture
+   */
+  const handleSwipeNavigation = useCallback(
+    (swipeDirection: 'left' | 'right' | 'up' | 'down') => {
+      if (!selectedCell) return;
+
+      // Get current clue to find its start position
+      const currentClue = findClueForCell(selectedCell.row, selectedCell.col, direction);
+      if (!currentClue) return;
+
+      const isAcross = direction === 'across';
+      const isHorizontalSwipe = swipeDirection === 'left' || swipeDirection === 'right';
+
+      let nextCell: { row: number; col: number } | null = null;
+
+      if (isAcross && isHorizontalSwipe) {
+        // Case 1: Across clue + horizontal swipe → move within same row
+        const delta = swipeDirection === 'right' ? 1 : -1;
+        nextCell = findNextAcrossClueInRow(currentClue.row, currentClue.col, delta);
+      } else if (isAcross && !isHorizontalSwipe) {
+        // Case 2: Across clue + vertical swipe → from leftmost cell, move vertically
+        const delta = swipeDirection === 'down' ? 1 : -1;
+        nextCell = findNextAcrossClueInColumn(currentClue.col, currentClue.row, delta);
+      } else if (!isAcross && !isHorizontalSwipe) {
+        // Case 3: Down clue + vertical swipe → move within same column
+        const delta = swipeDirection === 'down' ? 1 : -1;
+        nextCell = findNextDownClueInColumn(currentClue.col, currentClue.row, delta);
+      } else {
+        // Case 4: Down clue + horizontal swipe → from topmost cell, move horizontally
+        const delta = swipeDirection === 'right' ? 1 : -1;
+        nextCell = findNextDownClueInRow(currentClue.row, currentClue.col, delta);
+      }
+
+      if (nextCell) {
+        setSelectedCell(nextCell);
+      }
+    },
+    [
+      selectedCell,
+      direction,
+      findClueForCell,
+      findNextAcrossClueInRow,
+      findNextAcrossClueInColumn,
+      findNextDownClueInColumn,
+      findNextDownClueInRow,
+    ]
+  );
+
   // Compute whether prev/next clue navigation is available
   const clueNavState = (() => {
     const clueNumbers = getClueNumbers();
@@ -706,5 +918,6 @@ export function usePuzzleState(
     typeLetter,
     handleBackspace: handleBackspaceAction,
     toggleDirection,
+    handleSwipeNavigation,
   };
 }
