@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Collaborator } from '../../collaboration/types';
-import type { ConnectionState } from '../../crdt/webrtcProvider';
+import type { ConnectionState, TransportType } from '../../crdt/webrtcProvider';
 import './SolveHeader.css';
 
 interface SolveHeaderProps {
@@ -14,6 +14,8 @@ interface SolveHeaderProps {
   settingsMenu: ReactNode;
   /** P2P connection state */
   connectionState: ConnectionState;
+  /** Transport type (webrtc or websocket) */
+  transportType: TransportType;
   /** Whether we're in a P2P session */
   isP2PSession: boolean;
   /** Whether the device is online */
@@ -30,6 +32,7 @@ export function SolveHeader({
   collaborators,
   settingsMenu,
   connectionState,
+  transportType,
   isP2PSession,
   isOnline,
 }: SolveHeaderProps) {
@@ -77,9 +80,19 @@ export function SolveHeader({
       {/* Connection indicator - only show in P2P mode and when online */}
       {isP2PSession && isOnline && (
         <div
-          className={`solve-header__connection solve-header__connection--${connectionState}`}
-          title={`${connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}`}
-        />
+          className="solve-header__connection-wrapper"
+          title={`${connectionState === 'connected' ? (transportType === 'webrtc' ? 'P2P Connected' : 'Relay Connected') : connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}`}
+        >
+          <div
+            className={`solve-header__connection solve-header__connection--${connectionState}`}
+          />
+          {/* Show transport type when connected */}
+          {connectionState === 'connected' && (
+            <span className="solve-header__transport">
+              {transportType === 'webrtc' ? 'P2P' : 'Relay'}
+            </span>
+          )}
+        </div>
       )}
 
       {/* Share button - neutral styling with share icon */}

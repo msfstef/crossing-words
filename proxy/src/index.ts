@@ -1,6 +1,7 @@
 interface Env {
   ALLOWED_ORIGINS: string;
   SIGNALING_ROOM: DurableObjectNamespace;
+  WEBSOCKET_SYNC: DurableObjectNamespace;
 }
 
 interface PuzzleRequest {
@@ -25,9 +26,28 @@ const SOURCES: Record<string, SourceConfig> = {
   },
 };
 
-function corsHeaders(origin: string | null): HeadersInit {
+// Allowed origins for CORS (comma-separated in env)
+const ALLOWED_ORIGIN_LIST = [
+  'https://msfstef.dev',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+
+function isOriginAllowed(origin: string | null, env: Env): boolean {
+  if (!origin) return false;
+  // Check env override first, then hardcoded list
+  const envOrigins = env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+  const allAllowed = [...ALLOWED_ORIGIN_LIST, ...envOrigins];
+  return allAllowed.some(allowed =>
+    allowed === '*' || allowed === origin
+  );
+}
+
+function corsHeaders(origin: string | null, env: Env): HeadersInit {
+  // Only allow specific origins
+  const allowedOrigin = isOriginAllowed(origin, env) ? origin : ALLOWED_ORIGIN_LIST[0];
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin!,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
@@ -47,7 +67,7 @@ async function handlePuzzleRequest(
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
       headers: {
-        ...corsHeaders(origin),
+        ...corsHeaders(origin, env),
         'Content-Type': 'application/json',
       },
     });
@@ -65,7 +85,7 @@ async function handlePuzzleRequest(
       {
         status: 400,
         headers: {
-          ...corsHeaders(origin),
+          ...corsHeaders(origin, env),
           'Content-Type': 'application/json',
         },
       }
@@ -83,7 +103,7 @@ async function handlePuzzleRequest(
     return new Response(JSON.stringify({ error: 'Invalid date format' }), {
       status: 400,
       headers: {
-        ...corsHeaders(origin),
+        ...corsHeaders(origin, env),
         'Content-Type': 'application/json',
       },
     });
@@ -116,7 +136,7 @@ async function handlePuzzleRequest(
         {
           status: 404,
           headers: {
-            ...corsHeaders(origin),
+            ...corsHeaders(origin, env),
             'Content-Type': 'application/json',
           },
         }
@@ -128,7 +148,7 @@ async function handlePuzzleRequest(
     return new Response(puzzleData, {
       status: 200,
       headers: {
-        ...corsHeaders(origin),
+        ...corsHeaders(origin, env),
         'Content-Type': 'application/octet-stream',
       },
     });
@@ -139,7 +159,7 @@ async function handlePuzzleRequest(
       return new Response(JSON.stringify({ error: 'Upstream timeout' }), {
         status: 504,
         headers: {
-          ...corsHeaders(origin),
+          ...corsHeaders(origin, env),
           'Content-Type': 'application/json',
         },
       });
@@ -150,7 +170,7 @@ async function handlePuzzleRequest(
       {
         status: 500,
         headers: {
-          ...corsHeaders(origin),
+          ...corsHeaders(origin, env),
           'Content-Type': 'application/json',
         },
       }
@@ -170,7 +190,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 200,
-        headers: corsHeaders(origin),
+        headers: corsHeaders(origin, env),
       });
     }
 
@@ -192,7 +212,7 @@ export default {
         {
           status: 200,
           headers: {
-            ...corsHeaders(origin),
+            ...corsHeaders(origin, env),
             'Content-Type': 'application/json',
           },
         }
@@ -207,15 +227,36 @@ export default {
       return stub.fetch(request);
     }
 
+    // WebSocket sync fallback (y-websocket protocol)
+    // Uses per-room DO instances for isolation
+    // Route: /ywebsocket/{roomId}
+    if (url.pathname.startsWith('/ywebsocket/')) {
+      const roomId = url.pathname.slice('/ywebsocket/'.length);
+      if (!roomId) {
+        return new Response(JSON.stringify({ error: 'Room ID required' }), {
+          status: 400,
+          headers: {
+            ...corsHeaders(origin, env),
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+      // Each room gets its own DO instance
+      const id = env.WEBSOCKET_SYNC.idFromName(roomId);
+      const stub = env.WEBSOCKET_SYNC.get(id);
+      return stub.fetch(request);
+    }
+
     return new Response(JSON.stringify({ error: 'Not found' }), {
       status: 404,
       headers: {
-        ...corsHeaders(origin),
+        ...corsHeaders(origin, env),
         'Content-Type': 'application/json',
       },
     });
   },
 };
 
-// Export Durable Object class for Cloudflare
+// Export Durable Object classes for Cloudflare
 export { SignalingRoom } from './SignalingRoom';
+export { WebsocketSync } from './WebsocketSync';
