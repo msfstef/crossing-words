@@ -300,41 +300,43 @@ export function usePuzzleState(
 
   /**
    * Find the first cell in a row that has a clue in the given direction
-   * Skips verified cells (they are locked and cannot be edited)
+   * Skips verified cells and filled cells
    */
   const findFirstCellInRowWithClue = useCallback(
     (row: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let col = 0; col < puzzle.width; col++) {
         const key = `${row},${col}`;
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
+        // Skip black cells, verified cells, and filled cells
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key) && !userEntries.get(key)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle, findClueForCell, verifiedCells]
+    [puzzle, findClueForCell, verifiedCells, userEntries]
   );
 
   /**
    * Find the first cell in a column that has a clue in the given direction
-   * Skips verified cells (they are locked and cannot be edited)
+   * Skips verified cells and filled cells
    */
   const findFirstCellInColWithClue = useCallback(
     (col: number, dir: 'across' | 'down'): { row: number; col: number } | null => {
       for (let row = 0; row < puzzle.height; row++) {
         const key = `${row},${col}`;
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
+        // Skip black cells, verified cells, and filled cells
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key) && !userEntries.get(key)) {
           return { row, col };
         }
       }
       return null;
     },
-    [puzzle, findClueForCell, verifiedCells]
+    [puzzle, findClueForCell, verifiedCells, userEntries]
   );
 
   /**
    * Find next cell that has a clue in the current direction
-   * Skips verified cells (they are locked and cannot be edited)
+   * Skips verified cells and filled cells
    */
   const findNextCellWithClue = useCallback(
     (
@@ -350,8 +352,8 @@ export function usePuzzleState(
       while (row >= 0 && row < puzzle.height && col >= 0 && col < puzzle.width) {
         const key = `${row},${col}`;
 
-        // Skip black cells and verified cells
-        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key)) {
+        // Skip black cells, verified cells, and filled cells
+        if (!puzzle.grid[row][col].isBlack && findClueForCell(row, col, dir) && !verifiedCells.has(key) && !userEntries.get(key)) {
           return { row, col };
         }
         row += deltaRow;
@@ -360,7 +362,7 @@ export function usePuzzleState(
 
       return null;
     },
-    [puzzle, findClueForCell, verifiedCells]
+    [puzzle, findClueForCell, verifiedCells, userEntries]
   );
 
   /**
