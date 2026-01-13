@@ -40,34 +40,34 @@
 }
 
 [data-theme="dark"] {
-  /* Background colors - using existing #1a1a2e palette */
-  --color-bg: #1a1a2e;
-  --color-bg-secondary: #252540;
-  --color-bg-tertiary: #2d2d4a;
+  /* Background colors - warm neutral greys */
+  --color-bg: #141414;
+  --color-bg-secondary: #1c1c1c;
+  --color-bg-tertiary: #262626;
 
   /* Text colors */
-  --color-text: #e0e0e0;
-  --color-text-muted: #888888;
+  --color-text: #e5e5e5;
+  --color-text-muted: #8c8c8c;
 
   /* Border colors */
-  --color-border: #3a3a5a;
+  --color-border: #3d3d3d;
 
   /* Accent colors */
   --color-accent: #e94560;
   --color-accent-hover: #ff5a75;
 
-  /* Crossword cell colors */
-  --color-cell-bg: #2a2a45;
-  --color-cell-selected: #5a5a80;
-  --color-cell-word: #454570;
-  --color-cell-blocked: #0a0a15;
+  /* Crossword cell colors - warm undertones */
+  --color-cell-bg: #1f1f1f;
+  --color-cell-selected: #4a4030;
+  --color-cell-word: #2e2a24;
+  --color-cell-blocked: #0a0a0a;
 
   /* Verification colors */
   --color-verified: #4ade80;
   --color-error: #f87171;
 
   /* Keyboard colors */
-  --color-keyboard-bg: #252540;
-  --color-keyboard-key: #3a3a5a;
-  --color-keyboard-key-active: #4a4a6a;
+  --color-keyboard-bg: #1c1c1c;
+  --color-keyboard-key: #333333;
+  --color-keyboard-key-active: #404040;
 }

@@ -17,9 +17,9 @@ import chroma from 'chroma-js';
 /**
  * Fixed color for the local/main player.
  * Always the same for consistency and familiarity.
- * Indigo is distinct from red/green UI indicators.
+ * Warm amber gold is distinct from red/green UI indicators.
  */
-export const LOCAL_USER_COLOR = '#6366f1';
+export const LOCAL_USER_COLOR = '#d4a54a';
 
 /**
  * Check if a color's hue falls in the red or green range.
@@ -47,9 +47,9 @@ function isRedOrGreen(hexColor: string): boolean {
  */
 const PALETTE = distinctColors({
   count: 30, // Generate more to account for filtering
-  chromaMin: 50,
-  lightMin: 35,
-  lightMax: 75,
+  chromaMin: 60, // Increased for more saturation and contrast
+  lightMin: 45, // Increased for better visibility on dark backgrounds
+  lightMax: 70, // Slightly decreased max for consistency
 })
   .map((color) => color.hex())
   .filter((hex) => !isRedOrGreen(hex))
