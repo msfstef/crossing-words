@@ -195,7 +195,7 @@
 /* Floating error banner for library view */
 .error-banner--floating {
   position: fixed;
-  bottom: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -218,8 +218,8 @@
 /* Connection indicator */
 .connection-indicator {
   position: fixed;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  right: calc(0.75rem + env(safe-area-inset-right, 0px));
   display: flex;
   align-items: center;
   gap: 0.375rem;
