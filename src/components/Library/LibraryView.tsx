@@ -118,7 +118,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [loading, setLoading] = useState(true);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [optionsDialogOpen, setOptionsDialogOpen] = useState(false);
-  const [selectedPuzzle, setSelectedPuzzle] = useState<{ id: string; title: string } | null>(null);
+  const [selectedPuzzle, setSelectedPuzzle] = useState<{ id: string; title: string; date?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track if download dialog has a history entry
@@ -235,8 +235,8 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
     }
   }, [onError]);
 
-  const handleLongPress = useCallback((puzzleId: string, title: string, source?: string) => {
-    setSelectedPuzzle({ id: puzzleId, title: source ?? title });
+  const handleLongPress = useCallback((puzzleId: string, title: string, source?: string, date?: string) => {
+    setSelectedPuzzle({ id: puzzleId, title: source ?? title, date });
     setOptionsDialogOpen(true);
   }, []);
 
@@ -388,7 +388,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
                         progress={entry.progress}
                         onOpen={() => handleOpenPuzzle(entry.id)}
                         onDelete={() => handleDeletePuzzle(entry.id)}
-                        onLongPress={() => handleLongPress(entry.id, entry.title, entry.source)}
+                        onLongPress={() => handleLongPress(entry.id, entry.title, entry.source, entry.date)}
                       />
                     )
                   )}
@@ -426,6 +426,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         <PuzzleOptionsDialog
           isOpen={optionsDialogOpen}
           puzzleTitle={selectedPuzzle.title}
+          puzzleDate={selectedPuzzle.date}
           onClose={() => setOptionsDialogOpen(false)}
           onResetPuzzle={() => selectedPuzzle && handleResetPuzzle(selectedPuzzle.id)}
           onResetSharing={() => selectedPuzzle && handleResetSharing(selectedPuzzle.id)}

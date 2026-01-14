@@ -57,10 +57,10 @@ test.describe('Puzzle Card Long Press Menu', () => {
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;
 
-    // Perform long press (500ms+)
+    // Perform long press (350ms+)
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.waitForTimeout(600); // Wait longer than LONG_PRESS_DURATION
+    await page.waitForTimeout(400); // Wait longer than LONG_PRESS_DURATION (350ms)
     await page.mouse.up();
 
     // Options dialog should appear
@@ -94,7 +94,7 @@ test.describe('Puzzle Card Long Press Menu', () => {
     // Perform long press
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
 
     // Check that no text is selected
     const selection = await page.evaluate(() => window.getSelection()?.toString());
@@ -116,7 +116,7 @@ test.describe('Puzzle Card Long Press Menu', () => {
     // Trigger long press
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
     await page.mouse.up();
 
     // Wait for dialog
@@ -145,7 +145,7 @@ test.describe('Puzzle Card Long Press Menu', () => {
     // Trigger long press
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
     await page.mouse.up();
 
     // Wait for dialog
@@ -171,7 +171,7 @@ test.describe('Puzzle Card Long Press Menu', () => {
     // Trigger long press
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
     await page.mouse.up();
 
     // Wait for dialog
