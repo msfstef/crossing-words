@@ -487,6 +487,24 @@ function App() {
     clearAllEntries,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
+  // Animate letters when CRDT data first loads
+  // Track previous ready state to detect the transition
+  const prevReadyRef = useRef(ready);
+  const [animatingLetters, setAnimatingLetters] = useState(false);
+
+  useEffect(() => {
+    // Detect transition from not-ready to ready with entries
+    if (!prevReadyRef.current && ready && userEntries.size > 0) {
+      setAnimatingLetters(true);
+      // Animation runs for 400ms, then disable to keep typing instant
+      const timer = setTimeout(() => {
+        setAnimatingLetters(false);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+    prevReadyRef.current = ready;
+  }, [ready, userEntries.size]);
+
   // Build set of current word cells for reference highlight exclusion
   const currentWordCells = useMemo(() => {
     if (!currentWord) return new Set<string>();
@@ -965,6 +983,7 @@ function App() {
                 zoomViewport={zoomViewport}
                 edgeIndicators={edgeIndicators}
                 onToggleZoom={handleToggleZoom}
+                animatingLetters={animatingLetters}
               />
             </div>
           </div>

@@ -105,6 +105,26 @@
     z-index: 2;
 }
 
+/**
+ * Letter entrance animation for CRDT initial load
+ * Creates a pleasant "reveal" effect when saved progress loads
+ * Only active when container has --animating-letters class
+ */
+@keyframes letter-reveal {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.crossword-grid-container--animating-letters .cell-letter:not(:empty) {
+    animation: letter-reveal 0.35s ease-out both;
+}
+
 /* Verified cell - subtle green dot behind letter */
 .cell--verified::after {
     content: '';

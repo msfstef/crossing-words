@@ -102,6 +102,8 @@ interface CrosswordGridProps {
   edgeIndicators?: { top: boolean; bottom: boolean; left: boolean; right: boolean } | null;
   /** Callback to toggle zoom mode */
   onToggleZoom?: () => void;
+  /** Whether to animate letters (for CRDT initial load) */
+  animatingLetters?: boolean;
 }
 
 /**
@@ -262,6 +264,7 @@ export function CrosswordGrid({
   zoomViewport = null,
   edgeIndicators = null,
   onToggleZoom,
+  animatingLetters = false,
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
@@ -545,7 +548,7 @@ export function CrosswordGrid({
   return (
     <div
       ref={containerRef}
-      className={`crossword-grid-container ${isZoomMode ? 'crossword-grid-container--zoomed' : ''}`}
+      className={`crossword-grid-container ${isZoomMode ? 'crossword-grid-container--zoomed' : ''} ${animatingLetters ? 'crossword-grid-container--animating-letters' : ''}`}
       style={containerStyle as React.CSSProperties}
       {...touchHandlers}
     >
