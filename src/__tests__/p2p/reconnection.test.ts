@@ -62,7 +62,6 @@ describe('P2P Reconnection', () => {
 
       // Track connection attempts
       let attempts = 0;
-      const originalConnect = provider.connect.bind(provider);
       provider.connect = vi.fn(() => {
         attempts++;
         // Keep it disconnected to test backoff
@@ -214,8 +213,6 @@ describe('P2P Reconnection', () => {
     it('should reconnect when page becomes visible', async () => {
       session = await createP2PSession(store, 'test-room');
       await vi.advanceTimersByTimeAsync(150);
-
-      const provider = session.provider as unknown as MockWebrtcProvider;
 
       // Simulate page becoming hidden (like mobile app backgrounded)
       network.simulateVisibilityChange(true);
