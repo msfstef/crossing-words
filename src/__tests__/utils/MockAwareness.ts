@@ -28,8 +28,7 @@
  * ```
  */
 
-import type { Awareness } from 'y-protocols/awareness';
-import type { CollaboratorState, CursorPosition, UserInfo } from '../../collaboration/types';
+import type { CollaboratorState, CursorPosition, UserInfo, AwarenessLike } from '../../collaboration/types';
 
 /**
  * Event handler types for Awareness events
@@ -54,7 +53,7 @@ export interface MockCollaboratorData {
  * require network connectivity. Useful for unit testing collaboration UI
  * components and hooks.
  */
-export class MockAwareness implements Pick<Awareness, 'clientID' | 'getStates' | 'setLocalState' | 'setLocalStateField' | 'on' | 'off'> {
+export class MockAwareness implements AwarenessLike {
   /** Local client ID (simulated) */
   public readonly clientID: number;
 

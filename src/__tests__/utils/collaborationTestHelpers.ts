@@ -23,7 +23,7 @@
  */
 
 import { MockAwareness, type MockCollaboratorData } from './MockAwareness';
-import type { CursorPosition, UserInfo, Collaborator } from '../../collaboration/types';
+import type { CursorPosition, UserInfo } from '../../collaboration/types';
 import { PALETTE as COLLABORATOR_COLORS } from '../../collaboration/colors';
 
 // ============================================================================

@@ -12,7 +12,7 @@
  * - Testing overlapping cursors and follow mode
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCollaborators } from '../../collaboration/useCollaborators';
 import {
@@ -198,7 +198,7 @@ describe('Collaboration UI Testing', () => {
 
     it('should call notify on join/leave when provided', () => {
       const notify = vi.fn();
-      const { result } = renderHook(() => useCollaborators(awareness, { notify }));
+      renderHook(() => useCollaborators(awareness, { notify }));
 
       // First change is initial load, should not notify
       let clientId: number;
