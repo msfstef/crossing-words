@@ -151,24 +151,29 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     [setAvatar]
   );
 
+  // Reset file picker flag when window regains focus (file picker closed)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Small delay to let any pending click events fire first
+      setTimeout(() => {
+        isFilePickerOpen.current = false;
+      }, 100);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   // Open file picker (upload from gallery/files)
   const handleUploadClick = useCallback(() => {
     isFilePickerOpen.current = true;
     fileInputRef.current?.click();
-    // Reset flag after a delay in case user cancels
-    setTimeout(() => {
-      isFilePickerOpen.current = false;
-    }, 1000);
   }, []);
 
   // Open camera (uses HTML capture attribute)
   const handleCameraClick = useCallback(() => {
     isFilePickerOpen.current = true;
     cameraInputRef.current?.click();
-    // Reset flag after a delay in case user cancels
-    setTimeout(() => {
-      isFilePickerOpen.current = false;
-    }, 1000);
   }, []);
 
   // Handle remove avatar
@@ -245,7 +250,7 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
 
         <h2 className="profile-dialog__heading">Profile</h2>
 
-        {/* Avatar Section */}
+        {/* Avatar Section - avatar with actions on the side */}
         <div className="profile-dialog__avatar-section">
           <div className="profile-dialog__avatar-preview">
             {profile.avatar ? (
@@ -270,38 +275,38 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Avatar Actions */}
-        <div className="profile-dialog__avatar-actions">
-          <button
-            type="button"
-            className="profile-dialog__button"
-            onClick={handleUploadClick}
-            disabled={isProcessing}
-          >
-            {isProcessing ? 'Processing...' : 'Upload Photo'}
-          </button>
-          {isMobileDevice && (
+          {/* Avatar Actions - stacked vertically next to avatar */}
+          <div className="profile-dialog__avatar-actions">
             <button
               type="button"
               className="profile-dialog__button"
-              onClick={handleCameraClick}
+              onClick={handleUploadClick}
               disabled={isProcessing}
             >
-              Camera
+              {isProcessing ? 'Processing...' : 'Upload Photo'}
             </button>
-          )}
-          {profile.avatar && (
-            <button
-              type="button"
-              className="profile-dialog__button profile-dialog__button--danger"
-              onClick={handleRemoveAvatar}
-              disabled={isProcessing}
-            >
-              Remove
-            </button>
-          )}
+            {isMobileDevice && (
+              <button
+                type="button"
+                className="profile-dialog__button"
+                onClick={handleCameraClick}
+                disabled={isProcessing}
+              >
+                Camera
+              </button>
+            )}
+            {profile.avatar && (
+              <button
+                type="button"
+                className="profile-dialog__button profile-dialog__button--danger"
+                onClick={handleRemoveAvatar}
+                disabled={isProcessing}
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Hidden file input for gallery/file upload */}

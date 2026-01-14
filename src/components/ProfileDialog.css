@@ -72,19 +72,21 @@
   text-align: center;
 }
 
-/* Avatar Section */
+/* Avatar Section - horizontal layout with avatar and actions side by side */
 .profile-dialog__avatar-section {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .profile-dialog__avatar-preview {
-  width: 96px;
-  height: 96px;
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
   overflow: hidden;
   background-color: var(--color-bg-tertiary);
   border: 3px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .profile-dialog__avatar-image {
@@ -103,16 +105,15 @@
 }
 
 .profile-dialog__avatar-placeholder svg {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
 }
 
-/* Avatar Actions */
+/* Avatar Actions - stacked vertically */
 .profile-dialog__avatar-actions {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .profile-dialog__button {
@@ -287,6 +288,16 @@
     padding: 1.5rem 1rem;
     min-width: unset;
     width: calc(100vw - 2rem);
+  }
+
+  .profile-dialog__avatar-section {
+    flex-direction: column;
+  }
+
+  .profile-dialog__avatar-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .profile-dialog__nickname-section {
