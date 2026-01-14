@@ -27,7 +27,13 @@
 .library-header__left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.library-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .library-title {
@@ -118,6 +124,11 @@
   .library-header {
     /* Keep single row - FAB handles import/download now */
     padding: 0 0.75rem;
+  }
+
+  .library-logo {
+    width: 24px;
+    height: 24px;
   }
 
   .library-title {

@@ -342,6 +342,19 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
     <div className="library-view">
       <header className="library-header">
         <div className="library-header__left">
+          <svg className="library-logo" viewBox="0 0 192 192" aria-hidden="true">
+            <rect width="192" height="192" fill="var(--color-bg-secondary)"/>
+            <g stroke="currentColor" strokeWidth="6" fill="none">
+              <rect x="36" y="36" width="120" height="120"/>
+              <line x1="76" y1="36" x2="76" y2="156"/>
+              <line x1="116" y1="36" x2="116" y2="156"/>
+              <line x1="36" y1="76" x2="156" y2="76"/>
+              <line x1="36" y1="116" x2="156" y2="116"/>
+            </g>
+            <rect x="76" y="76" width="40" height="40" fill="var(--color-bg-secondary)"/>
+            <text x="56" y="65" fill="currentColor" fontFamily="system-ui, sans-serif" fontSize="28" textAnchor="middle">C</text>
+            <text x="136" y="105" fill="currentColor" fontFamily="system-ui, sans-serif" fontSize="28" textAnchor="middle">W</text>
+          </svg>
           <h1 className="library-title">Crossing Words</h1>
         </div>
         <div className="library-actions">
