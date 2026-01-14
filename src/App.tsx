@@ -786,14 +786,9 @@ function App() {
 
   // Build grid content
   // Show skeleton only when waiting for puzzle data (no puzzle available yet)
-  // Show ghost state (grid layout without entries) when puzzle is available but CRDT not ready
-  // NOTE: These hooks must be called before any early returns to maintain consistent hook order
+  // NOTE: This hook must be called before any early returns to maintain consistent hook order
   const isActuallyLoading = waitingForPuzzle || !puzzle;
   const isLoading = useMinimumLoadingTime(isActuallyLoading, 250);
-  // Ghost state: puzzle structure available but CRDT data still loading
-  const isCrdtLoading = puzzle && !ready;
-  // Empty map for ghost state (when CRDT is still loading)
-  const emptyEntries = useMemo(() => new Map<string, string>(), []);
 
   // Render Library view
   if (activeView === 'library') {
@@ -876,29 +871,24 @@ function App() {
             <div className="puzzle-grid-wrapper">
               <CrosswordGrid
                 puzzle={puzzle}
-                userEntries={isCrdtLoading ? emptyEntries : userEntries}
-                selectedCell={isCrdtLoading ? null : selectedCell}
+                userEntries={userEntries}
+                selectedCell={selectedCell}
                 direction={direction}
-                currentWord={isCrdtLoading ? null : currentWord}
-                onCellClick={isCrdtLoading ? () => {} : handleCellClickWithFollow}
-                collaborators={isCrdtLoading ? [] : collaborators}
-                localUserColor={isCrdtLoading ? undefined : localUser.color}
-                verifiedCells={isCrdtLoading ? new Set() : verifiedCells}
-                errorCells={isCrdtLoading ? new Set() : errorCells}
-                onSwipe={isCrdtLoading ? undefined : handleSwipeNavigationWithFollow}
+                currentWord={currentWord}
+                onCellClick={handleCellClickWithFollow}
+                collaborators={collaborators}
+                localUserColor={localUser.color}
+                verifiedCells={verifiedCells}
+                errorCells={errorCells}
+                onSwipe={handleSwipeNavigationWithFollow}
                 isTouchDevice={isTouchDevice}
-                referencedClueCells={isCrdtLoading ? new Set() : referencedClueCells}
-                letterReferenceCells={isCrdtLoading ? new Set() : letterReferenceCells}
+                referencedClueCells={referencedClueCells}
+                letterReferenceCells={letterReferenceCells}
                 isZoomMode={isZoomMode}
                 zoomViewport={zoomViewport}
                 edgeIndicators={edgeIndicators}
-                onToggleZoom={isCrdtLoading ? undefined : handleToggleZoom}
+                onToggleZoom={handleToggleZoom}
               />
-              {isCrdtLoading && (
-                <div className="puzzle-loading-overlay">
-                  <span className="puzzle-loading-overlay__text">Loading progress...</span>
-                </div>
-              )}
             </div>
           </div>
         </>
