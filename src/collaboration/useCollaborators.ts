@@ -76,6 +76,10 @@ export function useCollaborators(
     const states = awareness.getStates();
     const localId = awareness.clientID;
 
+    // Get local user's cursor for optimistic position updates of followers
+    const localState = states.get(localId) as CollaboratorState | undefined;
+    const localCursor = localState?.cursor ?? null;
+
     // Convert Map to array, filtering out local client
     const collaborators: Collaborator[] = [];
 
@@ -88,10 +92,15 @@ export function useCollaborators(
 
       // Only include clients with valid user state
       if (state?.user?.name && state?.user?.color) {
+        // Optimistic position update: if this collaborator is following the local user,
+        // show their cursor at the local user's position immediately (no network delay)
+        const isFollowingLocalUser = state.followingClientId === localId;
+        const cursorToUse = isFollowingLocalUser && localCursor ? localCursor : state.cursor ?? null;
+
         collaborators.push({
           clientId,
           user: state.user,
-          cursor: state.cursor ?? null,
+          cursor: cursorToUse,
         });
       }
     });

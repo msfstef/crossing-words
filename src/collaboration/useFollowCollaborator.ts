@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Awareness } from 'y-protocols/awareness';
-import type { Collaborator } from './types';
+import type { Collaborator, CollaboratorState } from './types';
 import type { NotifyFn } from './useCollaborators';
 
 interface FollowCollaboratorHook {
@@ -59,6 +59,8 @@ export function useFollowCollaborator(
   const { notify } = options ?? {};
   const [followedClientId, setFollowedClientId] = useState<number | null>(null);
   const previousFollowedIdRef = useRef<number | null>(null);
+  // Track who is currently following us to only notify on toggle (not every move)
+  const currentFollowersRef = useRef<Set<number>>(new Set());
 
   // Get the currently followed collaborator
   const followedCollaborator = collaborators.find((c) => c.clientId === followedClientId) ?? null;
@@ -152,7 +154,7 @@ export function useFollowCollaborator(
   }, [followedCollaborator, onCursorUpdate]);
 
   /**
-   * Send notification to the followed collaborator when we start following them.
+   * Send notification when someone starts following us (only on toggle, not every move).
    */
   useEffect(() => {
     if (!awareness || !notify) return;
@@ -161,19 +163,29 @@ export function useFollowCollaborator(
     const handleChange = () => {
       const states = awareness.getStates();
       const localClientId = awareness.clientID;
+      const newFollowers = new Set<number>();
 
-      // Check if anyone is now following us
-      states.forEach((state: any, clientId: number) => {
+      // Build set of who is currently following us
+      states.forEach((rawState, clientId: number) => {
         if (clientId === localClientId) return;
 
-        const followingId = state.followingClientId;
+        const state = rawState as CollaboratorState | undefined;
+        const followingId = state?.followingClientId;
         if (followingId === localClientId) {
-          const followerName = state.user?.name;
-          if (followerName) {
-            notify(`${followerName} is following you`, { icon: '👁️', duration: 3000 });
+          newFollowers.add(clientId);
+
+          // Only notify if this is a NEW follower (wasn't following us before)
+          if (!currentFollowersRef.current.has(clientId)) {
+            const followerName = state.user?.name;
+            if (followerName) {
+              notify(`${followerName} is following you`, { icon: '👁️', duration: 3000 });
+            }
           }
         }
       });
+
+      // Update the tracked followers
+      currentFollowersRef.current = newFollowers;
     };
 
     awareness.on('change', handleChange);
