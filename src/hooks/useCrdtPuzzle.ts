@@ -62,6 +62,8 @@ interface UseCrdtPuzzleReturn {
   autoCheckEnabled: boolean;
   /** Toggle auto-check mode (synced via CRDT) */
   setAutoCheck: (enabled: boolean) => void;
+  /** Clear all entries from the puzzle */
+  clearAllEntries: () => void;
 }
 
 // Empty map constant for initial state

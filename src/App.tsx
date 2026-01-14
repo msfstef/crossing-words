@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
+import { PuzzleSkeleton } from './components/PuzzleSkeleton';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
 import { SuccessDialog } from './components/SuccessDialog';
@@ -817,17 +818,20 @@ function App() {
   );
 
   // Build grid content
+  // Show skeleton during all loading states to prevent layout shifts
+  const isLoading = waitingForPuzzle || !puzzle || !ready;
+
   const gridContent = (
     <>
-      {waitingForPuzzle ? (
-        <div className="puzzle-loading">
-          <p>Joining shared session...</p>
-          <p className="puzzle-loading__subtitle">Waiting for puzzle data from host</p>
-        </div>
-      ) : !puzzle ? (
-        <div className="puzzle-loading">Loading...</div>
-      ) : !ready ? (
-        <div className="puzzle-loading">Loading puzzle state...</div>
+      {isLoading ? (
+        <>
+          <PuzzleSkeleton />
+          {waitingForPuzzle && (
+            <div className="puzzle-status-overlay">
+              <span className="puzzle-status-overlay__text">Joining shared session...</span>
+            </div>
+          )}
+        </>
       ) : (
         <>
           {error && (

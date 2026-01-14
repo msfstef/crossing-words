@@ -39,6 +39,7 @@
   overflow: hidden;
   padding: var(--grid-padding);
   min-height: 0; /* Critical: allow flex child to shrink below content size */
+  position: relative; /* For absolute positioned overlays */
 }
 
 /**

@@ -47,14 +47,11 @@
   padding: 1rem 1.5rem 2rem;
 }
 
-/* Loading state */
-.library-loading {
+/* Skeleton loading state */
+.library-skeleton {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: var(--color-text-muted);
-  font-size: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 /* Empty state */

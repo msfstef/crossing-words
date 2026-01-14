@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { PuzzleCard } from './PuzzleCard';
 import { LoadingCard } from './LoadingCard';
+import { SkeletonCard } from './SkeletonCard';
 import { FAB } from './FAB';
 import { DownloadDialog } from './DownloadDialog';
 import { PuzzleOptionsDialog } from './PuzzleOptionsDialog';
@@ -350,7 +351,11 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
 
       <main className="library-content">
         {loading ? (
-          <div className="library-loading">Loading puzzles...</div>
+          <div className="library-skeleton">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : !hasEntries ? (
           <div className="library-empty">
             <p className="library-empty__title">No puzzles yet</p>
