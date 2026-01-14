@@ -18,6 +18,8 @@ import {
   setPuzzleInCrdt,
   getPuzzleFromCrdt,
   observePuzzleInCrdt,
+  type PuzzleMetadata,
+  type PuzzleWithMetadata,
 } from '../collaboration/puzzleSync';
 import { getVerifiedMap, getErrorsMap, getSettingsMap, type VerifiedMap, type ErrorsMap, type SettingsMap } from '../crdt/puzzleDoc';
 import type { Puzzle } from '../types/puzzle';
@@ -25,8 +27,10 @@ import type { Puzzle } from '../types/puzzle';
 interface UseCrdtPuzzleOptions {
   /** Puzzle to store in CRDT for sharing (sharer provides this) */
   puzzle?: Puzzle | null;
+  /** Metadata (source, date) for the puzzle being shared */
+  metadata?: PuzzleMetadata;
   /** Callback when puzzle is received from CRDT (recipient receives via this) */
-  onPuzzleReceived?: (puzzle: Puzzle) => void;
+  onPuzzleReceived?: (result: PuzzleWithMetadata) => void;
 }
 
 interface UseCrdtPuzzleReturn {
@@ -124,7 +128,7 @@ export function useCrdtPuzzle(
   roomId?: string,
   options?: UseCrdtPuzzleOptions
 ): UseCrdtPuzzleReturn {
-  const { puzzle, onPuzzleReceived } = options ?? {};
+  const { puzzle, metadata, onPuzzleReceived } = options ?? {};
 
   // Store reference for access in callbacks and external store
   const storeRef = useRef<PuzzleStore | null>(null);
@@ -147,12 +151,14 @@ export function useCrdtPuzzle(
 
   // Use refs for puzzle sync to avoid triggering effect re-runs
   const puzzleRef = useRef(puzzle);
+  const metadataRef = useRef(metadata);
   const onPuzzleReceivedRef = useRef(onPuzzleReceived);
   // Track if we've already called onPuzzleReceived to avoid duplicate calls
   const puzzleReceivedCalledRef = useRef(false);
 
   // Keep refs updated
   puzzleRef.current = puzzle;
+  metadataRef.current = metadata;
   onPuzzleReceivedRef.current = onPuzzleReceived;
 
   // Subscribe function for useSyncExternalStore
@@ -302,7 +308,7 @@ export function useCrdtPuzzle(
       if (roomId) {
         // If we have a puzzle (via ref), store it in CRDT for sharing to peers
         if (puzzleRef.current) {
-          setPuzzleInCrdt(store.doc, puzzleRef.current);
+          setPuzzleInCrdt(store.doc, puzzleRef.current, metadataRef.current);
         }
 
         const session = await createP2PSession(store, roomId);
@@ -387,9 +393,9 @@ export function useCrdtPuzzle(
   useEffect(() => {
     const store = storeRef.current;
     if (store && puzzle && roomId) {
-      setPuzzleInCrdt(store.doc, puzzle);
+      setPuzzleInCrdt(store.doc, puzzle, metadata);
     }
-  }, [puzzle, roomId]);
+  }, [puzzle, metadata, roomId]);
 
   // Entry manipulation methods
   const setEntry = useCallback((row: number, col: number, value: string) => {

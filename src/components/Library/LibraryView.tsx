@@ -36,7 +36,7 @@ interface GhostEntry {
 }
 
 interface LibraryViewProps {
-  onOpenPuzzle: (puzzle: Puzzle, puzzleId: string) => void;
+  onOpenPuzzle: (puzzle: Puzzle, puzzleId: string, source?: string, date?: string) => void;
   onError: (message: string) => void;
 }
 
@@ -195,7 +195,9 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
       try {
         const puzzle = await loadPuzzleById(puzzleId);
         if (puzzle) {
-          onOpenPuzzle(puzzle, puzzleId);
+          // Find the entry to get source/date metadata
+          const entry = puzzles.find((p) => p.id === puzzleId);
+          onOpenPuzzle(puzzle, puzzleId, entry?.source, entry?.date);
         } else {
           onError('Puzzle not found');
         }
@@ -204,7 +206,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         onError('Failed to open puzzle');
       }
     },
-    [onOpenPuzzle, onError]
+    [onOpenPuzzle, onError, puzzles]
   );
 
   const handleDeletePuzzle = useCallback(async (puzzleId: string) => {

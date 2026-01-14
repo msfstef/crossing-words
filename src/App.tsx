@@ -50,6 +50,7 @@ import {
   getLocalEntryCount,
 } from './collaboration/timelineStorage';
 import { createPuzzleStore } from './crdt/puzzleStore';
+import type { PuzzleWithMetadata } from './collaboration/puzzleSync';
 import type { Puzzle } from './types/puzzle';
 import './App.css';
 
@@ -139,6 +140,8 @@ function AppContent() {
   const [activePuzzleId, setActivePuzzleId] = useState<string>(
     initialTestPuzzle ? getPuzzleId(initialTestPuzzle) : ''
   );
+  // Metadata for the current puzzle (source, date) - used for CRDT sharing
+  const [puzzleMetadata, setPuzzleMetadata] = useState<{ source?: string; date?: string }>({});
   const [error, setError] = useState<string | null>(null);
 
   // Session state: timeline ID for P2P collaboration
@@ -425,19 +428,22 @@ function AppContent() {
    * Handle receiving puzzle data from CRDT sync.
    * Called when joining a shared session where we don't have the puzzle locally.
    * Stores the timeline mapping so future opens of this puzzle rejoin the same timeline.
+   * Now includes metadata (source, date) to ensure puzzle appears correctly in library.
    */
-  const handlePuzzleReceived = useCallback((receivedPuzzle: Puzzle) => {
-    console.log('[App] Received puzzle from CRDT:', receivedPuzzle.title);
+  const handlePuzzleReceived = useCallback((result: PuzzleWithMetadata) => {
+    const { puzzle: receivedPuzzle, metadata } = result;
+    console.log('[App] Received puzzle from CRDT:', receivedPuzzle.title, 'with metadata:', metadata);
 
     // Update puzzle state
     setPuzzle(receivedPuzzle);
+    setPuzzleMetadata(metadata);
     setWaitingForPuzzle(false);
     setUrlPuzzleId(null);
 
-    // Save the received puzzle for future use
+    // Save the received puzzle for future use, including source/date metadata
     const newPuzzleId = getPuzzleId(receivedPuzzle);
     setActivePuzzleId(newPuzzleId);
-    savePuzzle(newPuzzleId, receivedPuzzle).catch((err) => {
+    savePuzzle(newPuzzleId, receivedPuzzle, metadata.source, metadata.date).catch((err) => {
       console.error('Failed to save received puzzle:', err);
     });
     // Also save as current puzzle
@@ -456,9 +462,11 @@ function AppContent() {
   const puzzleSyncOptions = useMemo(() => ({
     // Provide puzzle for sharing when we have one (and not waiting for one)
     puzzle: waitingForPuzzle ? null : puzzle,
+    // Provide metadata (source, date) for sharing so recipient sees same library entry
+    metadata: waitingForPuzzle ? undefined : puzzleMetadata,
     // Provide callback for receiving when we're waiting for a puzzle
     onPuzzleReceived: waitingForPuzzle ? handlePuzzleReceived : undefined,
-  }), [puzzle, waitingForPuzzle, handlePuzzleReceived]);
+  }), [puzzle, puzzleMetadata, waitingForPuzzle, handlePuzzleReceived]);
 
   const {
     userEntries,
@@ -818,10 +826,12 @@ function AppContent() {
    * Handle opening a puzzle from the library.
    * Checks for existing timeline (returning to puzzle) or generates new one.
    * This enables session resumption - closing and reopening puts you back in the same P2P room.
+   * Now also stores source/date metadata for CRDT sharing.
    */
-  const handleOpenPuzzle = useCallback((loadedPuzzle: Puzzle, loadedPuzzleId: string) => {
+  const handleOpenPuzzle = useCallback((loadedPuzzle: Puzzle, loadedPuzzleId: string, source?: string, date?: string) => {
     setPuzzle(loadedPuzzle);
     setActivePuzzleId(loadedPuzzleId);
+    setPuzzleMetadata({ source, date });
     setActiveView('solve');
     setError(null);
 
@@ -865,6 +875,7 @@ function AppContent() {
     // Clear puzzle state
     setPuzzle(null);
     setActivePuzzleId('');
+    setPuzzleMetadata({});
     // Reset zoom mode (ephemeral, not persisted)
     setIsZoomMode(false);
   }, [activePuzzleId]);

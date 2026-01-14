@@ -31,6 +31,30 @@ interface SerializedPuzzle {
     across: Clue[];
     down: Clue[];
   };
+  /** Source information (e.g., "NYT", "LA Times") for display in puzzle list */
+  source?: string;
+  /** Date information for display in puzzle list */
+  date?: string;
+}
+
+/**
+ * Puzzle metadata for sharing alongside the puzzle data.
+ * This metadata is stored separately in the user's puzzle library
+ * and should be included when sharing to ensure recipients see
+ * the same information as the sharer.
+ */
+export interface PuzzleMetadata {
+  source?: string;
+  date?: string;
+}
+
+/**
+ * Result of retrieving a puzzle from CRDT, including both
+ * the puzzle data and any associated metadata.
+ */
+export interface PuzzleWithMetadata {
+  puzzle: Puzzle;
+  metadata: PuzzleMetadata;
 }
 
 /** Key for puzzle metadata in Y.Doc */
@@ -48,7 +72,7 @@ function getPuzzleMap(doc: Y.Doc): Y.Map<string> {
 /**
  * Serialize a Puzzle object for CRDT storage.
  */
-function serializePuzzle(puzzle: Puzzle): SerializedPuzzle {
+function serializePuzzle(puzzle: Puzzle, metadata?: PuzzleMetadata): SerializedPuzzle {
   return {
     title: puzzle.title,
     author: puzzle.author,
@@ -66,13 +90,15 @@ function serializePuzzle(puzzle: Puzzle): SerializedPuzzle {
       across: puzzle.clues.across,
       down: puzzle.clues.down,
     },
+    source: metadata?.source,
+    date: metadata?.date,
   };
 }
 
 /**
- * Deserialize a puzzle from CRDT storage back to Puzzle type.
+ * Deserialize a puzzle from CRDT storage back to Puzzle type with metadata.
  */
-function deserializePuzzle(serialized: SerializedPuzzle): Puzzle {
+function deserializePuzzle(serialized: SerializedPuzzle): PuzzleWithMetadata {
   // Reconstruct 2D grid from flat array
   const grid: Cell[][] = [];
   for (let row = 0; row < serialized.height; row++) {
@@ -91,12 +117,18 @@ function deserializePuzzle(serialized: SerializedPuzzle): Puzzle {
   }
 
   return {
-    title: serialized.title,
-    author: serialized.author,
-    width: serialized.width,
-    height: serialized.height,
-    grid,
-    clues: serialized.clues,
+    puzzle: {
+      title: serialized.title,
+      author: serialized.author,
+      width: serialized.width,
+      height: serialized.height,
+      grid,
+      clues: serialized.clues,
+    },
+    metadata: {
+      source: serialized.source,
+      date: serialized.date,
+    },
   };
 }
 
@@ -108,23 +140,24 @@ function deserializePuzzle(serialized: SerializedPuzzle): Puzzle {
  *
  * @param doc - The Y.Doc to store puzzle in
  * @param puzzle - The puzzle to store
+ * @param metadata - Optional metadata (source, date) to include for proper display in recipient's library
  */
-export function setPuzzleInCrdt(doc: Y.Doc, puzzle: Puzzle): void {
+export function setPuzzleInCrdt(doc: Y.Doc, puzzle: Puzzle, metadata?: PuzzleMetadata): void {
   const puzzleMap = getPuzzleMap(doc);
-  const serialized = serializePuzzle(puzzle);
+  const serialized = serializePuzzle(puzzle, metadata);
   puzzleMap.set(PUZZLE_DATA_KEY, JSON.stringify(serialized));
-  console.debug('[puzzleSync] Stored puzzle in CRDT:', puzzle.title);
+  console.debug('[puzzleSync] Stored puzzle in CRDT:', puzzle.title, 'with metadata:', metadata);
 }
 
 /**
- * Retrieve puzzle metadata from the CRDT.
+ * Retrieve puzzle and metadata from the CRDT.
  *
  * Returns null if no puzzle has been stored yet.
  *
  * @param doc - The Y.Doc to read puzzle from
- * @returns The puzzle if present, null otherwise
+ * @returns The puzzle with metadata if present, null otherwise
  */
-export function getPuzzleFromCrdt(doc: Y.Doc): Puzzle | null {
+export function getPuzzleFromCrdt(doc: Y.Doc): PuzzleWithMetadata | null {
   const puzzleMap = getPuzzleMap(doc);
   const data = puzzleMap.get(PUZZLE_DATA_KEY);
 
@@ -134,9 +167,9 @@ export function getPuzzleFromCrdt(doc: Y.Doc): Puzzle | null {
 
   try {
     const serialized: SerializedPuzzle = JSON.parse(data);
-    const puzzle = deserializePuzzle(serialized);
-    console.debug('[puzzleSync] Retrieved puzzle from CRDT:', puzzle.title);
-    return puzzle;
+    const result = deserializePuzzle(serialized);
+    console.debug('[puzzleSync] Retrieved puzzle from CRDT:', result.puzzle.title, 'with metadata:', result.metadata);
+    return result;
   } catch (err) {
     console.error('[puzzleSync] Failed to parse puzzle from CRDT:', err);
     return null;
@@ -161,18 +194,18 @@ export function hasPuzzleInCrdt(doc: Y.Doc): boolean {
  * including when it's first received from a peer.
  *
  * @param doc - The Y.Doc to observe
- * @param callback - Called with the puzzle when it changes
+ * @param callback - Called with the puzzle and metadata when it changes
  * @returns Unsubscribe function
  */
 export function observePuzzleInCrdt(
   doc: Y.Doc,
-  callback: (puzzle: Puzzle | null) => void
+  callback: (result: PuzzleWithMetadata | null) => void
 ): () => void {
   const puzzleMap = getPuzzleMap(doc);
 
   const observer = () => {
-    const puzzle = getPuzzleFromCrdt(doc);
-    callback(puzzle);
+    const result = getPuzzleFromCrdt(doc);
+    callback(result);
   };
 
   puzzleMap.observe(observer);

@@ -5,6 +5,7 @@ import type { Puzzle, Clue } from '../types/puzzle';
 import { useCrdtPuzzle } from './useCrdtPuzzle';
 import type { ConnectionState } from '../crdt/webrtcProvider';
 import type { VerifiedMap, ErrorsMap } from '../crdt/puzzleDoc';
+import type { PuzzleMetadata, PuzzleWithMetadata } from '../collaboration/puzzleSync';
 
 interface CurrentClue {
   number: number;
@@ -15,8 +16,10 @@ interface CurrentClue {
 interface PuzzleStateHookOptions {
   /** Puzzle to store in CRDT for sharing (sharer provides this) */
   puzzle?: Puzzle | null;
+  /** Metadata (source, date) for the puzzle being shared */
+  metadata?: PuzzleMetadata;
   /** Callback when puzzle is received from CRDT (recipient receives via this) */
-  onPuzzleReceived?: (puzzle: Puzzle) => void;
+  onPuzzleReceived?: (result: PuzzleWithMetadata) => void;
 }
 
 interface PuzzleStateHook {
@@ -106,6 +109,7 @@ export function usePuzzleState(
     clearAllEntries,
   } = useCrdtPuzzle(puzzleId, roomId, {
     puzzle: options?.puzzle,
+    metadata: options?.metadata,
     onPuzzleReceived: options?.onPuzzleReceived,
   });
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
