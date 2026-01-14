@@ -219,14 +219,8 @@ export function useCrdtPuzzle(
     // Track puzzle sync observer for cleanup
     let puzzleSyncUnsubscribe: (() => void) | null = null;
 
-    // Auto-reconnect when page becomes visible (mobile sleep/wake)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && sessionRef.current) {
-        console.debug('[useCrdtPuzzle] Page became visible, triggering reconnect');
-        sessionRef.current.reconnect();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Note: Auto-reconnect on visibility change, network changes, etc. is now handled
+    // by the webrtcProvider itself, so no need to duplicate handlers here.
 
     // Create new store for this puzzle
     const store = createPuzzleStore(puzzleId);
@@ -352,8 +346,6 @@ export function useCrdtPuzzle(
 
     // Cleanup on unmount or puzzleId/roomId change
     return () => {
-      // Remove visibility change listener
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       // Unsubscribe from puzzle sync
       if (puzzleSyncUnsubscribe) {
         puzzleSyncUnsubscribe();

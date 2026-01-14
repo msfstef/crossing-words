@@ -36,6 +36,8 @@ export class SignalingRoom extends DurableObject<Env> {
     // Only billed during message processing, not connection duration
     this.ctx.acceptWebSocket(server);
 
+    console.log('[SignalingRoom] New WebSocket connection accepted');
+
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -83,10 +85,18 @@ export class SignalingRoom extends DurableObject<Env> {
    */
   async webSocketClose(
     _ws: WebSocket,
-    _code: number,
-    _reason: string
+    code: number,
+    reason: string
   ): Promise<void> {
+    console.log(`[SignalingRoom] WebSocket closed: code=${code}, reason=${reason}`);
     // Cleanup handled automatically by Cloudflare
+  }
+
+  /**
+   * Handle WebSocket errors.
+   */
+  async webSocketError(_ws: WebSocket, error: unknown): Promise<void> {
+    console.error('[SignalingRoom] WebSocket error:', error);
   }
 
   /**
@@ -100,12 +110,20 @@ export class SignalingRoom extends DurableObject<Env> {
       clients: allWs.length,
     });
 
+    let successCount = 0;
+    let failCount = 0;
+
     for (const conn of allWs) {
       try {
         conn.send(response);
-      } catch {
+        successCount++;
+      } catch (e) {
+        failCount++;
+        console.error('[SignalingRoom] Failed to send to connection:', e);
         // Connection closed, CF will call webSocketClose
       }
     }
+
+    console.log(`[SignalingRoom] Broadcast to ${successCount}/${allWs.length} connections (${failCount} failed)`);
   }
 }
