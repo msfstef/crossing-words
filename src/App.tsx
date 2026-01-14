@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { ClueBar } from './components/ClueBar';
+import { ClueBarSkeleton } from './components/ClueBarSkeleton';
 import { PuzzleSkeleton } from './components/PuzzleSkeleton';
+import { KeyboardSkeleton } from './components/KeyboardSkeleton';
 import { ShareDialog } from './components/ShareDialog';
 import { JoinDialog } from './components/JoinDialog';
 import { SuccessDialog } from './components/SuccessDialog';
@@ -18,6 +20,7 @@ import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
 import { usePlayTime } from './hooks/usePlayTime';
 import { useHistoryNavigation, type DialogType } from './hooks/useHistoryNavigation';
+import { useMinimumLoadingTime } from './hooks/useMinimumLoadingTime';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
@@ -819,7 +822,9 @@ function App() {
 
   // Build grid content
   // Show skeleton during all loading states to prevent layout shifts
-  const isLoading = waitingForPuzzle || !puzzle || !ready;
+  // Use minimum loading time to prevent jarring flash on fast loads
+  const isActuallyLoading = waitingForPuzzle || !puzzle || !ready;
+  const isLoading = useMinimumLoadingTime(isActuallyLoading, 300);
 
   const gridContent = (
     <>
@@ -832,7 +837,7 @@ function App() {
             </div>
           )}
         </>
-      ) : (
+      ) : puzzle ? (
         <>
           {error && (
             <div className="error-banner">
@@ -878,7 +883,7 @@ function App() {
             </div>
           </div>
         </>
-      )}
+      ) : null}
     </>
   );
 
@@ -898,22 +903,28 @@ function App() {
         }
         grid={gridContent}
         clueBar={
-          <ClueBar
-            clue={currentClue}
-            onPrevClue={goToPrevClueWithFollow}
-            onNextClue={goToNextClueWithFollow}
-            hasPrev={hasPrevClue}
-            hasNext={hasNextClue}
-            onToggleDirection={toggleDirectionWithFollow}
-          />
+          isLoading ? (
+            <ClueBarSkeleton />
+          ) : (
+            <ClueBar
+              clue={currentClue}
+              onPrevClue={goToPrevClueWithFollow}
+              onNextClue={goToNextClueWithFollow}
+              hasPrev={hasPrevClue}
+              hasNext={hasNextClue}
+              onToggleDirection={toggleDirectionWithFollow}
+            />
+          )
         }
         keyboard={
-          puzzle && ready ? (
+          isLoading ? (
+            <KeyboardSkeleton />
+          ) : (
             <CrosswordKeyboard
               onKeyPress={typeLetterWithFollow}
               onBackspace={handleBackspaceWithFollow}
             />
-          ) : null
+          )
         }
       />
 
