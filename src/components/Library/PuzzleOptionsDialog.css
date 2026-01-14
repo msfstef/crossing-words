@@ -15,12 +15,25 @@
   animation: fadeIn 150ms ease-out;
 }
 
+.puzzle-options-overlay--closing {
+  animation: fadeOut 200ms ease-out forwards;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -32,6 +45,11 @@
   width: 100%;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   animation: slideUp 150ms ease-out;
+  transition: transform 150ms ease-out;
+}
+
+.puzzle-options-dialog--closing {
+  animation: slideDown 200ms ease-out forwards;
 }
 
 @keyframes slideUp {
@@ -45,12 +63,32 @@
   }
 }
 
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
 .puzzle-options-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--color-border);
+}
+
+.puzzle-options-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+  padding-right: 1rem;
 }
 
 .puzzle-options-title {
@@ -61,7 +99,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-right: 1rem;
+}
+
+.puzzle-options-date {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
 }
 
 .puzzle-options-close {
@@ -128,11 +171,19 @@
 }
 
 .puzzle-options-button-icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 1.5rem;
+  height: 1.5rem;
   flex-shrink: 0;
-  width: 2rem;
-  text-align: center;
+  color: var(--color-text);
+  transition: color 120ms ease;
+}
+
+.puzzle-options-button--danger .puzzle-options-button-icon {
+  color: var(--color-text-muted);
+}
+
+.puzzle-options-button--danger:hover .puzzle-options-button-icon {
+  color: var(--color-error);
 }
 
 .puzzle-options-button-text {
@@ -172,6 +223,17 @@
     }
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100%);
       opacity: 1;
     }
   }

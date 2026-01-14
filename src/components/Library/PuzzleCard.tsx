@@ -13,7 +13,7 @@ interface PuzzleCardProps {
   onLongPress?: () => void;
 }
 
-const LONG_PRESS_DURATION = 500; // milliseconds
+const LONG_PRESS_DURATION = 350; // milliseconds - optimized for native feel
 
 /**
  * Card displaying a puzzle in the library with progress indicator.
