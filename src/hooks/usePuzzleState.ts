@@ -342,11 +342,15 @@ export function usePuzzleState(
    * @returns The first empty cell, or the first cell if all filled
    */
   const findFirstEmptyCellInClue = useCallback(
-    (clue: Clue, dir: 'across' | 'down'): { row: number; col: number } => {
+    (clue: Clue, dir: 'across' | 'down', excludeCell?: { row: number; col: number }): { row: number; col: number } => {
       if (dir === 'across') {
         for (let i = 0; i < clue.length; i++) {
           const col = clue.col + i;
           const key = `${clue.row},${col}`;
+          // Skip the cell if it matches excludeCell
+          if (excludeCell && clue.row === excludeCell.row && col === excludeCell.col) {
+            continue;
+          }
           if (col < puzzle.width &&
               !puzzle.grid[clue.row][col].isBlack &&
               !verifiedCells.has(key) &&
@@ -358,6 +362,10 @@ export function usePuzzleState(
         for (let i = 0; i < clue.length; i++) {
           const row = clue.row + i;
           const key = `${row},${clue.col}`;
+          // Skip the cell if it matches excludeCell
+          if (excludeCell && row === excludeCell.row && clue.col === excludeCell.col) {
+            continue;
+          }
           if (row < puzzle.height &&
               !puzzle.grid[row][clue.col].isBlack &&
               !verifiedCells.has(key) &&
@@ -379,12 +387,16 @@ export function usePuzzleState(
    * @returns Number of empty cells
    */
   const countEmptyCellsInClue = useCallback(
-    (clue: Clue, dir: 'across' | 'down'): number => {
+    (clue: Clue, dir: 'across' | 'down', excludeCell?: { row: number; col: number }): number => {
       let count = 0;
       if (dir === 'across') {
         for (let i = 0; i < clue.length; i++) {
           const col = clue.col + i;
           const key = `${clue.row},${col}`;
+          // Skip the cell if it matches excludeCell
+          if (excludeCell && clue.row === excludeCell.row && col === excludeCell.col) {
+            continue;
+          }
           if (col < puzzle.width &&
               !puzzle.grid[clue.row][col].isBlack &&
               !verifiedCells.has(key) &&
@@ -396,6 +408,10 @@ export function usePuzzleState(
         for (let i = 0; i < clue.length; i++) {
           const row = clue.row + i;
           const key = `${row},${clue.col}`;
+          // Skip the cell if it matches excludeCell
+          if (excludeCell && row === excludeCell.row && clue.col === excludeCell.col) {
+            continue;
+          }
           if (row < puzzle.height &&
               !puzzle.grid[row][clue.col].isBlack &&
               !verifiedCells.has(key) &&
@@ -494,11 +510,13 @@ export function usePuzzleState(
       if (isLast) {
         // We just filled the last cell (rightmost/bottommost) in the clue
         // Count how many empty cells remain in this clue (AFTER the current fill)
-        const emptyCellsInCurrentClue = countEmptyCellsInClue(currentClue, direction);
+        // Exclude the current cell since it was just filled (state hasn't updated yet)
+        const excludeCell = { row: fromRow, col: fromCol };
+        const emptyCellsInCurrentClue = countEmptyCellsInClue(currentClue, direction, excludeCell);
 
         if (emptyCellsInCurrentClue > 0) {
           // Clue has other empty cells - go to first empty cell in same clue
-          const cell = findFirstEmptyCellInClue(currentClue, direction);
+          const cell = findFirstEmptyCellInClue(currentClue, direction, excludeCell);
           setSelectedCell(cell);
         } else {
           // This was the only missing cell or all cells are now filled
