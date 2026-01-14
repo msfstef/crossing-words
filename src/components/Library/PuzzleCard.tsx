@@ -89,6 +89,9 @@ export function PuzzleCard({
       cancelLongPress();
       // Only trigger onOpen if not clicking delete button
       if (!(e.target as HTMLElement).closest('.puzzle-card__delete')) {
+        // Prevent the event from propagating to newly mounted components
+        e.preventDefault();
+        e.stopPropagation();
         onOpen();
       }
     } else {

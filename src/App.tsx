@@ -26,6 +26,7 @@ import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
+import { invalidateProgressCache } from './lib/puzzleCache';
 import {
   parseShareUrl,
   parseLegacyRoomUrl,
@@ -579,13 +580,17 @@ function App() {
     puzzleId,
     timelineId,
     onNavigateToLibrary: useCallback(() => {
+      // Invalidate progress cache so library shows fresh progress
+      if (activePuzzleId) {
+        invalidateProgressCache(activePuzzleId);
+      }
       // Navigate to library via back button
       clearUrlHash();
       setTimelineId(undefined);
       setActiveView('library');
       setPuzzle(null);
       setActivePuzzleId('');
-    }, []),
+    }, [activePuzzleId]),
     onDismissDialog: handleDismissDialog,
   });
 
@@ -729,6 +734,10 @@ function App() {
    * Handle going back to library from solve view.
    */
   const handleBackToLibrary = useCallback(() => {
+    // Invalidate progress cache so library shows fresh progress
+    if (activePuzzleId) {
+      invalidateProgressCache(activePuzzleId);
+    }
     // Clear the URL hash when leaving a puzzle
     clearUrlHash();
     // Reset timeline since we're leaving the puzzle
@@ -740,7 +749,7 @@ function App() {
     setActivePuzzleId('');
     // Reset zoom mode (ephemeral, not persisted)
     setIsZoomMode(false);
-  }, []);
+  }, [activePuzzleId]);
 
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
