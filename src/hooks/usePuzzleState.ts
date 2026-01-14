@@ -63,6 +63,10 @@ interface PuzzleStateHook {
   toggleDirection: () => void;
   /** Handle swipe navigation (for mobile touch gestures) */
   handleSwipeNavigation: (direction: 'left' | 'right' | 'up' | 'down') => void;
+  /** Set the selected cell (exposed for follow functionality) */
+  setSelectedCell: (cell: { row: number; col: number } | null) => void;
+  /** Set the direction (exposed for follow functionality) */
+  setDirection: (direction: 'across' | 'down') => void;
 }
 
 /**
@@ -1072,5 +1076,7 @@ export function usePuzzleState(
     handleBackspace: handleBackspaceAction,
     toggleDirection,
     handleSwipeNavigation,
+    setSelectedCell,
+    setDirection,
   };
 }
