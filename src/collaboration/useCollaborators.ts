@@ -5,18 +5,25 @@
  * state with React. Returns an array of collaborators (excluding
  * the local user) with their user info and cursor positions.
  *
- * Also shows toast notifications when collaborators join or leave.
+ * Optionally shows notifications when collaborators join or leave.
  */
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
-import { toast } from 'sonner';
 import type { Awareness } from 'y-protocols/awareness';
 import type { Collaborator, CollaboratorState } from './types';
+
+/** Notification callback type */
+export type NotifyFn = (message: string, options?: { icon?: string; duration?: number }) => void;
 
 /**
  * Empty collaborators array for when awareness is null.
  */
 const EMPTY_COLLABORATORS: Collaborator[] = [];
+
+interface UseCollaboratorsOptions {
+  /** Optional notification callback for join/leave events */
+  notify?: NotifyFn;
+}
 
 /**
  * Hook for tracking collaborator presence via Yjs Awareness.
@@ -26,11 +33,12 @@ const EMPTY_COLLABORATORS: Collaborator[] = [];
  * client automatically.
  *
  * @param awareness - Yjs Awareness instance or null if not in P2P mode
+ * @param options - Optional configuration including notify callback
  * @returns Array of collaborators (excludes local user)
  *
  * @example
  * ```typescript
- * const collaborators = useCollaborators(awareness);
+ * const collaborators = useCollaborators(awareness, { notify });
  *
  * // Display each collaborator
  * collaborators.forEach(({ clientId, user, cursor }) => {
@@ -38,7 +46,11 @@ const EMPTY_COLLABORATORS: Collaborator[] = [];
  * });
  * ```
  */
-export function useCollaborators(awareness: Awareness | null): Collaborator[] {
+export function useCollaborators(
+  awareness: Awareness | null,
+  options?: UseCollaboratorsOptions
+): Collaborator[] {
+  const { notify } = options ?? {};
   // Cache for getSnapshot to avoid infinite loops
   // useSyncExternalStore requires getSnapshot to return the same reference
   // if the underlying data hasn't changed
@@ -111,15 +123,15 @@ export function useCollaborators(awareness: Awareness | null): Collaborator[] {
 
   const collaborators = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  // Track if initial load is complete to avoid showing toasts for existing users
+  // Track if initial load is complete to avoid showing notifications for existing users
   const isInitialLoadRef = useRef(true);
 
-  // Show toast notifications for join/leave events
+  // Show notifications for join/leave events (if notify callback provided)
   useEffect(() => {
-    if (!awareness) return;
+    if (!awareness || !notify) return;
 
     const handleChange = ({ added, removed }: { added: number[]; removed: number[] }) => {
-      // Skip toasts on initial load
+      // Skip notifications on initial load
       if (isInitialLoadRef.current) {
         isInitialLoadRef.current = false;
         return;
@@ -134,7 +146,7 @@ export function useCollaborators(awareness: Awareness | null): Collaborator[] {
           const state = awareness.getStates().get(clientId) as CollaboratorState | undefined;
           const name = state?.user?.name;
           if (name) {
-            toast(`${name} joined`, { icon: '👋', duration: 3000 });
+            notify(`${name} joined`, { icon: '👋', duration: 3000 });
           }
         }
       }
@@ -145,14 +157,14 @@ export function useCollaborators(awareness: Awareness | null): Collaborator[] {
           // Skip self
           if (clientId === awareness.clientID) continue;
 
-          toast('Someone left', { duration: 2000 });
+          notify('Someone left', { duration: 2000 });
         }
       }
     };
 
     awareness.on('change', handleChange);
     return () => awareness.off('change', handleChange);
-  }, [awareness]);
+  }, [awareness, notify]);
 
   return collaborators;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Toaster } from 'sonner';
 import { CrosswordGrid } from './components/CrosswordGrid';
+import { NotificationProvider, useNotification, Notification } from './components/Notification';
 import { ClueBar } from './components/ClueBar';
 import { ClueBarSkeleton } from './components/ClueBarSkeleton';
 import { PuzzleSkeleton } from './components/PuzzleSkeleton';
@@ -118,10 +118,14 @@ function getTestPuzzleFromUrlParams(): Puzzle | null {
   return null;
 }
 
-function App() {
+/**
+ * Inner App component that uses the notification system.
+ * Must be rendered inside NotificationProvider.
+ */
+function AppContent() {
+  const { notify } = useNotification();
   // Check for test puzzle from URL parameters (dev mode only)
   const initialTestPuzzle = useMemo(() => getTestPuzzleFromUrlParams(), []);
-
   // View state: library (home) or solve (puzzle view)
   // Default to library unless URL has timeline (shared session) OR test puzzle
   const initialSession = getSessionFromHash();
@@ -583,8 +587,8 @@ function App() {
     prevEntriesRef.current = new Map(userEntries);
   }, [autoCheckEnabled, userEntries, puzzle, verifiedCells, errorsMap]);
 
-  // Track collaborators and show join/leave toasts (toasts handled inside hook)
-  const collaborators = useCollaborators(awareness);
+  // Track collaborators and show notifications for join/leave events
+  const collaborators = useCollaborators(awareness, { notify });
   // Get local user info for consistent styling with what collaborators see
   const localUser = useLocalUser(awareness);
 
@@ -595,7 +599,8 @@ function App() {
     useCallback((row: number, col: number, dir: 'across' | 'down') => {
       setSelectedCell({ row, col });
       setDirection(dir);
-    }, [setSelectedCell, setDirection])
+    }, [setSelectedCell, setDirection]),
+    { notify }
   );
 
   // Wrap user interaction handlers to disable follow mode on local movement
@@ -906,7 +911,7 @@ function App() {
             </button>
           </div>
         )}
-        <Toaster position="bottom-center" theme="dark" />
+        <Notification />
       </>
     );
   }
@@ -1074,9 +1079,20 @@ function App() {
         duration={formattedDuration}
       />
 
-      {/* Toast notifications */}
-      <Toaster position="bottom-center" theme="dark" />
+      {/* Adaptive notifications */}
+      <Notification />
     </>
+  );
+}
+
+/**
+ * Main App component wrapped with NotificationProvider.
+ */
+function App() {
+  return (
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
   );
 }
 

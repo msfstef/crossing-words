@@ -8,9 +8,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
 import type { Awareness } from 'y-protocols/awareness';
 import type { Collaborator } from './types';
+import type { NotifyFn } from './useCollaborators';
 
 interface FollowCollaboratorHook {
   /** The collaborator currently being followed, or null if not following */
@@ -23,12 +23,18 @@ interface FollowCollaboratorHook {
   disableFollow: () => void;
 }
 
+interface UseFollowCollaboratorOptions {
+  /** Optional notification callback for follow events */
+  notify?: NotifyFn;
+}
+
 /**
  * Hook for following a collaborator's cursor.
  *
  * @param collaborators - Array of current collaborators
  * @param awareness - Yjs Awareness instance
  * @param onCursorUpdate - Callback to update local cursor position
+ * @param options - Optional configuration including notify callback
  * @returns Follow state and controls
  *
  * @example
@@ -39,15 +45,18 @@ interface FollowCollaboratorHook {
  *   (row, col, direction) => {
  *     setSelectedCell({ row, col });
  *     setDirection(direction);
- *   }
+ *   },
+ *   { notify }
  * );
  * ```
  */
 export function useFollowCollaborator(
   collaborators: Collaborator[],
   awareness: Awareness | null,
-  onCursorUpdate: (row: number, col: number, direction: 'across' | 'down') => void
+  onCursorUpdate: (row: number, col: number, direction: 'across' | 'down') => void,
+  options?: UseFollowCollaboratorOptions
 ): FollowCollaboratorHook {
+  const { notify } = options ?? {};
   const [followedClientId, setFollowedClientId] = useState<number | null>(null);
   const previousFollowedIdRef = useRef<number | null>(null);
 
@@ -87,7 +96,7 @@ export function useFollowCollaborator(
         awareness.setLocalStateField('followingClientId', firstCollab.clientId);
       }
 
-      toast(`Following ${firstCollab.user.name}`, { duration: 2000 });
+      notify?.(`Following ${firstCollab.user.name}`, { duration: 2000 });
     } else {
       // Already following someone - find the next collaborator
       const currentIndex = collaborators.findIndex((c) => c.clientId === followedClientId);
@@ -101,7 +110,7 @@ export function useFollowCollaborator(
       if (currentIndex === collaborators.length - 1) {
         // Last collaborator - disable follow
         disableFollow();
-        toast('Stopped following', { duration: 2000 });
+        notify?.('Stopped following', { duration: 2000 });
       } else {
         // Move to next collaborator
         const nextCollab = collaborators[currentIndex + 1];
@@ -112,10 +121,10 @@ export function useFollowCollaborator(
           awareness.setLocalStateField('followingClientId', nextCollab.clientId);
         }
 
-        toast(`Following ${nextCollab.user.name}`, { duration: 2000 });
+        notify?.(`Following ${nextCollab.user.name}`, { duration: 2000 });
       }
     }
-  }, [collaborators, followedClientId, awareness, disableFollow]);
+  }, [collaborators, followedClientId, awareness, disableFollow, notify]);
 
   /**
    * Auto-disable follow when the followed collaborator leaves.
@@ -127,10 +136,10 @@ export function useFollowCollaborator(
     const stillExists = collaborators.some((c) => c.clientId === followedClientId);
 
     if (!stillExists) {
-      toast('Collaborator left - stopped following', { duration: 2000 });
+      notify?.('Collaborator left - stopped following', { duration: 2000 });
       disableFollow();
     }
-  }, [collaborators, followedClientId, disableFollow]);
+  }, [collaborators, followedClientId, disableFollow, notify]);
 
   /**
    * Sync local cursor to followed collaborator's cursor.
@@ -146,7 +155,7 @@ export function useFollowCollaborator(
    * Send notification to the followed collaborator when we start following them.
    */
   useEffect(() => {
-    if (!awareness) return;
+    if (!awareness || !notify) return;
 
     // Detect when someone starts or stops following us
     const handleChange = () => {
@@ -161,7 +170,7 @@ export function useFollowCollaborator(
         if (followingId === localClientId) {
           const followerName = state.user?.name;
           if (followerName) {
-            toast(`${followerName} is following you`, { icon: '👁️', duration: 3000 });
+            notify(`${followerName} is following you`, { icon: '👁️', duration: 3000 });
           }
         }
       });
@@ -169,7 +178,7 @@ export function useFollowCollaborator(
 
     awareness.on('change', handleChange);
     return () => awareness.off('change', handleChange);
-  }, [awareness]);
+  }, [awareness, notify]);
 
   /**
    * Notify the followed collaborator that we started following them.
