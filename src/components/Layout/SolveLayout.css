@@ -113,14 +113,11 @@
   display: none;
 }
 
-/* Desktop layout: center content vertically instead of pushing to bottom */
+/* Desktop layout: header at top, content fills remaining space */
 @media (min-width: 768px) {
-  .solve-layout {
-    justify-content: center;
-  }
-
   .solve-layout__grid {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   .solve-layout__clue-bar {

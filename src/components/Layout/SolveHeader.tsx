@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import type { Collaborator } from '../../collaboration/types';
-import type { ConnectionState } from '../../crdt/webrtcProvider';
 import './SolveHeader.css';
 
 interface SolveHeaderProps {
@@ -12,10 +11,6 @@ interface SolveHeaderProps {
   collaborators: Collaborator[];
   /** Settings menu component */
   settingsMenu: ReactNode;
-  /** P2P connection state */
-  connectionState: ConnectionState;
-  /** Whether we're in a P2P session */
-  isP2PSession: boolean;
   /** The collaborator currently being followed, or null if not following */
   followedCollaborator?: Collaborator | null;
   /** Toggle follow mode */
@@ -28,15 +23,13 @@ interface SolveHeaderProps {
 
 /**
  * Compact header for the puzzle solving view.
- * Layout: Back | Spacer | Collaborators | Connection | Share | Settings
+ * Layout: Back | Spacer | Collaborators | Follow | Share | Zoom | Settings
  */
 export function SolveHeader({
   onBack,
   onShare,
   collaborators,
   settingsMenu,
-  connectionState,
-  isP2PSession,
   followedCollaborator = null,
   onToggleFollow,
   isZoomMode = false,
@@ -58,40 +51,6 @@ export function SolveHeader({
 
       {/* Spacer - header title removed, now shown above grid */}
       <div className="solve-header__spacer" />
-
-      {/* Zoom toggle button */}
-      {onToggleZoom && (
-        <button
-          type="button"
-          className={`solve-header__zoom ${isZoomMode ? 'solve-header__zoom--active' : ''}`}
-          onClick={onToggleZoom}
-          aria-label={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
-          title={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
-        >
-          <svg
-            className="solve-header__zoom-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {/* Magnifying glass */}
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-            {/* Plus sign when not zoomed, minus when zoomed */}
-            {isZoomMode ? (
-              <line x1="8" y1="11" x2="14" y2="11" />
-            ) : (
-              <>
-                <line x1="11" y1="8" x2="11" y2="14" />
-                <line x1="8" y1="11" x2="14" y2="11" />
-              </>
-            )}
-          </svg>
-        </button>
-      )}
 
       {/* Collaborator dots - compact overlapping avatars */}
       {collaborators.length > 0 && (
@@ -138,19 +97,6 @@ export function SolveHeader({
         </button>
       )}
 
-      {/* Connection indicator - show in P2P mode */}
-      {isP2PSession && (
-        <div className={`solve-header__connection solve-header__connection--${connectionState}`}>
-          {connectionState === 'connecting' && (
-            <>
-              <span className="solve-header__connection-spinner" />
-              <span>Connecting</span>
-            </>
-          )}
-          {connectionState === 'connected' && <span>Connected</span>}
-        </div>
-      )}
-
       {/* Share button - neutral styling with share icon */}
       <button
         type="button"
@@ -173,6 +119,40 @@ export function SolveHeader({
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
       </button>
+
+      {/* Zoom toggle button */}
+      {onToggleZoom && (
+        <button
+          type="button"
+          className={`solve-header__zoom ${isZoomMode ? 'solve-header__zoom--active' : ''}`}
+          onClick={onToggleZoom}
+          aria-label={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
+          title={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
+        >
+          <svg
+            className="solve-header__zoom-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Magnifying glass */}
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+            {/* Plus sign when not zoomed, minus when zoomed */}
+            {isZoomMode ? (
+              <line x1="8" y1="11" x2="14" y2="11" />
+            ) : (
+              <>
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </>
+            )}
+          </svg>
+        </button>
+      )}
 
       {/* Settings menu */}
       {settingsMenu}

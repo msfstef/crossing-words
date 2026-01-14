@@ -382,7 +382,6 @@ function App() {
     handleCellClick,
     handleKeyDown,
     ready,
-    connectionState,
     awareness,
     verifiedCells,
     errorCells,
@@ -879,8 +878,6 @@ function App() {
             onShare={handleShare}
             collaborators={collaborators}
             settingsMenu={settingsMenuContent}
-            connectionState={connectionState}
-            isP2PSession={Boolean(roomId)}
             followedCollaborator={followedCollaborator}
             onToggleFollow={toggleFollow}
             isZoomMode={isZoomMode}
