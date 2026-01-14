@@ -249,7 +249,7 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 // Profile change listeners for useSyncExternalStore
-let profileListeners: Set<() => void> = new Set();
+const profileListeners: Set<() => void> = new Set();
 
 /**
  * Subscribe to profile changes.

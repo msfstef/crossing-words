@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import './SettingsMenu.css';
 
@@ -19,10 +19,15 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
 
   // Check if device is touch-only (coarse pointer + no hover = phones/tablets)
   // This excludes touchscreen laptops that also have mouse/trackpad
-  const isTouchDevice = useRef(
-    typeof window !== 'undefined' &&
-    window.matchMedia('(pointer: coarse) and (hover: none)').matches
+  const isTouchDevice = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(pointer: coarse) and (hover: none)').matches,
+    []
   );
+
+  // Use ref to hold latest callback to avoid stale closure in recursive animation frame
+  const updateProgressRef = useRef<(() => void) | null>(null);
 
   const updateProgress = useCallback(() => {
     const elapsed = Date.now() - startTimeRef.current;
@@ -30,7 +35,7 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
     setProgress(newProgress);
 
     if (newProgress < 1) {
-      frameRef.current = requestAnimationFrame(updateProgress);
+      frameRef.current = requestAnimationFrame(() => updateProgressRef.current?.());
     } else if (!completedRef.current) {
       completedRef.current = true;
       onComplete();
@@ -40,18 +45,23 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
     }
   }, [duration, onComplete]);
 
+  // Keep ref in sync with latest callback
+  useEffect(() => {
+    updateProgressRef.current = updateProgress;
+  }, [updateProgress]);
+
   const startPress = useCallback(() => {
-    if (!isTouchDevice.current) return;
+    if (!isTouchDevice) return;
 
     completedRef.current = false;
     setIsPressed(true);
     setProgress(0);
     startTimeRef.current = Date.now();
-    frameRef.current = requestAnimationFrame(updateProgress);
-  }, [updateProgress]);
+    frameRef.current = requestAnimationFrame(() => updateProgressRef.current?.());
+  }, [isTouchDevice]);
 
   const endPress = useCallback(() => {
-    if (!isTouchDevice.current) return;
+    if (!isTouchDevice) return;
 
     setIsPressed(false);
     setProgress(0);
@@ -59,23 +69,25 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     }
-  }, []);
+  }, [isTouchDevice]);
 
   const handleClick = useCallback(() => {
     // Only trigger on click for non-touch devices
-    if (!isTouchDevice.current) {
+    if (!isTouchDevice) {
       onComplete();
     }
-  }, [onComplete]);
+  }, [onComplete, isTouchDevice]);
 
   // Cleanup on unmount
   useEffect(() => {
+    const frame = frameRef.current;
+    const timer = timerRef.current;
     return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
+      if (frame) {
+        cancelAnimationFrame(frame);
       }
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
+      if (timer) {
+        clearTimeout(timer);
       }
     };
   }, []);
@@ -83,7 +95,7 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
   return {
     progress,
     isPressed,
-    isTouchDevice: isTouchDevice.current,
+    isTouchDevice,
     handlers: {
       onTouchStart: startPress,
       onTouchEnd: endPress,

@@ -83,7 +83,7 @@ async function injectTestPuzzle(page: Page): Promise<void> {
     const library = existingLibrary ? JSON.parse(existingLibrary) : [];
 
     // Remove existing test puzzle if any
-    const filteredLibrary = library.filter((p: any) => p.id !== puzzleId);
+    const filteredLibrary = library.filter((p: { id: string }) => p.id !== puzzleId);
     filteredLibrary.unshift(puzzleData);
 
     localStorage.setItem('puzzle-library', JSON.stringify(filteredLibrary));
@@ -143,21 +143,6 @@ async function clearCell(page: Page, row: number, col: number): Promise<void> {
  */
 async function clickNextClue(page: Page): Promise<void> {
   await page.locator('button[aria-label="Next clue"]').click();
-}
-
-/**
- * Get the current clue direction
- */
-async function getCurrentDirection(page: Page): Promise<'across' | 'down'> {
-  return page.evaluate(() => {
-    const clueBar = document.querySelector('.clue-bar');
-    if (!clueBar) return 'across';
-
-    const clueText = clueBar.textContent || '';
-    if (clueText.includes('Across')) return 'across';
-    if (clueText.includes('Down')) return 'down';
-    return 'across';
-  });
 }
 
 test.describe('Movement Patterns', () => {

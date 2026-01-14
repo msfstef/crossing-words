@@ -89,6 +89,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     const timeRemaining = notification.duration - (Date.now() - notification.timestamp);
     if (timeRemaining <= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: clear expired notification
       setNotification(null);
       return;
     }
@@ -138,6 +139,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 /**
  * Hook to access notification functions.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- Hook co-located with provider
 export function useNotification(): NotificationContextValue {
   const context = useContext(NotificationContext);
   if (!context) {

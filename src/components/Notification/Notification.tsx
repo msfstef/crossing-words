@@ -33,6 +33,7 @@ export function Notification() {
 
     if (notification) {
       // New notification arrived - show it immediately
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: sync displayed state with incoming notification
       setIsExiting(false);
       setDisplayedNotification(notification);
     } else if (displayedNotification && !isExiting) {

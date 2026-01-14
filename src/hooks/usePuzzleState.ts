@@ -138,6 +138,7 @@ export function usePuzzleState(
     // Find first across clue
     const firstAcross = puzzle.clues.across[0];
     if (firstAcross) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: initialize cell selection on puzzle load
       setSelectedCell({ row: firstAcross.row, col: firstAcross.col });
       setDirection('across');
       return;
@@ -760,7 +761,7 @@ export function usePuzzleState(
         setSelectedCell(nextCell);
       }
     },
-    [selectedCell, userEntries, direction, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells, toggleDirection]
+    [selectedCell, userEntries, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells, toggleDirection]
   );
 
   // Compute current word and clue - memoized to prevent unnecessary re-renders

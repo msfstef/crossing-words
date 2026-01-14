@@ -67,6 +67,7 @@ export function ShareDialog({
   // Check if native sharing is supported
   useEffect(() => {
     const shareData = { title: 'Test', url: 'https://example.com' };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time feature detection on mount
     setCanShare(!!navigator.canShare?.(shareData));
   }, []);
 
@@ -74,6 +75,7 @@ export function ShareDialog({
   useEffect(() => {
     if (isOpen) {
       // Opening: show immediately
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary for open/close animation sync
       setIsVisible(true);
     } else if (isVisible) {
       // Closing: wait for animation before hiding
@@ -138,30 +140,7 @@ export function ShareDialog({
     };
   }, []);
 
-  const handleCopyLink = useCallback(async () => {
-    const result = await shareSession(shareUrl, `Join: ${puzzleTitle}`);
-    showCopyFeedback(result);
-  }, [shareUrl, puzzleTitle]);
-
-  const handleShare = useCallback(async () => {
-    const result = await shareSession(shareUrl, `Join: ${puzzleTitle}`);
-    if (result === 'shared') {
-      onClose();
-    } else {
-      showCopyFeedback(result);
-    }
-  }, [shareUrl, puzzleTitle, onClose]);
-
-  const handleUrlInputClick = useCallback(
-    async (e: React.MouseEvent<HTMLInputElement>) => {
-      (e.target as HTMLInputElement).select();
-      const success = await copyToClipboard(shareUrl);
-      showCopyFeedback(success ? 'copied' : 'failed');
-    },
-    [shareUrl]
-  );
-
-  const showCopyFeedback = (result: ShareResult) => {
+  const showCopyFeedback = useCallback((result: ShareResult) => {
     // Clear any existing timeout
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
@@ -186,7 +165,30 @@ export function ShareDialog({
     copyTimeoutRef.current = window.setTimeout(() => {
       setCopyFeedback(null);
     }, 2000);
-  };
+  }, []);
+
+  const handleCopyLink = useCallback(async () => {
+    const result = await shareSession(shareUrl, `Join: ${puzzleTitle}`);
+    showCopyFeedback(result);
+  }, [shareUrl, puzzleTitle, showCopyFeedback]);
+
+  const handleShare = useCallback(async () => {
+    const result = await shareSession(shareUrl, `Join: ${puzzleTitle}`);
+    if (result === 'shared') {
+      onClose();
+    } else {
+      showCopyFeedback(result);
+    }
+  }, [shareUrl, puzzleTitle, onClose, showCopyFeedback]);
+
+  const handleUrlInputClick = useCallback(
+    async (e: React.MouseEvent<HTMLInputElement>) => {
+      (e.target as HTMLInputElement).select();
+      const success = await copyToClipboard(shareUrl);
+      showCopyFeedback(success ? 'copied' : 'failed');
+    },
+    [shareUrl, showCopyFeedback]
+  );
 
   // Only render when visible (stays visible during close animation)
   if (!isVisible) {

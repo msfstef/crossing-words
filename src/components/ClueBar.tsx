@@ -65,6 +65,7 @@ export function ClueBar({
     el.style.fontSize = targetSize;
 
     // Also update state for consistency with React's controlled style
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: sync state with DOM measurement
     setFontSize(targetSize);
   }, [clue]);
 

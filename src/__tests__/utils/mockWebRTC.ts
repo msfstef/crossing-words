@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 /**
  * Mock WebRTC Provider utilities for P2P testing
  *

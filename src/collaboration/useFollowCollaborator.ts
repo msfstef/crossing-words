@@ -138,6 +138,7 @@ export function useFollowCollaborator(
 
     if (!stillExists) {
       notify?.('Collaborator left - stopped following', { duration: 2000 });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: disable follow when collaborator leaves
       disableFollow();
     }
   }, [collaborators, followedClientId, disableFollow, notify]);

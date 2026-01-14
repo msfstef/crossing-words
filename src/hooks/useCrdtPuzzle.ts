@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs -- This hook intentionally updates refs during render for callback synchronization */
 /**
  * React hook for CRDT-backed puzzle state
  *

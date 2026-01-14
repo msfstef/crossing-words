@@ -24,6 +24,7 @@ export const EDGE_INDICATOR_FRACTION = 0.4;
  * When edge indicators are present, accounts for the extra space they take
  * (40% of cell size per edge).
  */
+// eslint-disable-next-line react-refresh/only-export-components -- Utility function co-located with component
 export function calculateCellSize(
   containerWidth: number,
   containerHeight: number,
@@ -509,6 +510,7 @@ export function CrosswordGrid({
     }
 
     return cells;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only depend on puzzle.grid, not entire puzzle object
   }, [puzzle.grid, isZoomMode, zoomViewport, edgeIndicators]);
 
   // Compute grid template for unified grid with edge tracks

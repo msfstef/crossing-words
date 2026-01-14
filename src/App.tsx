@@ -306,6 +306,7 @@ function AppContent() {
     // If we're waiting for a puzzle from the sharer, just join immediately
     // (no local progress to worry about)
     if (waitingForPuzzle && urlPuzzleId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: joining shared session requires immediate state sync
       setTimelineId(pendingUrlTimeline);
       setPendingUrlTimeline(null);
       return;
@@ -514,6 +515,7 @@ function AppContent() {
     // The ref prevents re-animation on subsequent renders/state changes
     if (!hasAnimatedLettersRef.current && ready && userEntries.size > 0) {
       hasAnimatedLettersRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: useLayoutEffect triggers animation before paint
       setAnimatingLetters(true);
     }
   }, [ready, userEntries.size]);
@@ -725,6 +727,7 @@ function AppContent() {
     if (justCompleted) {
       verifyAllCells();
       pushDialog('success');
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary: show dialog on completion event
       setShowSuccessDialog(true);
     }
   }, [justCompleted, verifyAllCells, pushDialog]);

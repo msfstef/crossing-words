@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Connectivity E2E Tests for Crossing Words
@@ -28,16 +28,6 @@ async function waitForLibraryReady(page: Page): Promise<void> {
  */
 async function waitForGrid(page: Page, timeout = 60000): Promise<void> {
   await page.waitForSelector('.crossword-cell', { state: 'visible', timeout });
-}
-
-/**
- * Wait for connection indicator to show "Connected"
- */
-async function waitForConnected(page: Page, timeout = 60000): Promise<void> {
-  await page.waitForFunction(
-    () => document.body.textContent?.includes('Connected'),
-    { timeout }
-  );
 }
 
 /**
@@ -82,17 +72,6 @@ async function getCellLetter(page: Page, number: string): Promise<string> {
   const cell = page.locator(`.crossword-cell:has-text("${number}")`).first();
   const letter = cell.locator('.cell-letter');
   return (await letter.textContent()) ?? '';
-}
-
-/**
- * Get connection state text from the page
- */
-async function getConnectionState(page: Page): Promise<string | null> {
-  const text = await page.textContent('body');
-  if (text?.includes('Connected')) return 'connected';
-  if (text?.includes('Connecting')) return 'connecting';
-  if (text?.includes('Disconnected')) return 'disconnected';
-  return null;
 }
 
 test.describe('P2P Connectivity Reliability', () => {

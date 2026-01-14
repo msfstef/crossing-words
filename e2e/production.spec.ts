@@ -35,30 +35,6 @@ async function waitForGrid(page: Page, timeout = 60000): Promise<void> {
 }
 
 /**
- * Wait for connection indicator to show "Connected"
- */
-async function waitForConnected(page: Page, timeout = 60000): Promise<void> {
-  await page.waitForFunction(
-    () => document.body.textContent?.includes('Connected'),
-    { timeout }
-  );
-}
-
-/**
- * Wait for joining to complete - grid visible and no "Joining" text
- */
-async function waitForJoinComplete(page: Page, timeout = 60000): Promise<void> {
-  await page.waitForFunction(
-    () => {
-      const hasCell = document.querySelector('.crossword-cell');
-      const isJoining = document.body.textContent?.includes('Joining shared session');
-      return hasCell && !isJoining;
-    },
-    { timeout }
-  );
-}
-
-/**
  * Download a puzzle from the Universal Crossword source
  * Uses a date 2 days in the past to ensure the puzzle is available
  */

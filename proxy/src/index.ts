@@ -52,7 +52,7 @@ const SOURCES: Record<string, SourceConfig> = {
   },
 };
 
-function corsHeaders(origin: string | null): HeadersInit {
+function corsHeaders(_origin: string | null): HeadersInit {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -62,7 +62,7 @@ function corsHeaders(origin: string | null): HeadersInit {
 
 async function handlePuzzleRequest(
   request: Request,
-  env: Env
+  _env: Env
 ): Promise<Response> {
   const origin = request.headers.get('Origin');
 
@@ -189,7 +189,7 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext
+    _ctx: ExecutionContext
   ): Promise<Response> {
     const origin = request.headers.get('Origin');
 

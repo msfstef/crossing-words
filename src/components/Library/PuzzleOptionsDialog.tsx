@@ -54,6 +54,7 @@ export function PuzzleOptionsDialog({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
   }, [isOpen]);
 
   // Close dialog when clicking outside
@@ -75,6 +76,7 @@ export function PuzzleOptionsDialog({
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
   }, [isOpen]);
 
   // Handle back button
@@ -98,6 +100,7 @@ export function PuzzleOptionsDialog({
     return () => {
       window.removeEventListener('popstate', handlePopstate);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
   }, [isOpen]);
 
   // Clean up history when dialog closes normally (not via back button)

@@ -63,6 +63,7 @@ export function SuccessDialog({
   useEffect(() => {
     if (isOpen) {
       // Opening: show immediately
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary for open/close animation sync
       setIsVisible(true);
     } else if (isVisible) {
       // Closing: wait for animation before hiding

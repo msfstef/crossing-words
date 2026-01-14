@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs -- This hook intentionally uses refs during initial state computation */
 import { useState, useEffect, useRef } from 'react';
 
 /**

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs -- This hook intentionally uses ref patterns during render for synchronous state tracking */
 /**
  * Hook for detecting puzzle completion.
  *

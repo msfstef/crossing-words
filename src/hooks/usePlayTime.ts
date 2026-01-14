@@ -68,6 +68,7 @@ export function usePlayTime({
   enabled,
 }: UsePlayTimeOptions): UsePlayTimeReturn {
   // Get stable client ID for this device
+  // eslint-disable-next-line react-hooks/refs -- Intentional: stable value computed once
   const clientId = useRef(getStableClientId()).current;
 
   // Refs for tracking time
@@ -143,6 +144,7 @@ export function usePlayTime({
     return () => {
       durationsMap.unobserve(observer);
     };
+    // eslint-disable-next-line react-hooks/refs -- clientId is a stable value from ref
   }, [doc, clientId, computeMaxDuration, notifySubscribers]);
 
   // Track time and sync to CRDT
@@ -203,6 +205,7 @@ export function usePlayTime({
         syncIntervalRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/refs -- clientId is a stable value from ref
   }, [doc, enabled, clientId, computeMaxDuration, notifySubscribers]);
 
   return {

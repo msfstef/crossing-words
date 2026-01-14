@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Follow Button E2E Tests
@@ -181,7 +181,7 @@ test.describe('Follow Button', () => {
       await page2.goto(devServerUrl);
 
       // Inject test puzzle in both pages
-      const puzzleId = await injectTestPuzzle(page1);
+      await injectTestPuzzle(page1);
       await injectTestPuzzle(page2);
 
       // Reload both pages

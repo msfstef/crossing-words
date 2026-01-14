@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Mock for y-webrtc module
  * This file provides the mock implementation that vitest will use
