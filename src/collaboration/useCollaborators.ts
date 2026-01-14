@@ -9,8 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
-import type { Awareness } from 'y-protocols/awareness';
-import type { Collaborator, CollaboratorState } from './types';
+import type { Collaborator, CollaboratorState, AwarenessLike } from './types';
 
 /** Notification callback type */
 export type NotifyFn = (message: string, options?: { icon?: string; duration?: number }) => void;
@@ -47,7 +46,7 @@ interface UseCollaboratorsOptions {
  * ```
  */
 export function useCollaborators(
-  awareness: Awareness | null,
+  awareness: AwarenessLike | null,
   options?: UseCollaboratorsOptions
 ): Collaborator[] {
   const { notify } = options ?? {};

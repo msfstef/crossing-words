@@ -8,8 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Awareness } from 'y-protocols/awareness';
-import type { Collaborator, CollaboratorState } from './types';
+import type { Collaborator, CollaboratorState, AwarenessLike } from './types';
 import type { NotifyFn } from './useCollaborators';
 
 interface FollowCollaboratorHook {
@@ -52,7 +51,7 @@ interface UseFollowCollaboratorOptions {
  */
 export function useFollowCollaborator(
   collaborators: Collaborator[],
-  awareness: Awareness | null,
+  awareness: AwarenessLike | null,
   onCursorUpdate: (row: number, col: number, direction: 'across' | 'down') => void,
   options?: UseFollowCollaboratorOptions
 ): FollowCollaboratorHook {
@@ -176,7 +175,7 @@ export function useFollowCollaborator(
 
           // Only notify if this is a NEW follower (wasn't following us before)
           if (!currentFollowersRef.current.has(clientId)) {
-            const followerName = state.user?.name;
+            const followerName = state?.user?.name;
             if (followerName) {
               notify(`${followerName} is following you`, { icon: '👁️', duration: 3000 });
             }

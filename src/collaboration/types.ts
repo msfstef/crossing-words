@@ -5,6 +5,14 @@
  * via the Yjs Awareness protocol.
  */
 
+import type { Awareness } from 'y-protocols/awareness';
+
+/**
+ * Minimal Awareness interface for testing and hooks.
+ * Allows both real Awareness and MockAwareness to be used interchangeably.
+ */
+export type AwarenessLike = Pick<Awareness, 'clientID' | 'getStates' | 'setLocalState' | 'setLocalStateField' | 'on' | 'off'>;
+
 /**
  * Cursor position in the puzzle grid with direction.
  */
