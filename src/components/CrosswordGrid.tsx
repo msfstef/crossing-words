@@ -14,14 +14,14 @@ export const MIN_CELL_SIZE = 12;
 /** Maximum cell size in pixels */
 export const MAX_CELL_SIZE = 36;
 /** Edge indicator size as fraction of cell size */
-export const EDGE_INDICATOR_FRACTION = 0.35;
+export const EDGE_INDICATOR_FRACTION = 0.5;
 
 /**
  * Calculate optimal cell size to fit puzzle within container bounds.
  * Returns cell size in pixels, clamped between min and max.
  *
  * When edge indicators are present, accounts for the extra space they take
- * (35% of cell size per edge).
+ * (50% of cell size per edge).
  */
 export function calculateCellSize(
   containerWidth: number,
@@ -503,7 +503,7 @@ export function CrosswordGrid({
     };
   }, [swipeHandlers, pinchHandlers]);
 
-  // Helper to render an edge indicator cell (partial visibility)
+  // Helper to render an edge indicator cell (partial visibility, tappable)
   const renderEdgeCell = (
     cell: typeof puzzle.grid[0][0],
     position: 'top' | 'bottom' | 'left' | 'right'
@@ -519,6 +519,7 @@ export function CrosswordGrid({
         }`}
         data-row={cell.row}
         data-col={cell.col}
+        onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
       >
         {!cell.isBlack && (
           <span className="cell-letter">{userEntry || ""}</span>

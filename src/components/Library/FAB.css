@@ -132,8 +132,8 @@
 /* Mobile adjustments */
 @media (max-width: 600px) {
   .fab {
-    right: calc(0.75rem + env(safe-area-inset-right, 0px));
-    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    right: calc(1rem + env(safe-area-inset-right, 0px));
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .fab__main {
@@ -147,10 +147,10 @@
   }
 }
 
-/* When keyboard is visible, move FAB up */
+/* When keyboard is visible or viewport is short */
 @media (max-height: 500px) {
   .fab {
-    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .fab__main {
