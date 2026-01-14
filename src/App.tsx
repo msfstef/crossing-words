@@ -776,10 +776,10 @@ function App() {
   }, [activeView, handleKeyDownWithFollow]);
 
   // Build grid content
-  // Show skeleton during all loading states to prevent layout shifts
-  // Use minimum loading time to prevent jarring flash on fast loads
+  // Show skeleton only when waiting for puzzle data (not for CRDT ready state)
+  // This allows instant display when puzzle is cached, with entries filling in from CRDT
   // NOTE: This hook must be called before any early returns to maintain consistent hook order
-  const isActuallyLoading = waitingForPuzzle || !puzzle || !ready;
+  const isActuallyLoading = waitingForPuzzle || !puzzle;
   const isLoading = useMinimumLoadingTime(isActuallyLoading, 250);
 
   // Render Library view

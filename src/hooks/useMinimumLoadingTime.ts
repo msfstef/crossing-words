@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
  * Behavior:
  * - If data is immediately available (isActuallyLoading starts false), show content immediately
  * - If loading is needed, show skeleton for at least minimumMs to prevent jarring flash
+ * - Each transition from false→true→false is a fresh loading cycle
  *
  * @param isActuallyLoading - The real loading state from your data/async operation
  * @param minimumMs - Minimum time (in ms) to show loading state when loading occurs (default: 250ms)
@@ -15,16 +16,13 @@ export function useMinimumLoadingTime(
   isActuallyLoading: boolean,
   minimumMs: number = 250
 ): boolean {
-  // Track if we've ever started loading - if not, data was cached
-  const hasStartedLoadingRef = useRef(false);
   const loadingStartRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const prevLoadingRef = useRef(isActuallyLoading);
 
-  // Only show loading if we've actually started loading
-  // This prevents flash when data is immediately available from cache
+  // Initialize based on current loading state
   const [showLoading, setShowLoading] = useState(() => {
     if (isActuallyLoading) {
-      hasStartedLoadingRef.current = true;
       loadingStartRef.current = Date.now();
       return true;
     }
@@ -32,28 +30,32 @@ export function useMinimumLoadingTime(
   });
 
   useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+    prevLoadingRef.current = isActuallyLoading;
+
     if (isActuallyLoading) {
-      // Loading started - record the time and show loading state
-      if (!hasStartedLoadingRef.current) {
-        hasStartedLoadingRef.current = true;
+      // Loading started (or continuing)
+      if (!wasLoading) {
+        // Fresh loading cycle - record start time
         loadingStartRef.current = Date.now();
       }
       setShowLoading(true);
 
-      // Clear any pending timeout from a previous loading cycle
+      // Clear any pending timeout from a previous cycle
       if (timeoutRef.current !== null) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
     } else {
       // Loading finished
-      if (!hasStartedLoadingRef.current) {
-        // Never started loading - data was cached, don't show skeleton
+      if (!wasLoading) {
+        // Was never loading - data was immediately available
+        // Don't show skeleton at all
         setShowLoading(false);
         return;
       }
 
-      // Check if minimum time has passed
+      // Was loading, now finished - check minimum time
       if (loadingStartRef.current !== null) {
         const elapsed = Date.now() - loadingStartRef.current;
         const remaining = minimumMs - elapsed;
