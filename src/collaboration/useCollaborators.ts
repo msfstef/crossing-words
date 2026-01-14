@@ -126,6 +126,10 @@ export function useCollaborators(
   // Track if initial load is complete to avoid showing notifications for existing users
   const isInitialLoadRef = useRef(true);
 
+  // Track collaborator names so we can show them in leave notifications
+  // (state is removed from awareness before the 'change' event fires)
+  const knownNamesRef = useRef<Map<number, string>>(new Map());
+
   // Show notifications for join/leave events (if notify callback provided)
   useEffect(() => {
     if (!awareness || !notify) return;
@@ -134,6 +138,16 @@ export function useCollaborators(
       // Skip notifications on initial load
       if (isInitialLoadRef.current) {
         isInitialLoadRef.current = false;
+
+        // But still record initial names for future leave notifications
+        const states = awareness.getStates();
+        states.forEach((rawState, clientId) => {
+          if (clientId === awareness.clientID) return;
+          const state = rawState as CollaboratorState | undefined;
+          if (state?.user?.name) {
+            knownNamesRef.current.set(clientId, state.user.name);
+          }
+        });
         return;
       }
 
@@ -146,6 +160,8 @@ export function useCollaborators(
           const state = awareness.getStates().get(clientId) as CollaboratorState | undefined;
           const name = state?.user?.name;
           if (name) {
+            // Remember name for when they leave
+            knownNamesRef.current.set(clientId, name);
             notify(`${name} joined`, { icon: '👋', duration: 3000 });
           }
         }
@@ -157,7 +173,15 @@ export function useCollaborators(
           // Skip self
           if (clientId === awareness.clientID) continue;
 
-          notify('Someone left', { duration: 2000 });
+          // Look up the name we stored when they joined
+          const name = knownNamesRef.current.get(clientId);
+          knownNamesRef.current.delete(clientId);
+
+          if (name) {
+            notify(`${name} left`, { icon: '👋', duration: 2000 });
+          } else {
+            notify('Someone left', { duration: 2000 });
+          }
         }
       }
     };

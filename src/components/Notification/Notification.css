@@ -18,6 +18,10 @@
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+
+  /* GPU acceleration hints for smooth animations */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 /**
@@ -41,12 +45,13 @@
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  /* Enter animation */
-  animation: notification-compact-enter 0.2s ease-out both;
+  /* Enter animation - smooth deceleration curve */
+  animation: notification-compact-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .notification--compact.notification--exiting {
-  animation: notification-compact-exit 0.15s ease-in both;
+  /* Exit animation - gentle acceleration curve */
+  animation: notification-compact-exit 0.15s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 @keyframes notification-compact-enter {
@@ -92,12 +97,13 @@
     0 4px 12px rgba(0, 0, 0, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.08);
 
-  /* Enter animation */
-  animation: notification-normal-enter 0.2s ease-out both;
+  /* Enter animation - smooth deceleration curve */
+  animation: notification-normal-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .notification--normal.notification--exiting {
-  animation: notification-normal-exit 0.15s ease-in both;
+  /* Exit animation - gentle acceleration curve */
+  animation: notification-normal-exit 0.15s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 @keyframes notification-normal-enter {
