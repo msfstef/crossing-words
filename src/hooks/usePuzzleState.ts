@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import type { Puzzle, Clue } from '../types/puzzle';
@@ -756,8 +756,13 @@ export function usePuzzleState(
     [selectedCell, userEntries, direction, autoAdvance, findNextCell, findPrevNonVerifiedCell, setEntry, clearEntry, verifiedCells, toggleDirection]
   );
 
-  // Compute current word and clue
-  const wordAndClue = getCurrentWordAndClue();
+  // Compute current word and clue - memoized to prevent unnecessary re-renders
+  // The result object reference stays stable when inputs don't change,
+  // ensuring Grid and ClueBar update in the same render cycle
+  const wordAndClue = useMemo(
+    () => getCurrentWordAndClue(),
+    [getCurrentWordAndClue]
+  );
 
   /**
    * Get sorted list of clue numbers for the current direction.
@@ -1054,7 +1059,8 @@ export function usePuzzleState(
   );
 
   // Compute whether prev/next clue navigation is available
-  const clueNavState = (() => {
+  // Memoized to avoid expensive clue lookup on every render
+  const clueNavState = useMemo(() => {
     const clueNumbers = getClueNumbers();
     const currentNum = getCurrentClueNumber();
     if (currentNum === null) {
@@ -1065,7 +1071,7 @@ export function usePuzzleState(
       hasPrev: currentIndex > 0,
       hasNext: currentIndex >= 0 && currentIndex < clueNumbers.length - 1,
     };
-  })();
+  }, [getClueNumbers, getCurrentClueNumber]);
 
   return {
     userEntries,
