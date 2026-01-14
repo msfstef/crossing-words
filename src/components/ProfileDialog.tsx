@@ -2,18 +2,16 @@
  * ProfileDialog component for editing user profile.
  *
  * Modal dialog with avatar upload/camera capture and nickname editing.
- * Follows the ShareDialog pattern for consistent UX.
+ * Uses HTML capture attribute for unified camera/file picker experience:
+ * - On mobile: Opens camera directly (front-facing by default)
+ * - On desktop: Opens file picker
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/capture
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useProfile } from '../hooks/useProfile';
-import {
-  processAvatarImage,
-  captureVideoFrame,
-  isCameraAvailable,
-  startCameraStream,
-  stopCameraStream,
-} from '../lib/imageUtils';
+import { processAvatarImage } from '../lib/imageUtils';
 import './ProfileDialog.css';
 
 /** Duration of the close animation in ms */
@@ -30,7 +28,7 @@ interface ProfileDialogProps {
 export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const {
     profile,
@@ -42,17 +40,20 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
   } = useProfile();
 
   const [localNickname, setLocalNickname] = useState(profile.nickname);
-  const [isCameraMode, setCameraMode] = useState(false);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [showMaxLengthHint, setShowMaxLengthHint] = useState(false);
+
+  // Track if file picker is open to prevent click-outside from closing dialog
+  const isFilePickerOpen = useRef(false);
 
   // Sync local nickname with profile when dialog opens
   useEffect(() => {
     if (isOpen) {
       setLocalNickname(profile.nickname);
       setError(null);
+      setShowMaxLengthHint(false);
     }
   }, [isOpen, profile.nickname]);
 
@@ -67,19 +68,13 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     } else if (dialog.open) {
       // Start closing animation
       setIsClosing(true);
-      // Cleanup camera when closing
-      if (cameraStream) {
-        stopCameraStream(cameraStream);
-        setCameraStream(null);
-        setCameraMode(false);
-      }
       const timer = setTimeout(() => {
         dialog.close();
         setIsClosing(false);
       }, CLOSE_ANIMATION_DURATION);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, cameraStream]);
+  }, [isOpen]);
 
   // Handle Escape key and click outside
   useEffect(() => {
@@ -92,14 +87,15 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     };
 
     const handleClick = (e: MouseEvent) => {
-      const rect = dialog.getBoundingClientRect();
-      const isInDialog =
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom;
+      // Don't close if file picker was just opened
+      // (click events can fire after file picker closes)
+      if (isFilePickerOpen.current) {
+        return;
+      }
 
-      if (!isInDialog) {
+      // Only close if clicking directly on the dialog backdrop
+      // (not on the content inside)
+      if (e.target === dialog) {
         onClose();
       }
     };
@@ -124,9 +120,12 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [localNickname, profile.nickname, setNickname]);
 
-  // Handle file selection
+  // Handle file/camera selection
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Reset file picker flag
+      isFilePickerOpen.current = false;
+
       const file = e.target.files?.[0];
       if (!file) return;
 
@@ -144,63 +143,33 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        if (cameraInputRef.current) {
+          cameraInputRef.current.value = '';
+        }
       }
     },
     [setAvatar]
   );
 
-  // Start camera preview
-  const handleStartCamera = useCallback(async () => {
-    setError(null);
-
-    try {
-      const stream = await startCameraStream();
-      setCameraStream(stream);
-      setCameraMode(true);
-
-      // Connect stream to video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-    } catch (err) {
-      setError('Could not access camera');
-      console.error('[ProfileDialog] Camera error:', err);
-    }
+  // Open file picker (upload from gallery/files)
+  const handleUploadClick = useCallback(() => {
+    isFilePickerOpen.current = true;
+    fileInputRef.current?.click();
+    // Reset flag after a delay in case user cancels
+    setTimeout(() => {
+      isFilePickerOpen.current = false;
+    }, 1000);
   }, []);
 
-  // Capture photo from camera
-  const handleCapturePhoto = useCallback(async () => {
-    if (!videoRef.current) return;
-
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      const dataUrl = captureVideoFrame(videoRef.current);
-      await setAvatar(dataUrl);
-
-      // Stop camera after capture
-      if (cameraStream) {
-        stopCameraStream(cameraStream);
-        setCameraStream(null);
-      }
-      setCameraMode(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to capture photo');
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [cameraStream, setAvatar]);
-
-  // Cancel camera mode
-  const handleCancelCamera = useCallback(() => {
-    if (cameraStream) {
-      stopCameraStream(cameraStream);
-      setCameraStream(null);
-    }
-    setCameraMode(false);
-  }, [cameraStream]);
+  // Open camera (uses HTML capture attribute)
+  const handleCameraClick = useCallback(() => {
+    isFilePickerOpen.current = true;
+    cameraInputRef.current?.click();
+    // Reset flag after a delay in case user cancels
+    setTimeout(() => {
+      isFilePickerOpen.current = false;
+    }, 1000);
+  }, []);
 
   // Handle remove avatar
   const handleRemoveAvatar = useCallback(async () => {
@@ -212,10 +181,28 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [removeAvatar]);
 
+  // Handle nickname input with max length hint
+  const handleNicknameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+
+      // Check if user is trying to type beyond max length
+      if (value.length >= maxNicknameLength) {
+        setShowMaxLengthHint(true);
+        // Hide hint after 2 seconds
+        setTimeout(() => setShowMaxLengthHint(false), 2000);
+      }
+
+      setLocalNickname(value);
+    },
+    [maxNicknameLength]
+  );
+
   // Handle randomize nickname
   const handleRandomize = useCallback(() => {
     randomizeNickname();
     setLocalNickname(profile.nickname);
+    setShowMaxLengthHint(false);
   }, [randomizeNickname, profile.nickname]);
 
   // Use effect to update local nickname after randomize
@@ -234,7 +221,12 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     return null;
   }
 
-  const canUseCamera = isCameraAvailable();
+  // Check if device likely has a camera (mobile or tablet)
+  const isMobileDevice =
+    typeof window !== 'undefined' &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
 
   return (
     <dialog
@@ -255,103 +247,78 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
 
         {/* Avatar Section */}
         <div className="profile-dialog__avatar-section">
-          {isCameraMode ? (
-            <div className="profile-dialog__camera-preview">
-              <video
-                ref={videoRef}
-                className="profile-dialog__video"
-                autoPlay
-                playsInline
-                muted
+          <div className="profile-dialog__avatar-preview">
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt="Your avatar"
+                className="profile-dialog__avatar-image"
               />
-              <div className="profile-dialog__camera-overlay" />
-            </div>
-          ) : (
-            <div className="profile-dialog__avatar-preview">
-              {profile.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt="Your avatar"
-                  className="profile-dialog__avatar-image"
-                />
-              ) : (
-                <div className="profile-dialog__avatar-placeholder">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          )}
+            ) : (
+              <div className="profile-dialog__avatar-placeholder">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                </svg>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Avatar Actions */}
         <div className="profile-dialog__avatar-actions">
-          {isCameraMode ? (
-            <>
-              <button
-                type="button"
-                className="profile-dialog__button profile-dialog__button--primary"
-                onClick={handleCapturePhoto}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Saving...' : 'Take Photo'}
-              </button>
-              <button
-                type="button"
-                className="profile-dialog__button"
-                onClick={handleCancelCamera}
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="profile-dialog__button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : 'Upload Photo'}
-              </button>
-              {canUseCamera && (
-                <button
-                  type="button"
-                  className="profile-dialog__button"
-                  onClick={handleStartCamera}
-                  disabled={isProcessing}
-                >
-                  Camera
-                </button>
-              )}
-              {profile.avatar && (
-                <button
-                  type="button"
-                  className="profile-dialog__button profile-dialog__button--danger"
-                  onClick={handleRemoveAvatar}
-                  disabled={isProcessing}
-                >
-                  Remove
-                </button>
-              )}
-            </>
+          <button
+            type="button"
+            className="profile-dialog__button"
+            onClick={handleUploadClick}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing...' : 'Upload Photo'}
+          </button>
+          {isMobileDevice && (
+            <button
+              type="button"
+              className="profile-dialog__button"
+              onClick={handleCameraClick}
+              disabled={isProcessing}
+            >
+              Camera
+            </button>
+          )}
+          {profile.avatar && (
+            <button
+              type="button"
+              className="profile-dialog__button profile-dialog__button--danger"
+              onClick={handleRemoveAvatar}
+              disabled={isProcessing}
+            >
+              Remove
+            </button>
           )}
         </div>
 
-        {/* Hidden file input */}
+        {/* Hidden file input for gallery/file upload */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          onChange={handleFileSelect}
+          className="profile-dialog__file-input"
+        />
+
+        {/* Hidden file input with capture for camera (mobile only) */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="user"
           onChange={handleFileSelect}
           className="profile-dialog__file-input"
         />
@@ -366,7 +333,7 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
             <input
               type="text"
               value={localNickname}
-              onChange={(e) => setLocalNickname(e.target.value)}
+              onChange={handleNicknameChange}
               maxLength={maxNicknameLength}
               className="profile-dialog__nickname-input"
               placeholder="Enter nickname"
@@ -392,9 +359,11 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
               </svg>
             </button>
           </div>
-          <div className="profile-dialog__char-count">
-            {localNickname.length}/{maxNicknameLength}
-          </div>
+          {showMaxLengthHint && (
+            <div className="profile-dialog__max-hint">
+              Maximum {maxNicknameLength} characters
+            </div>
+          )}
         </div>
       </div>
     </dialog>
