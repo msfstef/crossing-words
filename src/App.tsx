@@ -775,6 +775,13 @@ function App() {
     };
   }, [activeView, handleKeyDownWithFollow]);
 
+  // Build grid content
+  // Show skeleton during all loading states to prevent layout shifts
+  // Use minimum loading time to prevent jarring flash on fast loads
+  // NOTE: This hook must be called before any early returns to maintain consistent hook order
+  const isActuallyLoading = waitingForPuzzle || !puzzle || !ready;
+  const isLoading = useMinimumLoadingTime(isActuallyLoading, 300);
+
   // Render Library view
   if (activeView === 'library') {
     return (
@@ -819,12 +826,6 @@ function App() {
   ) : (
     <SettingsMenu />
   );
-
-  // Build grid content
-  // Show skeleton during all loading states to prevent layout shifts
-  // Use minimum loading time to prevent jarring flash on fast loads
-  const isActuallyLoading = waitingForPuzzle || !puzzle || !ready;
-  const isLoading = useMinimumLoadingTime(isActuallyLoading, 300);
 
   const gridContent = (
     <>
