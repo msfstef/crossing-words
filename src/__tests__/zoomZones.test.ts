@@ -215,11 +215,12 @@ describe('assignCluesToZones', () => {
     }
   });
 
-  it('should compute expanded bounds for clues spanning zones', () => {
+  it('should compute expanded bounds for clues with significant overflow (>2 cells)', () => {
     const puzzle = createPuzzleWithLongClue();
     const zones = computeBaseZones(puzzle);
     const assignments = assignCluesToZones(puzzle, zones);
 
+    // Long clue (15 cells) spans entire width, significant overflow
     const longClueAssignment = assignments.get('across-1');
     expect(longClueAssignment).toBeDefined();
     expect(longClueAssignment!.expandedBounds).toBeDefined();
@@ -240,6 +241,29 @@ describe('assignCluesToZones', () => {
     expect(shortClueAssignment).toBeDefined();
     // A 5-cell clue starting at (0,0) in a 15x15 puzzle should fit in one quadrant
     expect(shortClueAssignment!.expandedBounds).toBeUndefined();
+  });
+
+  it('should not expand bounds for clues with minor overflow (<=2 cells)', () => {
+    // Create a puzzle where a clue just barely crosses a zone boundary
+    const puzzle = createPuzzleWithClues();
+    const zones = computeBaseZones(puzzle);
+    const assignments = assignCluesToZones(puzzle, zones);
+
+    // All clues in createPuzzleWithClues are short (5-7 cells) and should not expand
+    // because even if they cross a zone, only 1-2 cells would overflow
+    for (const [, assignment] of assignments) {
+      // None of these short clues should have expanded bounds
+      // (they either fit in one zone, or have minor overflow)
+      if (assignment.expandedBounds) {
+        // If there are expanded bounds, verify the clue has significant overflow
+        // by checking that the expansion is substantial (not just 1-2 cells)
+        const clue = puzzle.clues.across.find(c => `across-${c.number}` === assignment.clueId)
+          || puzzle.clues.down.find(c => `down-${c.number}` === assignment.clueId);
+        expect(clue).toBeDefined();
+        // Clue should be long enough to have >2 cells outside primary zone
+        expect(clue!.length).toBeGreaterThan(7);
+      }
+    }
   });
 });
 
@@ -319,7 +343,7 @@ describe('getViewportForClue', () => {
     expect(viewport!.endCol).toBeLessThan(puzzle.width);
   });
 
-  it('should ensure minimum viewport size', () => {
+  it('should ensure minimum viewport size (10x10)', () => {
     const puzzle = createPuzzleWithClues();
     const zoneMap = computeZoomZoneMap(puzzle);
     const clue = puzzle.clues.across[0];
@@ -327,8 +351,8 @@ describe('getViewportForClue', () => {
     const viewport = getViewportForClue(clue, zoneMap, puzzle);
 
     expect(viewport).toBeDefined();
-    expect(viewport!.endRow - viewport!.startRow + 1).toBeGreaterThanOrEqual(5);
-    expect(viewport!.endCol - viewport!.startCol + 1).toBeGreaterThanOrEqual(5);
+    expect(viewport!.endRow - viewport!.startRow + 1).toBeGreaterThanOrEqual(10);
+    expect(viewport!.endCol - viewport!.startCol + 1).toBeGreaterThanOrEqual(10);
   });
 
   it('should include entire clue in viewport', () => {

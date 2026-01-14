@@ -167,16 +167,19 @@ export function assignCluesToZones(
       }
     }
 
-    // Check if clue spans multiple zones
-    const spansMultipleZones = zoneCounts.size > 1;
+    // Check if clue spans multiple zones significantly
+    // Only expand if more than 2 cells are outside the primary zone
+    // This prevents jankiness from minor overflows
+    const cellsOutsidePrimaryZone = cells.length - maxCount;
+    const significantOverflow = cellsOutsidePrimaryZone > 2;
 
     const assignment: ClueZoneAssignment = {
       clueId: clue.id,
       primaryZone: primaryZone.id,
     };
 
-    // If clue spans zones, compute expanded bounds
-    if (spansMultipleZones) {
+    // Only expand bounds if significant portion of clue is outside primary zone
+    if (significantOverflow) {
       const rows = cells.map((c) => c.row);
       const cols = cells.map((c) => c.col);
       const clueMinRow = Math.min(...rows);
@@ -202,11 +205,12 @@ export function assignCluesToZones(
 /**
  * Ensure viewport meets minimum size requirements.
  * Expands viewport symmetrically if needed.
+ * Default minimum is 10x10 to reduce jankiness when navigating.
  */
 export function ensureMinimumViewportSize(
   bounds: ViewportBounds,
   puzzle: Puzzle,
-  minSize: number = 5
+  minSize: number = 10
 ): ViewportBounds {
   let { startRow, endRow, startCol, endCol } = bounds;
   const { width, height } = puzzle;
@@ -252,32 +256,24 @@ export function ensureMinimumViewportSize(
 
 /**
  * Add padding to viewport bounds.
- * Padding is adjusted based on clue direction for better context.
+ * Uses uniform padding in all directions to prevent jankiness
+ * when rotating between across/down orientations.
  */
 export function addViewportPadding(
   bounds: ViewportBounds,
   puzzle: Puzzle,
-  direction: 'across' | 'down',
+  _direction: 'across' | 'down',
   padding: number = 2
 ): ViewportBounds {
   let { startRow, endRow, startCol, endCol } = bounds;
   const { width, height } = puzzle;
 
-  if (direction === 'across') {
-    // For across clues, add more padding vertically
-    startRow = Math.max(0, startRow - padding);
-    endRow = Math.min(height - 1, endRow + padding);
-    // Minimal horizontal padding
-    startCol = Math.max(0, startCol - 1);
-    endCol = Math.min(width - 1, endCol + 1);
-  } else {
-    // For down clues, add more padding horizontally
-    startCol = Math.max(0, startCol - padding);
-    endCol = Math.min(width - 1, endCol + padding);
-    // Minimal vertical padding
-    startRow = Math.max(0, startRow - 1);
-    endRow = Math.min(height - 1, endRow + 1);
-  }
+  // Use uniform padding in all directions to prevent viewport changes
+  // when rotating orientation
+  startRow = Math.max(0, startRow - padding);
+  endRow = Math.min(height - 1, endRow + padding);
+  startCol = Math.max(0, startCol - padding);
+  endCol = Math.min(width - 1, endCol + padding);
 
   return { startRow, endRow, startCol, endCol };
 }
@@ -320,8 +316,8 @@ export function getViewportForClue(
   // Add padding based on clue direction
   bounds = addViewportPadding(bounds, puzzle, clue.direction);
 
-  // Ensure minimum viewport size
-  bounds = ensureMinimumViewportSize(bounds, puzzle, 5);
+  // Ensure minimum viewport size (10x10 for less jankiness)
+  bounds = ensureMinimumViewportSize(bounds, puzzle);
 
   return bounds;
 }
