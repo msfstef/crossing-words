@@ -63,59 +63,6 @@
   min-width: 0.5rem;
 }
 
-/* Zoom button */
-.solve-header__zoom {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border-subtle, var(--color-border));
-  color: var(--color-text);
-  border-radius: 8px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.solve-header__zoom:hover {
-  background: var(--color-border);
-  border-color: var(--color-border);
-}
-
-.solve-header__zoom:active {
-  transform: scale(0.96);
-}
-
-.solve-header__zoom:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.solve-header__zoom:focus {
-  outline: none;
-}
-
-/* Active state - zoomed in */
-.solve-header__zoom--active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: white;
-}
-
-.solve-header__zoom--active:hover {
-  background: var(--color-accent-dark, var(--color-accent));
-  border-color: var(--color-accent-dark, var(--color-accent));
-}
-
-.solve-header__zoom-icon {
-  width: 18px;
-  height: 18px;
-}
-
 /* Collaborator dots */
 .solve-header__collaborators {
   display: flex;

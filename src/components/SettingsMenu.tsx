@@ -11,6 +11,10 @@ interface SettingsMenuProps {
   onRevealPuzzle?: () => void;
   autoCheckEnabled?: boolean;
   onAutoCheckToggle?: () => void;
+  /** Whether zoom mode is active */
+  isZoomMode?: boolean;
+  /** Toggle zoom mode */
+  onToggleZoom?: () => void;
 }
 
 /**
@@ -26,6 +30,8 @@ export function SettingsMenu({
   onRevealPuzzle,
   autoCheckEnabled = false,
   onAutoCheckToggle,
+  isZoomMode = false,
+  onToggleZoom,
 }: SettingsMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -152,8 +158,37 @@ export function SettingsMenu({
             </div>
           )}
 
-          {/* Divider before theme */}
+          {/* Divider before view/theme */}
           {hasPuzzleActions && <div className="settings-menu__divider" />}
+
+          {/* View section */}
+          {onToggleZoom && (
+            <div className="settings-menu__section">
+              <span className="settings-menu__label">View</span>
+              <div className="settings-menu__options" role="radiogroup">
+                <button
+                  role="radio"
+                  aria-checked={!isZoomMode}
+                  className={`settings-menu__option ${!isZoomMode ? 'settings-menu__option--active' : ''}`}
+                  onClick={() => {
+                    if (isZoomMode) onToggleZoom();
+                  }}
+                >
+                  🔲 Full Grid
+                </button>
+                <button
+                  role="radio"
+                  aria-checked={isZoomMode}
+                  className={`settings-menu__option ${isZoomMode ? 'settings-menu__option--active' : ''}`}
+                  onClick={() => {
+                    if (!isZoomMode) onToggleZoom();
+                  }}
+                >
+                  🔍 Zoom
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Theme section */}
           <div className="settings-menu__section">

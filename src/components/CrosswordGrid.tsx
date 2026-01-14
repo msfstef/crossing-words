@@ -304,9 +304,10 @@ export function CrosswordGrid({
   });
 
   // Pinch gesture handlers for zoom toggle
+  // Pinch out (fingers apart) = zoom in, Pinch in (fingers closer) = zoom out
   const pinchHandlers = usePinchGesture({
-    onPinchIn: onToggleZoom && !isZoomMode ? onToggleZoom : undefined,
-    onPinchOut: onToggleZoom && isZoomMode ? onToggleZoom : undefined,
+    onPinchOut: onToggleZoom && !isZoomMode ? onToggleZoom : undefined,
+    onPinchIn: onToggleZoom && isZoomMode ? onToggleZoom : undefined,
   });
   // Determine grid dimensions based on zoom mode
   const { gridWidth, gridHeight, gridStartRow: _gridStartRow, gridStartCol: _gridStartCol } = useMemo(() => {

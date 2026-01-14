@@ -729,6 +729,8 @@ function App() {
     // Clear puzzle state
     setPuzzle(null);
     setActivePuzzleId('');
+    // Reset zoom mode (ephemeral, not persisted)
+    setIsZoomMode(false);
   }, []);
 
   const handleError = useCallback((errorMessage: string) => {
@@ -801,6 +803,8 @@ function App() {
       onRevealPuzzle={revealPuzzle}
       autoCheckEnabled={autoCheckEnabled}
       onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+      isZoomMode={isZoomMode}
+      onToggleZoom={handleToggleZoom}
     />
   ) : (
     <SettingsMenu />
@@ -880,8 +884,6 @@ function App() {
             settingsMenu={settingsMenuContent}
             followedCollaborator={followedCollaborator}
             onToggleFollow={toggleFollow}
-            isZoomMode={isZoomMode}
-            onToggleZoom={handleToggleZoom}
           />
         }
         grid={gridContent}
