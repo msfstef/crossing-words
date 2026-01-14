@@ -9,7 +9,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createP2PSession } from '../../crdt/webrtcProvider';
-import type { P2PSession } from '../../crdt/webrtcProvider';
 import { WebrtcProvider as MockWebrtcProvider } from '../__mocks__/y-webrtc';
 import { MockP2PNetwork } from '../utils/mockWebRTC';
 import {

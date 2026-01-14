@@ -5,26 +5,32 @@
  */
 
 import * as Y from 'yjs';
-import { createPuzzleStore } from '../../crdt/puzzleStore';
+import type { PuzzleStore } from '../../crdt/puzzleStore';
 import { createP2PSession } from '../../crdt/webrtcProvider';
 import type { P2PSession } from '../../crdt/webrtcProvider';
-import { MockP2PNetwork, MockWebrtcProvider } from './mockWebRTC';
+import { getEntriesMap } from '../../crdt/puzzleDoc';
+import { MockP2PNetwork } from './mockWebRTC';
+import { WebrtcProvider } from '../__mocks__/y-webrtc';
 import { vi } from 'vitest';
 
 /**
  * Create a test puzzle store
  */
-export async function createTestStore(puzzleId: string = 'test-puzzle') {
+export async function createTestStore(puzzleId: string = 'test-puzzle'): Promise<PuzzleStore> {
   // Mock IndexedDB provider since we're in a test environment
   const doc = new Y.Doc();
+  const entries = getEntriesMap(doc);
 
-  // Create a mock store with minimal implementation
+  // Create a mock store with all required PuzzleStore properties
+  // Using type assertion to bypass private property check
   const mockStore = {
     doc,
+    entries,
+    puzzleId,
     ready: Promise.resolve(),
     destroy: vi.fn(),
-    clear: vi.fn(),
-  };
+    clearData: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PuzzleStore;
 
   return mockStore;
 }
@@ -37,13 +43,13 @@ export async function setupP2PTest(options: {
   peerCount: number;
 }): Promise<{
   sessions: P2PSession[];
-  stores: any[];
+  stores: PuzzleStore[];
   network: MockP2PNetwork;
   cleanup: () => void;
 }> {
   const { roomId, peerCount } = options;
   const sessions: P2PSession[] = [];
-  const stores: any[] = [];
+  const stores: PuzzleStore[] = [];
   const network = new MockP2PNetwork();
 
   // Create multiple peers
@@ -55,7 +61,7 @@ export async function setupP2PTest(options: {
     sessions.push(session);
 
     // Register provider in network
-    network.registerProvider(session.provider as unknown as MockWebrtcProvider);
+    network.registerProvider(session.provider as unknown as WebrtcProvider);
   }
 
   // Cleanup function
@@ -75,7 +81,6 @@ export async function waitForConnectionState(
   expectedState: 'connected' | 'disconnected' | 'connecting',
   timeout = 5000
 ): Promise<void> {
-  const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
     // Check if already in desired state
@@ -114,7 +119,6 @@ export async function waitForPeerCount(
   expectedCount: number,
   timeout = 5000
 ): Promise<void> {
-  const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
     // Check if already at desired count
@@ -153,7 +157,6 @@ export async function waitForAwarenessState(
   predicate: () => boolean,
   timeout = 5000
 ): Promise<void> {
-  const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
     // Check if already satisfied

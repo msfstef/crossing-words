@@ -12,7 +12,7 @@ vi.mock('y-webrtc', async () => {
 });
 
 // Mock console methods to reduce noise in test output
-global.console = {
+globalThis.console = {
   ...console,
   debug: vi.fn(),
 };

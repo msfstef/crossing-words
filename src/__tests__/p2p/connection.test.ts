@@ -11,8 +11,6 @@ import { WebrtcProvider as MockWebrtcProvider } from '../__mocks__/y-webrtc';
 import { MockP2PNetwork } from '../utils/mockWebRTC';
 import {
   createTestStore,
-  waitForConnectionState,
-  waitForPeerCount,
 } from '../utils/p2pTestHelpers';
 
 describe('P2P Connection', () => {
@@ -269,8 +267,6 @@ describe('P2P Connection', () => {
     });
 
     it('should handle offline event gracefully', async () => {
-      const initialState = session.connectionState;
-
       // Simulate network going offline
       network.simulateNetworkChange(false);
 
