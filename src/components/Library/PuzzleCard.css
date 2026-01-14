@@ -13,6 +13,18 @@
     background-color 120ms ease,
     border-color 120ms ease,
     transform 80ms ease;
+
+  /* Prevent text selection for native feel */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+
+  /* Prevent touch callout on iOS */
+  -webkit-touch-callout: none;
+
+  /* Optimize touch interactions */
+  touch-action: manipulation;
 }
 
 .puzzle-card:hover {
@@ -22,6 +34,10 @@
 
 .puzzle-card:active {
   transform: scale(0.99);
+}
+
+.puzzle-card--pressed {
+  background-color: var(--color-bg-tertiary);
 }
 
 .puzzle-card:focus {

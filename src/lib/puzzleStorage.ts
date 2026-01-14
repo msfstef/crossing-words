@@ -358,6 +358,47 @@ export async function listAllPuzzles(): Promise<PuzzleEntry[]> {
 }
 
 /**
+ * Resets puzzle progress by clearing CRDT database and timeline mapping.
+ * Keeps the puzzle data and metadata intact.
+ *
+ * @param puzzleId - The puzzle ID to reset
+ */
+export async function resetPuzzleProgress(puzzleId: string): Promise<void> {
+  try {
+    // Clear CRDT database (progress, entries, durations)
+    const deleteRequest = indexedDB.deleteDatabase(`puzzle-${puzzleId}`);
+    await new Promise<void>((resolve, reject) => {
+      deleteRequest.onsuccess = () => {
+        console.debug('[puzzleStorage] Reset CRDT database:', `puzzle-${puzzleId}`);
+        resolve();
+      };
+      deleteRequest.onerror = () => {
+        console.warn('[puzzleStorage] Failed to reset CRDT database:', deleteRequest.error);
+        reject(deleteRequest.error);
+      };
+    });
+
+    // Clear timeline mapping
+    localStorage.removeItem(`timeline:${puzzleId}`);
+    console.debug('[puzzleStorage] Reset timeline entry:', `timeline:${puzzleId}`);
+  } catch (error) {
+    console.error('[puzzleStorage] Failed to reset puzzle progress:', error);
+    throw error;
+  }
+}
+
+/**
+ * Resets puzzle sharing by clearing only the timeline mapping.
+ * Progress is preserved, but a new collaborative session will start.
+ *
+ * @param puzzleId - The puzzle ID to reset sharing for
+ */
+export function resetPuzzleSharing(puzzleId: string): void {
+  localStorage.removeItem(`timeline:${puzzleId}`);
+  console.debug('[puzzleStorage] Reset sharing for puzzle:', puzzleId);
+}
+
+/**
  * Deletes a puzzle from storage.
  * Removes the puzzle data, metadata, CRDT state database, and timeline entry.
  *
