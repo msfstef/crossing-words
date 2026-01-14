@@ -53,9 +53,20 @@ export function SolveHeader({
             <div
               key={collab.clientId}
               className="solve-header__avatar"
-              style={{ backgroundColor: collab.user.color }}
+              style={{
+                borderColor: collab.user.color,
+                backgroundColor: collab.user.avatar ? 'transparent' : collab.user.color,
+              }}
               title={collab.user.name}
-            />
+            >
+              {collab.user.avatar && (
+                <img
+                  src={collab.user.avatar}
+                  alt=""
+                  className="solve-header__avatar-image"
+                />
+              )}
+            </div>
           ))}
           {collaborators.length > 5 && (
             <div className="solve-header__avatar solve-header__avatar--overflow">
