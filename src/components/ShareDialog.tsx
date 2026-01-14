@@ -48,6 +48,9 @@ interface ShareDialogProps {
  * />
  * ```
  */
+/** Duration of the close animation in ms */
+const CLOSE_ANIMATION_DURATION = 120;
+
 export function ShareDialog({
   isOpen,
   onClose,
@@ -56,6 +59,7 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const copyTimeoutRef = useRef<number | null>(null);
 
@@ -65,15 +69,22 @@ export function ShareDialog({
     setCanShare(!!navigator.canShare?.(shareData));
   }, []);
 
-  // Open/close the dialog element
+  // Open/close the dialog element with animation
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (isOpen) {
+      setIsClosing(false);
       dialog.showModal();
-    } else {
-      dialog.close();
+    } else if (dialog.open) {
+      // Start closing animation
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        dialog.close();
+        setIsClosing(false);
+      }, CLOSE_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -169,12 +180,16 @@ export function ShareDialog({
     }, 2000);
   };
 
-  if (!isOpen) {
+  // Keep dialog mounted during close animation
+  if (!isOpen && !isClosing) {
     return null;
   }
 
   return (
-    <dialog ref={dialogRef} className="share-dialog">
+    <dialog
+      ref={dialogRef}
+      className={`share-dialog${isClosing ? ' share-dialog--closing' : ''}`}
+    >
       <div className="share-dialog__content">
         <button
           type="button"

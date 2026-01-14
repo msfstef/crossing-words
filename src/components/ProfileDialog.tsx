@@ -16,6 +16,9 @@ import {
 } from '../lib/imageUtils';
 import './ProfileDialog.css';
 
+/** Duration of the close animation in ms */
+const CLOSE_ANIMATION_DURATION = 120;
+
 interface ProfileDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,6 +46,7 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   // Sync local nickname with profile when dialog opens
   useEffect(() => {
@@ -52,21 +56,28 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [isOpen, profile.nickname]);
 
-  // Open/close the dialog element
+  // Open/close the dialog element with animation
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (isOpen) {
+      setIsClosing(false);
       dialog.showModal();
-    } else {
-      dialog.close();
+    } else if (dialog.open) {
+      // Start closing animation
+      setIsClosing(true);
       // Cleanup camera when closing
       if (cameraStream) {
         stopCameraStream(cameraStream);
         setCameraStream(null);
         setCameraMode(false);
       }
+      const timer = setTimeout(() => {
+        dialog.close();
+        setIsClosing(false);
+      }, CLOSE_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, cameraStream]);
 
@@ -218,14 +229,18 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [profile.nickname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!isOpen) {
+  // Keep dialog mounted during close animation
+  if (!isOpen && !isClosing) {
     return null;
   }
 
   const canUseCamera = isCameraAvailable();
 
   return (
-    <dialog ref={dialogRef} className="profile-dialog">
+    <dialog
+      ref={dialogRef}
+      className={`profile-dialog${isClosing ? ' profile-dialog--closing' : ''}`}
+    >
       <div className="profile-dialog__content">
         <button
           type="button"

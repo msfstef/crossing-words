@@ -61,7 +61,8 @@
   color: var(--color-text);
 }
 
-.success-dialog__close:focus {
+/* Only show focus ring for keyboard navigation, not programmatic focus */
+.success-dialog__close:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
@@ -217,13 +218,22 @@
   }
 }
 
-/* Animation */
+/* Animation - Open */
 .success-dialog[open] {
   animation: success-dialog-appear 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .success-dialog[open]::backdrop {
   animation: backdrop-appear 150ms ease-out;
+}
+
+/* Animation - Close */
+.success-dialog[open].success-dialog--closing {
+  animation: success-dialog-disappear 150ms ease-in forwards;
+}
+
+.success-dialog[open].success-dialog--closing::backdrop {
+  animation: backdrop-disappear 150ms ease-in forwards;
 }
 
 @keyframes success-dialog-appear {
@@ -237,6 +247,17 @@
   }
 }
 
+@keyframes success-dialog-disappear {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
 @keyframes backdrop-appear {
   from {
     opacity: 0;
@@ -246,8 +267,17 @@
   }
 }
 
+@keyframes backdrop-disappear {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* Checkmark icon animation */
-.success-dialog[open] .success-dialog__icon svg {
+.success-dialog[open]:not(.success-dialog--closing) .success-dialog__icon svg {
   animation: checkmark-draw 400ms ease-out 100ms both;
 }
 

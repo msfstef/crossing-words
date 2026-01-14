@@ -5,8 +5,11 @@
  * Offers options to continue viewing the puzzle or return to the library.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './SuccessDialog.css';
+
+/** Duration of the close animation in ms */
+const CLOSE_ANIMATION_DURATION = 150;
 
 interface SuccessDialogProps {
   /** Whether the dialog is open */
@@ -53,16 +56,24 @@ export function SuccessDialog({
   duration,
 }: SuccessDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
-  // Open/close the dialog element
+  // Open/close the dialog element with animation
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (isOpen) {
+      setIsClosing(false);
       dialog.showModal();
-    } else {
-      dialog.close();
+    } else if (dialog.open) {
+      // Start closing animation
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        dialog.close();
+        setIsClosing(false);
+      }, CLOSE_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -99,14 +110,18 @@ export function SuccessDialog({
     };
   }, [onClose]);
 
-  if (!isOpen) {
+  // Keep dialog mounted during close animation
+  if (!isOpen && !isClosing) {
     return null;
   }
 
   const isMultiplayer = collaboratorCount > 0;
 
   return (
-    <dialog ref={dialogRef} className="success-dialog">
+    <dialog
+      ref={dialogRef}
+      className={`success-dialog${isClosing ? ' success-dialog--closing' : ''}`}
+    >
       <div className="success-dialog__content">
         <button
           type="button"
