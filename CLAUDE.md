@@ -55,12 +55,15 @@ If occupied, use a different port:
 npm run dev -- --port 5174  # or any available port
 ```
 
-**Playwright MCP Browser Isolation**: When using the Playwright MCP tools for browser testing, **always run in isolated mode** to avoid conflicts with other worktrees or agents running tests simultaneously. The default browser instance is shared and will cause "Browser is already in use" errors.
+**Playwright MCP Browser Isolation**: When using the Playwright MCP tools for browser testing, **ALWAYS use isolated mode**. The default shared browser instance causes "Browser is already in use" errors when multiple agents or worktrees run concurrently.
 
-To enable isolated mode, configure the MCP server with `--isolated` flag. If you encounter browser conflicts:
-- Multiple worktrees may be testing the same app on different ports
-- Always verify which port your dev server is running on before navigating
-- Use `browser_close` to clean up browser instances when done testing
+**CRITICAL**: Use the `mcp__plugin_playwright_playwright__*` tools (e.g., `mcp__plugin_playwright_playwright__browser_navigate`) instead of `mcp__playwright__*` tools. The plugin version runs in isolated mode automatically.
+
+If you encounter "Browser is already in use" errors:
+1. Switch to using `mcp__plugin_playwright_playwright__*` tool variants
+2. Use `browser_close` to clean up any stale browser instances
+3. Verify which port your dev server is running on before navigating
+4. Multiple worktrees may be testing the same app on different ports
 
 **Quick port availability check**:
 ```bash
