@@ -16,6 +16,7 @@ import { useCompletionDetection } from './hooks/useCompletionDetection';
 import { usePlayTime } from './hooks/usePlayTime';
 import { useHistoryNavigation, type DialogType } from './hooks/useHistoryNavigation';
 import { useCollaborators } from './collaboration/useCollaborators';
+import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
@@ -398,6 +399,8 @@ function App() {
     handleBackspace,
     toggleDirection,
     handleSwipeNavigation,
+    setSelectedCell,
+    setDirection,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Build set of current word cells for reference highlight exclusion
@@ -479,6 +482,63 @@ function App() {
   const collaborators = useCollaborators(awareness);
   // Get local user info for consistent styling with what collaborators see
   const localUser = useLocalUser(awareness);
+
+  // Follow collaborator functionality - sync cursor to followed collaborator
+  const { followedCollaborator, toggleFollow, disableFollow } = useFollowCollaborator(
+    collaborators,
+    awareness,
+    useCallback((row: number, col: number, dir: 'across' | 'down') => {
+      setSelectedCell({ row, col });
+      setDirection(dir);
+    }, [setSelectedCell, setDirection])
+  );
+
+  // Wrap user interaction handlers to disable follow mode on local movement
+  const handleCellClickWithFollow = useCallback((row: number, col: number) => {
+    disableFollow();
+    handleCellClick(row, col);
+  }, [disableFollow, handleCellClick]);
+
+  const handleKeyDownWithFollow = useCallback((event: KeyboardEvent) => {
+    // Only disable follow for navigation/input keys, not meta keys
+    const isNavigationOrInput = /^[a-zA-Z]$/.test(event.key) ||
+      ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', ' '].includes(event.key);
+
+    if (isNavigationOrInput) {
+      disableFollow();
+    }
+    handleKeyDown(event);
+  }, [disableFollow, handleKeyDown]);
+
+  const goToPrevClueWithFollow = useCallback(() => {
+    disableFollow();
+    goToPrevClue();
+  }, [disableFollow, goToPrevClue]);
+
+  const goToNextClueWithFollow = useCallback(() => {
+    disableFollow();
+    goToNextClue();
+  }, [disableFollow, goToNextClue]);
+
+  const toggleDirectionWithFollow = useCallback(() => {
+    disableFollow();
+    toggleDirection();
+  }, [disableFollow, toggleDirection]);
+
+  const handleSwipeNavigationWithFollow = useCallback((dir: 'left' | 'right' | 'up' | 'down') => {
+    disableFollow();
+    handleSwipeNavigation(dir);
+  }, [disableFollow, handleSwipeNavigation]);
+
+  const typeLetterWithFollow = useCallback((letter: string) => {
+    disableFollow();
+    typeLetter(letter);
+  }, [disableFollow, typeLetter]);
+
+  const handleBackspaceWithFollow = useCallback(() => {
+    disableFollow();
+    handleBackspace();
+  }, [disableFollow, handleBackspace]);
 
   /**
    * Handle dialog dismissal from back button navigation.
@@ -649,7 +709,7 @@ function App() {
     if (activeView !== 'solve') return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      handleKeyDown(event);
+      handleKeyDownWithFollow(event);
     };
 
     document.addEventListener('keydown', onKeyDown);
@@ -657,7 +717,7 @@ function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [activeView, handleKeyDown]);
+  }, [activeView, handleKeyDownWithFollow]);
 
   // Render Library view
   if (activeView === 'library') {
@@ -738,12 +798,12 @@ function App() {
             selectedCell={selectedCell}
             direction={direction}
             currentWord={currentWord}
-            onCellClick={handleCellClick}
+            onCellClick={handleCellClickWithFollow}
             collaborators={collaborators}
             localUserColor={localUser.color}
             verifiedCells={verifiedCells}
             errorCells={errorCells}
-            onSwipe={handleSwipeNavigation}
+            onSwipe={handleSwipeNavigationWithFollow}
             isTouchDevice={isTouchDevice}
             referencedClueCells={referencedClueCells}
             letterReferenceCells={letterReferenceCells}
@@ -765,24 +825,26 @@ function App() {
             settingsMenu={settingsMenuContent}
             connectionState={connectionState}
             isP2PSession={Boolean(roomId)}
+            followedCollaborator={followedCollaborator}
+            onToggleFollow={toggleFollow}
           />
         }
         grid={gridContent}
         clueBar={
           <ClueBar
             clue={currentClue}
-            onPrevClue={goToPrevClue}
-            onNextClue={goToNextClue}
+            onPrevClue={goToPrevClueWithFollow}
+            onNextClue={goToNextClueWithFollow}
             hasPrev={hasPrevClue}
             hasNext={hasNextClue}
-            onToggleDirection={toggleDirection}
+            onToggleDirection={toggleDirectionWithFollow}
           />
         }
         keyboard={
           puzzle && ready ? (
             <CrosswordKeyboard
-              onKeyPress={typeLetter}
-              onBackspace={handleBackspace}
+              onKeyPress={typeLetterWithFollow}
+              onBackspace={handleBackspaceWithFollow}
             />
           ) : null
         }

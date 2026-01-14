@@ -91,6 +91,73 @@
   background-color: var(--color-bg-tertiary);
 }
 
+/* Follow button */
+.solve-header__follow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: 2px solid var(--color-border-subtle, var(--color-border));
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  animation: followButtonFadeIn 0.2s ease forwards;
+}
+
+@keyframes followButtonFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.solve-header__follow:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+.solve-header__follow:active {
+  transform: scale(0.96);
+}
+
+.solve-header__follow:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.solve-header__follow:focus {
+  outline: none;
+}
+
+/* Active state - following someone */
+.solve-header__follow--active {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+  border-width: 2px;
+  box-shadow: 0 0 0 1px var(--color-bg-secondary);
+}
+
+.solve-header__follow--active:hover {
+  background: var(--color-bg-tertiary);
+  opacity: 0.9;
+}
+
+.solve-header__follow-icon {
+  width: 18px;
+  height: 18px;
+}
+
 /* Connection indicator */
 .solve-header__connection {
   display: flex;

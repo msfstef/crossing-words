@@ -33,6 +33,8 @@ export interface CollaboratorState {
   user: UserInfo;
   /** Current cursor position, null if not focused on puzzle */
   cursor: CursorPosition | null;
+  /** Client ID of the collaborator being followed, null if not following anyone */
+  followingClientId?: number | null;
 }
 
 /**

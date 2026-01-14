@@ -16,6 +16,10 @@ interface SolveHeaderProps {
   connectionState: ConnectionState;
   /** Whether we're in a P2P session */
   isP2PSession: boolean;
+  /** The collaborator currently being followed, or null if not following */
+  followedCollaborator?: Collaborator | null;
+  /** Toggle follow mode */
+  onToggleFollow?: () => void;
 }
 
 /**
@@ -29,6 +33,8 @@ export function SolveHeader({
   settingsMenu,
   connectionState,
   isP2PSession,
+  followedCollaborator = null,
+  onToggleFollow,
 }: SolveHeaderProps) {
   return (
     <header className="solve-header">
@@ -64,6 +70,32 @@ export function SolveHeader({
             </div>
           )}
         </div>
+      )}
+
+      {/* Follow button - show when there are collaborators */}
+      {collaborators.length > 0 && onToggleFollow && (
+        <button
+          type="button"
+          className={`solve-header__follow ${followedCollaborator ? 'solve-header__follow--active' : ''}`}
+          onClick={onToggleFollow}
+          aria-label={followedCollaborator ? `Following ${followedCollaborator.user.name}` : 'Follow a collaborator'}
+          title={followedCollaborator ? `Following ${followedCollaborator.user.name}` : 'Follow a collaborator'}
+          style={followedCollaborator ? { borderColor: followedCollaborator.user.color } : undefined}
+        >
+          <svg
+            className="solve-header__follow-icon"
+            viewBox="0 0 24 24"
+            fill={followedCollaborator ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Eye icon */}
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
       )}
 
       {/* Connection indicator - show in P2P mode */}
