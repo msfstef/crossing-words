@@ -446,4 +446,419 @@ Potential areas for expansion:
 
 ---
 
+# Collaboration UI Testing
+
+This section covers testing collaboration UI components and hooks **without network connectivity**. Use these utilities when implementing or modifying collaboration UI features.
+
+## Overview
+
+The collaboration UI test infrastructure provides:
+- **MockAwareness** - A standalone Yjs Awareness mock for testing hooks and components
+- **Test Helpers** - Utilities for creating mock collaborators and simulating collaboration flows
+- **Scenario Builders** - Pre-built setups for common collaboration scenarios
+
+## Quick Start
+
+### Running Collaboration UI Tests
+
+```bash
+# Run collaboration UI tests
+npm run test:run -- src/__tests__/collaboration/
+
+# Run a specific test file
+npm run test:run -- src/__tests__/collaboration/collaborationUI.test.ts
+```
+
+### Basic Test Setup
+
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useCollaborators } from '../../collaboration/useCollaborators';
+import {
+  MockAwareness,
+  simulateCollaboratorJoin,
+  simulateCollaboratorLeave,
+  simulateCursorMove,
+  resetClientIdCounter,
+} from '../utils/collaborationTestHelpers';
+
+describe('My Collaboration Feature', () => {
+  let awareness: MockAwareness;
+
+  beforeEach(() => {
+    resetClientIdCounter(); // Ensures predictable client IDs
+    awareness = new MockAwareness();
+  });
+
+  it('should react to collaborator joining', () => {
+    const { result } = renderHook(() => useCollaborators(awareness));
+
+    act(() => {
+      simulateCollaboratorJoin(awareness, { name: 'Alice' });
+    });
+
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0].user.name).toBe('Alice');
+  });
+});
+```
+
+## Test Utilities
+
+### MockAwareness
+
+A mock implementation of Yjs Awareness that doesn't require network connectivity.
+
+```typescript
+import { MockAwareness } from '../utils/collaborationTestHelpers';
+
+// Create with default local client ID (1)
+const awareness = new MockAwareness();
+
+// Create with custom local client ID
+const awareness = new MockAwareness(42);
+
+// Set local user state
+awareness.setLocalState({
+  user: { name: 'Me', color: '#4F46E5' },
+  cursor: { row: 0, col: 0, direction: 'across' },
+});
+
+// Get all states (matches real Awareness API)
+const states = awareness.getStates();
+```
+
+#### Test Helper Methods
+
+MockAwareness provides additional methods for testing:
+
+```typescript
+// Add a collaborator (simulates remote user joining)
+awareness.addCollaborator({
+  clientId: 2,
+  user: { name: 'Alice', color: '#ff6b6b' },
+  cursor: { row: 5, col: 3, direction: 'across' },
+});
+
+// Remove a collaborator (simulates user leaving)
+awareness.removeCollaborator(2);
+
+// Update collaborator cursor
+awareness.updateCollaboratorCursor(2, { row: 10, col: 7, direction: 'down' });
+
+// Get specific collaborator state
+const state = awareness.getCollaboratorState(2);
+
+// Get all collaborator IDs (excluding local)
+const ids = awareness.getCollaboratorIds();
+
+// Clear all collaborators
+awareness.clearCollaborators();
+
+// Reset entire awareness state
+awareness.reset();
+```
+
+### Simulation Helpers
+
+Helper functions for common collaboration actions:
+
+```typescript
+import {
+  simulateCollaboratorJoin,
+  simulateCollaboratorLeave,
+  simulateCursorMove,
+  simulateTyping,
+  simulateMultipleJoins,
+} from '../utils/collaborationTestHelpers';
+
+// Simulate collaborator joining with options
+const clientId = simulateCollaboratorJoin(awareness, {
+  name: 'Alice',
+  cursor: { row: 0, col: 0, direction: 'across' },
+});
+
+// Simulate collaborator leaving
+simulateCollaboratorLeave(awareness, clientId);
+
+// Simulate cursor movement
+simulateCursorMove(awareness, clientId, { row: 5, col: 3, direction: 'down' });
+
+// Simulate typing (advances cursor in current direction)
+simulateTyping(awareness, clientId);
+
+// Simulate multiple users joining at once
+const clientIds = simulateMultipleJoins(awareness, 5);
+```
+
+### Mock Data Generators
+
+Create mock collaborators with sensible defaults:
+
+```typescript
+import {
+  createMockCollaborator,
+  createMockCollaborators,
+  generateClientId,
+  getMockName,
+  getCollaboratorColor,
+} from '../utils/collaborationTestHelpers';
+
+// Create a single mock collaborator
+const alice = createMockCollaborator({
+  name: 'Alice',
+  cursor: { row: 5, col: 3, direction: 'across' },
+});
+
+// Create with all defaults (auto-generated name, color, clientId)
+const collaborator = createMockCollaborator();
+
+// Create multiple collaborators
+const collaborators = createMockCollaborators(5, {
+  cursor: { row: 0, col: 0, direction: 'across' },
+});
+```
+
+### State Verification Helpers
+
+Helpers for asserting collaboration state:
+
+```typescript
+import {
+  getCollaboratorCount,
+  hasCollaborator,
+  getCollaboratorCursor,
+  hasCollaboratorAtPosition,
+  getCollaboratorsAtPosition,
+} from '../utils/collaborationTestHelpers';
+
+// Get number of collaborators (excluding local)
+const count = getCollaboratorCount(awareness);
+
+// Check if specific collaborator exists
+const exists = hasCollaborator(awareness, clientId);
+
+// Get a collaborator's cursor position
+const cursor = getCollaboratorCursor(awareness, clientId);
+
+// Check if any collaborator is at a position
+const atCell = hasCollaboratorAtPosition(awareness, { row: 5, col: 3 });
+
+// Get all collaborators at a position
+const atPosition = getCollaboratorsAtPosition(awareness, { row: 5, col: 3 });
+```
+
+## Scenario Builders
+
+Pre-built setups for common testing scenarios:
+
+### Basic Collaboration Scenario
+
+```typescript
+import { setupCollaborationScenario } from '../utils/collaborationTestHelpers';
+
+const awareness = setupCollaborationScenario({
+  localUser: { name: 'Me', color: '#4F46E5' },
+  localCursor: { row: 0, col: 0, direction: 'across' },
+  collaborators: [
+    { name: 'Alice', cursor: { row: 5, col: 5, direction: 'across' } },
+    { name: 'Bob', cursor: { row: 10, col: 10, direction: 'down' } },
+  ],
+});
+```
+
+### Overlapping Cursors Scenario
+
+Test multiple cursors on the same cell:
+
+```typescript
+import { setupOverlappingCursors } from '../utils/collaborationTestHelpers';
+
+// 3 collaborators all at position (5, 3)
+const awareness = setupOverlappingCursors({ row: 5, col: 3 }, 3);
+
+// Verify
+const atPosition = getCollaboratorsAtPosition(awareness, { row: 5, col: 3 });
+expect(atPosition).toHaveLength(3);
+```
+
+### Follow Mode Scenario
+
+Test cursor following behavior:
+
+```typescript
+import { setupFollowScenario } from '../utils/collaborationTestHelpers';
+
+const { awareness, leaderId, followerIds } = setupFollowScenario({
+  leader: {
+    name: 'Leader',
+    cursor: { row: 0, col: 0, direction: 'across' },
+  },
+  followerCount: 2,
+});
+
+// Verify followers are following the leader
+for (const followerId of followerIds) {
+  const state = awareness.getCollaboratorState(followerId);
+  expect(state?.followingClientId).toBe(leaderId);
+}
+```
+
+## Common Test Patterns
+
+### Testing Hook Reactivity
+
+```typescript
+it('should update when collaborator cursor moves', () => {
+  const { result } = renderHook(() => useCollaborators(awareness));
+
+  let clientId: number;
+  act(() => {
+    clientId = simulateCollaboratorJoin(awareness, {
+      cursor: { row: 0, col: 0, direction: 'across' },
+    });
+  });
+
+  expect(result.current[0].cursor?.row).toBe(0);
+
+  act(() => {
+    simulateCursorMove(awareness, clientId!, { row: 5, col: 3, direction: 'down' });
+  });
+
+  expect(result.current[0].cursor?.row).toBe(5);
+  expect(result.current[0].cursor?.col).toBe(3);
+});
+```
+
+### Testing Component Rendering
+
+```typescript
+import { render, screen } from '@testing-library/react';
+import { CollaboratorCursors } from '../../components/CollaboratorCursors';
+
+it('should render collaborator cursors', () => {
+  const awareness = setupCollaborationScenario({
+    collaborators: [
+      { name: 'Alice', cursor: { row: 0, col: 0, direction: 'across' } },
+    ],
+  });
+
+  render(<CollaboratorCursors awareness={awareness} />);
+
+  expect(screen.getByText('Alice')).toBeInTheDocument();
+});
+```
+
+### Testing Collaboration Events
+
+```typescript
+it('should notify on collaborator join', () => {
+  const notify = vi.fn();
+  const { result } = renderHook(() =>
+    useCollaborators(awareness, { notify })
+  );
+
+  // First join after initial load
+  act(() => {
+    simulateCollaboratorJoin(awareness, { name: 'Alice' });
+  });
+
+  // Trigger another join to trigger notification
+  act(() => {
+    simulateCollaboratorJoin(awareness, { name: 'Bob' });
+  });
+
+  expect(notify).toHaveBeenCalledWith('Bob joined', expect.any(Object));
+});
+```
+
+### Testing Async Scenarios
+
+```typescript
+import { waitForCollaboratorCount } from '../utils/collaborationTestHelpers';
+
+it('should wait for expected collaborator count', async () => {
+  const awareness = new MockAwareness();
+
+  // Simulate delayed joins
+  setTimeout(() => simulateCollaboratorJoin(awareness, {}), 100);
+  setTimeout(() => simulateCollaboratorJoin(awareness, {}), 200);
+
+  // Wait for both to join
+  await waitForCollaboratorCount(awareness, 2, 500);
+
+  expect(getCollaboratorCount(awareness)).toBe(2);
+});
+```
+
+## When to Use Each Approach
+
+| Scenario | Approach |
+|----------|----------|
+| Testing hooks (useCollaborators, etc.) | MockAwareness + renderHook |
+| Testing UI components | MockAwareness + render |
+| Testing cursor interactions | simulateCursorMove + simulateTyping |
+| Testing presence flows | simulateCollaboratorJoin/Leave |
+| Testing overlapping cursors | setupOverlappingCursors |
+| Testing follow mode | setupFollowScenario |
+| Full P2P integration | Use P2P test infrastructure |
+
+## File Structure
+
+```
+src/__tests__/
+├── utils/
+│   ├── MockAwareness.ts           # Mock Yjs Awareness implementation
+│   ├── collaborationTestHelpers.ts # Helper functions and scenarios
+│   └── p2pTestHelpers.ts          # Full P2P test helpers
+├── collaboration/
+│   └── collaborationUI.test.ts    # Example collaboration UI tests
+└── p2p/
+    └── ...                        # Full P2P integration tests
+```
+
+## Best Practices
+
+1. **Use MockAwareness for unit tests** - Fast, isolated, no network
+2. **Reset client ID counter** in `beforeEach` for predictable IDs
+3. **Use `act()` wrapper** when simulating state changes in hook tests
+4. **Test both join and leave flows** - Ensure proper cleanup
+5. **Test edge cases** - Overlapping cursors, rapid join/leave, etc.
+6. **Keep tests focused** - One scenario per test
+7. **Use scenario builders** for complex setups
+8. **Verify state after actions** - Don't assume state changes happened
+
+## Troubleshooting
+
+### Hook Not Updating
+
+Ensure state changes are wrapped in `act()`:
+
+```typescript
+// ❌ Wrong
+simulateCollaboratorJoin(awareness, { name: 'Alice' });
+
+// ✅ Correct
+act(() => {
+  simulateCollaboratorJoin(awareness, { name: 'Alice' });
+});
+```
+
+### Client ID Collisions
+
+Reset the counter between tests:
+
+```typescript
+beforeEach(() => {
+  resetClientIdCounter();
+});
+```
+
+### Local User Appearing in Collaborators
+
+Ensure hooks filter out the local client ID. Check that `awareness.clientID` matches what you expect.
+
+---
+
 **Questions or Issues?** Check existing test files for examples or open an issue.

@@ -95,6 +95,25 @@ lsof -i :5173-5180 | grep LISTEN
 
 ## Debugging Approaches
 
+### Collaboration UI Issues
+
+When implementing or modifying collaboration UI features (cursors, presence indicators, follow mode), use the collaboration test utilities:
+
+**Approach: Use MockAwareness and Test Helpers**
+
+1. Use `MockAwareness` to test hooks and components without network
+2. Use simulation helpers like `simulateCollaboratorJoin`, `simulateCursorMove`
+3. Use scenario builders for complex setups (overlapping cursors, follow mode)
+4. See `docs/P2P_TESTING.md` > "Collaboration UI Testing" section for full guide
+
+```typescript
+// Quick example
+import { MockAwareness, simulateCollaboratorJoin } from '../__tests__/utils/collaborationTestHelpers';
+
+const awareness = new MockAwareness();
+simulateCollaboratorJoin(awareness, { name: 'Alice', cursor: { row: 0, col: 0, direction: 'across' } });
+```
+
 ### P2P Connectivity Issues
 
 When debugging P2P (peer-to-peer) connection issues, use the automated test suite first:
