@@ -187,32 +187,45 @@ function hexToRgba(hex: string, alpha: number): string {
  * Strategy:
  * - 1 color: Simple solid outline
  * - 2 colors: Split border (top/bottom vs left/right in alternating colors)
- * - 3+ colors: Each side gets a different color (top, right, bottom cycling through colors)
+ * - 3+ colors: Dashed pattern with count indicator via CSS class
  *
  * This approach is performant and creates a clear visual distinction without
  * requiring complex CSS patterns or pseudo-elements.
  */
-function createMultiColorBorder(colors: string[]): React.CSSProperties {
+function createMultiColorBorder(colors: string[], isOverlappingWithLocal: boolean = false): React.CSSProperties {
   if (colors.length === 0) return {};
 
-  const alpha = 0.75; // Strong alpha for visibility
+  const alpha = 0.85; // Strong alpha for visibility
+  const thickness = isOverlappingWithLocal ? 2 : 3; // Thinner when sharing with local user
 
   if (colors.length === 1) {
     // Single collaborator: simple outline
+    const color = hexToRgba(colors[0], alpha);
+    if (isOverlappingWithLocal) {
+      // Corner indicators when overlapping with local user
+      return {
+        '--collab-color': color,
+        zIndex: 5,
+      } as React.CSSProperties;
+    }
     return {
-      outline: `2px solid ${hexToRgba(colors[0], alpha)}`,
+      outline: `2px solid ${color}`,
       outlineOffset: '-2px',
       zIndex: 5,
     };
   }
 
-  // Multiple collaborators: use box-shadow to create colored segments
-  // This creates distinct colored borders on different sides
-  const thickness = 3;
-
   if (colors.length === 2) {
     // Two colors: alternate top/bottom vs left/right
     const [color1, color2] = colors.map(c => hexToRgba(c, alpha));
+
+    if (isOverlappingWithLocal) {
+      return {
+        '--collab-color-1': color1,
+        '--collab-color-2': color2,
+        zIndex: 5,
+      } as React.CSSProperties;
+    }
 
     return {
       boxShadow: `
@@ -226,19 +239,33 @@ function createMultiColorBorder(colors: string[]): React.CSSProperties {
     };
   }
 
-  // Three or more colors: each side gets its own color
-  const [color1, color2, color3] = colors.slice(0, 3).map(c => hexToRgba(c, alpha));
+  // Three or more colors: use a distinct "crowd" indicator
+  // Show first two colors with a special pattern indicating "more"
+  const [color1, color2] = colors.slice(0, 2).map(c => hexToRgba(c, alpha));
 
+  if (isOverlappingWithLocal) {
+    return {
+      '--collab-color-1': color1,
+      '--collab-color-2': color2,
+      '--collab-count': String(colors.length),
+      zIndex: 5,
+    } as React.CSSProperties;
+  }
+
+  // For 3+ without local overlap: dashed pattern with alternating colors
   return {
     boxShadow: `
       0 -${thickness}px 0 0 ${color1},
       ${thickness}px 0 0 0 ${color2},
-      0 ${thickness}px 0 0 ${color3},
-      -${thickness}px 0 0 0 ${colors.length > 3 ? hexToRgba(colors[3], alpha) : color1}
+      0 ${thickness}px 0 0 ${color1},
+      -${thickness}px 0 0 0 ${color2}
     `,
+    outline: `1px dashed ${hexToRgba('#ffffff', 0.6)}`,
+    outlineOffset: '-1px',
+    '--collab-count': String(colors.length),
     zIndex: 5,
     position: 'relative',
-  };
+  } as React.CSSProperties;
 }
 
 /**
@@ -352,10 +379,10 @@ export function CrosswordGrid({
 
   /**
    * Build a map of cell positions to collaborator colors for word highlighting.
-   * First collaborator with a cursor on that word "wins" the color.
+   * Now tracks all collaborators whose words include each cell for overlap detection.
    */
   const collaboratorHighlights = useMemo(() => {
-    const highlights = new Map<string, string>();
+    const highlights = new Map<string, string[]>(); // key -> colors array
 
     for (const collab of collaborators) {
       if (!collab.cursor) continue;
@@ -365,9 +392,13 @@ export function CrosswordGrid({
 
       for (const cell of wordCells) {
         const key = `${cell.row},${cell.col}`;
-        // Only set if no other collaborator claimed this cell
         if (!highlights.has(key)) {
-          highlights.set(key, collab.user.color);
+          highlights.set(key, []);
+        }
+        const colors = highlights.get(key)!;
+        // Track up to 3 colors for overlap visualization
+        if (colors.length < 3) {
+          colors.push(collab.user.color);
         }
       }
     }
@@ -591,16 +622,22 @@ export function CrosswordGrid({
           const inWord = isInCurrentWord(cell.row, cell.col);
           const userEntry = userEntries.get(key);
 
-          // Get collaborator highlight color for this cell (if any)
-          const collaboratorColor = collaboratorHighlights.get(key);
+          // Get collaborator highlight colors for this cell (if any)
+          const highlightColors = collaboratorHighlights.get(key);
           // Only show collaborator highlight if not in local user's current word
           const hasCollaboratorHighlight =
-            collaboratorColor && !inWord && !isSelected;
+            highlightColors && highlightColors.length > 0 && !inWord && !isSelected;
+          // Check if multiple collaborators' words overlap on this cell
+          const hasOverlappingHighlights = highlightColors && highlightColors.length > 1;
 
           // Get collaborator cursor colors (exact focused cell) - may be multiple!
           const cursorColors = collaboratorCursors.get(key);
-          // Only show cursor if not the local user's selected cell
-          const hasCollaboratorCursor = cursorColors && cursorColors.length > 0 && !isSelected;
+          // Show cursor indicators for collaborators on this cell
+          const hasCollaboratorCursor = cursorColors && cursorColors.length > 0;
+          // Check if local user's selection overlaps with collaborators
+          const isOverlappingWithCollaborators = isSelected && hasCollaboratorCursor;
+          // Count for crowd indicator
+          const collaboratorCount = cursorColors?.length ?? 0;
 
           // Check verification and error status
           const isVerified = verifiedCells.has(key);
@@ -624,7 +661,15 @@ export function CrosswordGrid({
             inWord && !isSelected && !hasLocalColor ? "cell--in-word" : "",
             inWord && !isSelected && hasLocalColor ? "cell--in-word-custom" : "",
             hasCollaboratorHighlight ? "cell--collaborator" : "",
-            hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
+            hasOverlappingHighlights ? "cell--collaborator-highlight-overlap" : "",
+            // Collaborator cursor classes - different when overlapping with local user
+            hasCollaboratorCursor && !isSelected ? "cell--collaborator-cursor" : "",
+            isOverlappingWithCollaborators ? "cell--collaborator-overlap" : "",
+            // "Crowd" indicator for 3+ collaborators
+            collaboratorCount >= 3 ? "cell--collaborator-crowd" : "",
+            // Count-specific classes for 1 vs 2 overlapping collaborators
+            isOverlappingWithCollaborators && collaboratorCount === 1 ? "cell--overlap-single" : "",
+            isOverlappingWithCollaborators && collaboratorCount === 2 ? "cell--overlap-double" : "",
             isVerified ? "cell--verified" : "",
             hasError ? "cell--error" : "",
             // Clue reference highlights (champagne/gold color)
@@ -652,13 +697,33 @@ export function CrosswordGrid({
             cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
           }
           // Collaborator word highlight (very subtle)
-          if (hasCollaboratorHighlight) {
-            cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
+          if (hasCollaboratorHighlight && highlightColors) {
+            if (highlightColors.length === 1) {
+              // Single collaborator - simple background
+              cellStyle.backgroundColor = hexToRgba(highlightColors[0], 0.15);
+            } else {
+              // Multiple collaborators - diagonal stripe pattern with their colors
+              const color1 = hexToRgba(highlightColors[0], 0.2);
+              const color2 = hexToRgba(highlightColors[1], 0.2);
+              cellStyle.background = `repeating-linear-gradient(
+                -45deg,
+                ${color1},
+                ${color1} 3px,
+                ${color2} 3px,
+                ${color2} 6px
+              )`;
+            }
           }
           // Collaborator cursor(s) - may be multiple overlapping collaborators!
-          if (hasCollaboratorCursor && cursorColors) {
-            const multiColorStyle = createMultiColorBorder(cursorColors);
+          // When overlapping with local user, we show different indicator styles
+          if (hasCollaboratorCursor && cursorColors && !isSelected) {
+            const multiColorStyle = createMultiColorBorder(cursorColors, false);
             Object.assign(cellStyle, multiColorStyle);
+          }
+          // When local user's cell overlaps with collaborators, add indicator CSS vars
+          if (isOverlappingWithCollaborators && cursorColors) {
+            const overlapStyle = createMultiColorBorder(cursorColors, true);
+            Object.assign(cellStyle, overlapStyle);
           }
 
           return (
@@ -668,6 +733,7 @@ export function CrosswordGrid({
               style={cellStyle}
               data-row={cell.row}
               data-col={cell.col}
+              data-collab-count={collaboratorCount >= 3 ? collaboratorCount : undefined}
               onClick={() => !cell.isBlack && !isMountGuardActive && onCellClick(cell.row, cell.col)}
             >
               {cell.clueNumber && (
