@@ -31,3 +31,5 @@ playwright-report/
 test-results/
 .playwright-mcp/
 .worktrees/
+.worktrees/
+.worktrees/

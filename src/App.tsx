@@ -10,6 +10,7 @@ import { LibraryView } from './components/Library';
 import { SolveLayout, SolveHeader } from './components/Layout';
 import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
+import { useZoomZones } from './hooks/useZoomZones';
 import { useClueReferences } from './hooks/useClueReferences';
 import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
@@ -626,101 +627,42 @@ function App() {
   // Zoom mode state
   const [isZoomMode, setIsZoomMode] = useState(false);
 
+  // Pre-computed zoom zones for stable viewports
+  const { getViewportForClue, getEdgeIndicators } = useZoomZones(puzzle);
+
   /**
-   * Calculate stable viewport region for zoom mode.
-   * Divides puzzle into stable regions to avoid jarring changes while typing.
-   * Returns viewport bounds based on which region the current clue is in.
+   * Get the full Clue object for the current clue.
+   * Needed because currentClue from usePuzzleState only has number/direction/text.
+   */
+  const fullCurrentClue = useMemo(() => {
+    if (!puzzle || !currentClue) return null;
+    const clues = currentClue.direction === 'across'
+      ? puzzle.clues.across
+      : puzzle.clues.down;
+    return clues.find(c => c.number === currentClue.number) ?? null;
+  }, [puzzle, currentClue]);
+
+  /**
+   * Get stable viewport region for zoom mode using pre-computed zones.
+   * Zones are computed once when puzzle loads to avoid jarring viewport changes.
    */
   const zoomViewport = useMemo(() => {
-    if (!isZoomMode || !puzzle || !currentWord || currentWord.length === 0) {
+    if (!isZoomMode || !fullCurrentClue) {
       return null;
     }
+    return getViewportForClue(fullCurrentClue);
+  }, [isZoomMode, fullCurrentClue, getViewportForClue]);
 
-    const { width, height } = puzzle;
-
-    // Calculate the center of the current clue
-    const rows = currentWord.map(c => c.row);
-    const cols = currentWord.map(c => c.col);
-    const clueMinRow = Math.min(...rows);
-    const clueMaxRow = Math.max(...rows);
-    const clueMinCol = Math.min(...cols);
-    const clueMaxCol = Math.max(...cols);
-    const clueCenterRow = (clueMinRow + clueMaxRow) / 2;
-    const clueCenterCol = (clueMinCol + clueMaxCol) / 2;
-
-    // Determine grid division based on puzzle size
-    // For smaller puzzles (< 10), use halves
-    // For medium puzzles (10-20), use quadrants
-    // For larger puzzles (> 20), use eighths
-    let rowDivisions: number, colDivisions: number;
-
-    if (Math.max(width, height) < 10) {
-      rowDivisions = colDivisions = 2; // halves
-    } else if (Math.max(width, height) <= 20) {
-      rowDivisions = colDivisions = 2; // quadrants
-    } else {
-      rowDivisions = colDivisions = 4; // eighths (4x2 or 2x4)
-      // Use fewer divisions in the smaller dimension
-      if (width < height) {
-        colDivisions = 2;
-      } else if (height < width) {
-        rowDivisions = 2;
-      }
+  /**
+   * Edge indicators for the current zoom viewport.
+   * Shows which edges have hidden content beyond the viewport.
+   */
+  const edgeIndicators = useMemo(() => {
+    if (!zoomViewport) {
+      return null;
     }
-
-    // Determine which region the clue center falls into
-    const regionRow = Math.floor((clueCenterRow / height) * rowDivisions);
-    const regionCol = Math.floor((clueCenterCol / width) * colDivisions);
-
-    // Calculate region bounds
-    const rowsPerRegion = height / rowDivisions;
-    const colsPerRegion = width / colDivisions;
-
-    let startRow = Math.floor(regionRow * rowsPerRegion);
-    let endRow = Math.floor((regionRow + 1) * rowsPerRegion) - 1;
-    let startCol = Math.floor(regionCol * colsPerRegion);
-    let endCol = Math.floor((regionCol + 1) * colsPerRegion) - 1;
-
-    // Expand viewport to ensure entire current clue is visible
-    startRow = Math.min(startRow, clueMinRow);
-    endRow = Math.max(endRow, clueMaxRow);
-    startCol = Math.min(startCol, clueMinCol);
-    endCol = Math.max(endCol, clueMaxCol);
-
-    // Add padding in the perpendicular direction to current clue
-    const padding = Math.max(2, Math.floor(Math.max(width, height) * 0.15));
-
-    if (direction === 'across') {
-      // For across clues, add more padding vertically
-      startRow = Math.max(0, startRow - padding);
-      endRow = Math.min(height - 1, endRow + padding);
-      // Add minimal padding horizontally to show next clue context
-      startCol = Math.max(0, startCol - 1);
-      endCol = Math.min(width - 1, endCol + 2);
-    } else {
-      // For down clues, add more padding horizontally
-      startCol = Math.max(0, startCol - padding);
-      endCol = Math.min(width - 1, endCol + padding);
-      // Add minimal padding vertically to show next clue context
-      startRow = Math.max(0, startRow - 1);
-      endRow = Math.min(height - 1, endRow + 2);
-    }
-
-    // Ensure viewport includes at least 5 cells in each dimension
-    const minViewportSize = 5;
-    if (endRow - startRow + 1 < minViewportSize) {
-      const expansion = Math.ceil((minViewportSize - (endRow - startRow + 1)) / 2);
-      startRow = Math.max(0, startRow - expansion);
-      endRow = Math.min(height - 1, endRow + expansion);
-    }
-    if (endCol - startCol + 1 < minViewportSize) {
-      const expansion = Math.ceil((minViewportSize - (endCol - startCol + 1)) / 2);
-      startCol = Math.max(0, startCol - expansion);
-      endCol = Math.min(width - 1, endCol + expansion);
-    }
-
-    return { startRow, endRow, startCol, endCol };
-  }, [isZoomMode, puzzle, currentWord, direction]);
+    return getEdgeIndicators(zoomViewport);
+  }, [zoomViewport, getEdgeIndicators]);
 
   // Toggle zoom mode
   const handleToggleZoom = useCallback(() => {
@@ -917,6 +859,7 @@ function App() {
                 letterReferenceCells={letterReferenceCells}
                 isZoomMode={isZoomMode}
                 zoomViewport={zoomViewport}
+                edgeIndicators={edgeIndicators}
                 onToggleZoom={handleToggleZoom}
               />
             </div>

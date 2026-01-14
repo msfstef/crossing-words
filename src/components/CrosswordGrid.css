@@ -197,3 +197,86 @@
 .crossword-grid-container {
     touch-action: pan-x pan-y;
 }
+
+/* ============================================================================
+ * Edge Indicators for Zoom Mode
+ * Shows partial cells at boundaries to indicate hidden puzzle content
+ * ============================================================================ */
+
+/* Container layout for edge indicators + grid */
+.crossword-grid-container--zoomed {
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Row container for left/grid/right arrangement */
+.crossword-grid-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+/* Edge indicator containers */
+.crossword-edge-indicator {
+    display: grid;
+    gap: var(--grid-gap, 2px);
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Top edge - horizontal strip above grid */
+.crossword-edge-indicator--top {
+    height: calc(var(--cell-size) * 0.35);
+    justify-content: center;
+    margin-left: calc(var(--cell-size) * 0.35 + var(--grid-gap, 2px));
+}
+
+/* Bottom edge - horizontal strip below grid */
+.crossword-edge-indicator--bottom {
+    height: calc(var(--cell-size) * 0.35);
+    justify-content: center;
+    margin-left: calc(var(--cell-size) * 0.35 + var(--grid-gap, 2px));
+}
+
+/* Left edge - vertical strip beside grid */
+.crossword-edge-indicator--left {
+    width: calc(var(--cell-size) * 0.35);
+    grid-template-columns: 1fr;
+}
+
+/* Right edge - vertical strip beside grid */
+.crossword-edge-indicator--right {
+    width: calc(var(--cell-size) * 0.35);
+    grid-template-columns: 1fr;
+}
+
+/* Edge indicator cells - partial visibility */
+.crossword-cell--edge-indicator {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Top edge cells - show bottom portion */
+.crossword-cell--edge-top {
+    clip-path: inset(65% 0 0 0);
+    margin-top: calc(var(--cell-size) * -0.65);
+}
+
+/* Bottom edge cells - show top portion */
+.crossword-cell--edge-bottom {
+    clip-path: inset(0 0 65% 0);
+    margin-bottom: calc(var(--cell-size) * -0.65);
+}
+
+/* Left edge cells - show right portion */
+.crossword-cell--edge-left {
+    clip-path: inset(0 0 0 65%);
+    margin-left: calc(var(--cell-size) * -0.65);
+}
+
+/* Right edge cells - show left portion */
+.crossword-cell--edge-right {
+    clip-path: inset(0 65% 0 0);
+    margin-right: calc(var(--cell-size) * -0.65);
+}

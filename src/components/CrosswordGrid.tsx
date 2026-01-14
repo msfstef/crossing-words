@@ -108,6 +108,8 @@ interface CrosswordGridProps {
   isZoomMode?: boolean;
   /** Viewport bounds for zoom mode (startRow, endRow, startCol, endCol) */
   zoomViewport?: { startRow: number; endRow: number; startCol: number; endCol: number } | null;
+  /** Edge indicators showing which edges have hidden content */
+  edgeIndicators?: { top: boolean; bottom: boolean; left: boolean; right: boolean } | null;
   /** Callback to toggle zoom mode */
   onToggleZoom?: () => void;
 }
@@ -268,6 +270,7 @@ export function CrosswordGrid({
   letterReferenceCells = new Set(),
   isZoomMode = false,
   zoomViewport = null,
+  edgeIndicators = null,
   onToggleZoom,
 }: CrosswordGridProps) {
   // Container ref for measuring available space
@@ -406,6 +409,44 @@ export function CrosswordGrid({
     return puzzle.grid.flat();
   }, [puzzle.grid, isZoomMode, zoomViewport]);
 
+  // Compute edge cells for partial cell indicators
+  // These are cells just beyond the viewport boundary that show as hints
+  const edgeCells = useMemo(() => {
+    if (!isZoomMode || !zoomViewport || !edgeIndicators) {
+      return { top: [], bottom: [], left: [], right: [] };
+    }
+
+    const { startRow, endRow, startCol, endCol } = zoomViewport;
+    const { height, width } = puzzle;
+
+    return {
+      // Top edge: row above viewport (if exists)
+      top: edgeIndicators.top && startRow > 0
+        ? puzzle.grid[startRow - 1].filter(cell =>
+            cell.col >= startCol && cell.col <= endCol
+          )
+        : [],
+      // Bottom edge: row below viewport (if exists)
+      bottom: edgeIndicators.bottom && endRow < height - 1
+        ? puzzle.grid[endRow + 1].filter(cell =>
+            cell.col >= startCol && cell.col <= endCol
+          )
+        : [],
+      // Left edge: column before viewport (if exists)
+      left: edgeIndicators.left && startCol > 0
+        ? puzzle.grid
+            .filter((_, rowIndex) => rowIndex >= startRow && rowIndex <= endRow)
+            .map(row => row[startCol - 1])
+        : [],
+      // Right edge: column after viewport (if exists)
+      right: edgeIndicators.right && endCol < width - 1
+        ? puzzle.grid
+            .filter((_, rowIndex) => rowIndex >= startRow && rowIndex <= endRow)
+            .map(row => row[endCol + 1])
+        : [],
+    };
+  }, [isZoomMode, zoomViewport, edgeIndicators, puzzle.grid, puzzle.height, puzzle.width]);
+
   // Merge touch handlers (swipe and pinch)
   const touchHandlers = useMemo(() => {
     return {
@@ -428,6 +469,30 @@ export function CrosswordGrid({
     };
   }, [swipeHandlers, pinchHandlers]);
 
+  // Helper to render an edge indicator cell (partial visibility)
+  const renderEdgeCell = (
+    cell: typeof puzzle.grid[0][0],
+    position: 'top' | 'bottom' | 'left' | 'right'
+  ) => {
+    const key = `edge-${position}-${cell.row},${cell.col}`;
+    const userEntry = userEntries.get(`${cell.row},${cell.col}`);
+
+    return (
+      <div
+        key={key}
+        className={`crossword-cell crossword-cell--edge-indicator crossword-cell--edge-${position} ${
+          cell.isBlack ? 'cell--black' : 'cell--white'
+        }`}
+        data-row={cell.row}
+        data-col={cell.col}
+      >
+        {!cell.isBlack && (
+          <span className="cell-letter">{userEntry || ""}</span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -437,109 +502,159 @@ export function CrosswordGrid({
       } as React.CSSProperties}
       {...touchHandlers}
     >
-      <div
-        className={`crossword-grid ${isZoomMode ? 'crossword-grid--zoomed' : ''}`}
-        style={{
-          gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
-          gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
-        }}
-      >
-      {visibleCells.map((cell) => {
-        const key = `${cell.row},${cell.col}`;
-        const isSelected =
-          selectedCell?.row === cell.row && selectedCell?.col === cell.col;
-        const inWord = isInCurrentWord(cell.row, cell.col);
-        const userEntry = userEntries.get(key);
+      {/* Top edge indicator cells */}
+      {isZoomMode && edgeCells.top.length > 0 && (
+        <div
+          className="crossword-edge-indicator crossword-edge-indicator--top"
+          style={{
+            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
+          }}
+        >
+          {edgeCells.top.map(cell => renderEdgeCell(cell, 'top'))}
+        </div>
+      )}
 
-        // Get collaborator highlight color for this cell (if any)
-        const collaboratorColor = collaboratorHighlights.get(key);
-        // Only show collaborator highlight if not in local user's current word
-        const hasCollaboratorHighlight =
-          collaboratorColor && !inWord && !isSelected;
-
-        // Get collaborator cursor colors (exact focused cell) - may be multiple!
-        const cursorColors = collaboratorCursors.get(key);
-        // Only show cursor if not the local user's selected cell
-        const hasCollaboratorCursor = cursorColors && cursorColors.length > 0 && !isSelected;
-
-        // Check verification and error status
-        const isVerified = verifiedCells.has(key);
-        const hasError = errorCells.has(key);
-
-        // Check clue reference highlights
-        // Whole-clue references: only show when not in current word (avoid visual conflict)
-        // Letter-specific references: show even in current word (for "letters X-Y here" patterns)
-        const isReferencedClue = referencedClueCells.has(key) && !inWord && !isSelected;
-        const isReferencedLetter = letterReferenceCells.has(key);
-
-        // Determine if local user has a color (in collaborative mode)
-        const hasLocalColor = Boolean(localUserColor);
-
-        const cellClasses = [
-          "crossword-cell",
-          cell.isBlack ? "cell--black" : "cell--white",
-          // Use custom selection styling when we have local color, otherwise fall back to CSS
-          isSelected && !hasLocalColor ? "cell--selected" : "",
-          isSelected && hasLocalColor ? "cell--selected-custom" : "",
-          inWord && !isSelected && !hasLocalColor ? "cell--in-word" : "",
-          inWord && !isSelected && hasLocalColor ? "cell--in-word-custom" : "",
-          hasCollaboratorHighlight ? "cell--collaborator" : "",
-          hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
-          isVerified ? "cell--verified" : "",
-          hasError ? "cell--error" : "",
-          // Clue reference highlights (champagne/gold color)
-          isReferencedClue ? "cell--referenced-clue" : "",
-          isReferencedLetter ? "cell--referenced-letter" : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        // Build inline style for highlighting
-        // Local user: Uses their collaborator color for consistency
-        // Collaborators: Subtle styling so they don't distract from local user
-        const cellStyle: React.CSSProperties = {};
-
-        // Local user's word highlight (subtle background)
-        if (inWord && !isSelected && localUserColor) {
-          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
-        }
-        // Local user's selected cell (prominent outline with glow)
-        if (isSelected && localUserColor) {
-          cellStyle.outline = `3px solid ${localUserColor}`;
-          cellStyle.outlineOffset = '-3px';
-          cellStyle.boxShadow = `0 0 0 2px ${hexToRgba(localUserColor, 0.4)}, inset 0 0 8px ${hexToRgba(localUserColor, 0.3)}`;
-          cellStyle.zIndex = 10; // Above collaborator cursors
-          cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
-        }
-        // Collaborator word highlight (very subtle)
-        if (hasCollaboratorHighlight) {
-          cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
-        }
-        // Collaborator cursor(s) - may be multiple overlapping collaborators!
-        if (hasCollaboratorCursor && cursorColors) {
-          const multiColorStyle = createMultiColorBorder(cursorColors);
-          Object.assign(cellStyle, multiColorStyle);
-        }
-
-        return (
+      <div className="crossword-grid-row">
+        {/* Left edge indicator cells */}
+        {isZoomMode && edgeCells.left.length > 0 && (
           <div
-            key={key}
-            className={cellClasses}
-            style={cellStyle}
-            data-row={cell.row}
-            data-col={cell.col}
-            onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
+            className="crossword-edge-indicator crossword-edge-indicator--left"
+            style={{
+              gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
+            }}
           >
-            {cell.clueNumber && (
-              <span className="clue-number">{cell.clueNumber}</span>
-            )}
-            {!cell.isBlack && (
-              <span className="cell-letter">{userEntry || ""}</span>
-            )}
+            {edgeCells.left.map(cell => renderEdgeCell(cell, 'left'))}
           </div>
-        );
-      })}
+        )}
+
+        <div
+          className={`crossword-grid ${isZoomMode ? 'crossword-grid--zoomed' : ''}`}
+          style={{
+            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
+            gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
+          }}
+        >
+        {visibleCells.map((cell) => {
+          const key = `${cell.row},${cell.col}`;
+          const isSelected =
+            selectedCell?.row === cell.row && selectedCell?.col === cell.col;
+          const inWord = isInCurrentWord(cell.row, cell.col);
+          const userEntry = userEntries.get(key);
+
+          // Get collaborator highlight color for this cell (if any)
+          const collaboratorColor = collaboratorHighlights.get(key);
+          // Only show collaborator highlight if not in local user's current word
+          const hasCollaboratorHighlight =
+            collaboratorColor && !inWord && !isSelected;
+
+          // Get collaborator cursor colors (exact focused cell) - may be multiple!
+          const cursorColors = collaboratorCursors.get(key);
+          // Only show cursor if not the local user's selected cell
+          const hasCollaboratorCursor = cursorColors && cursorColors.length > 0 && !isSelected;
+
+          // Check verification and error status
+          const isVerified = verifiedCells.has(key);
+          const hasError = errorCells.has(key);
+
+          // Check clue reference highlights
+          // Whole-clue references: only show when not in current word (avoid visual conflict)
+          // Letter-specific references: show even in current word (for "letters X-Y here" patterns)
+          const isReferencedClue = referencedClueCells.has(key) && !inWord && !isSelected;
+          const isReferencedLetter = letterReferenceCells.has(key);
+
+          // Determine if local user has a color (in collaborative mode)
+          const hasLocalColor = Boolean(localUserColor);
+
+          const cellClasses = [
+            "crossword-cell",
+            cell.isBlack ? "cell--black" : "cell--white",
+            // Use custom selection styling when we have local color, otherwise fall back to CSS
+            isSelected && !hasLocalColor ? "cell--selected" : "",
+            isSelected && hasLocalColor ? "cell--selected-custom" : "",
+            inWord && !isSelected && !hasLocalColor ? "cell--in-word" : "",
+            inWord && !isSelected && hasLocalColor ? "cell--in-word-custom" : "",
+            hasCollaboratorHighlight ? "cell--collaborator" : "",
+            hasCollaboratorCursor ? "cell--collaborator-cursor" : "",
+            isVerified ? "cell--verified" : "",
+            hasError ? "cell--error" : "",
+            // Clue reference highlights (champagne/gold color)
+            isReferencedClue ? "cell--referenced-clue" : "",
+            isReferencedLetter ? "cell--referenced-letter" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          // Build inline style for highlighting
+          // Local user: Uses their collaborator color for consistency
+          // Collaborators: Subtle styling so they don't distract from local user
+          const cellStyle: React.CSSProperties = {};
+
+          // Local user's word highlight (subtle background)
+          if (inWord && !isSelected && localUserColor) {
+            cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
+          }
+          // Local user's selected cell (prominent outline with glow)
+          if (isSelected && localUserColor) {
+            cellStyle.outline = `3px solid ${localUserColor}`;
+            cellStyle.outlineOffset = '-3px';
+            cellStyle.boxShadow = `0 0 0 2px ${hexToRgba(localUserColor, 0.4)}, inset 0 0 8px ${hexToRgba(localUserColor, 0.3)}`;
+            cellStyle.zIndex = 10; // Above collaborator cursors
+            cellStyle.backgroundColor = hexToRgba(localUserColor, 0.25);
+          }
+          // Collaborator word highlight (very subtle)
+          if (hasCollaboratorHighlight) {
+            cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
+          }
+          // Collaborator cursor(s) - may be multiple overlapping collaborators!
+          if (hasCollaboratorCursor && cursorColors) {
+            const multiColorStyle = createMultiColorBorder(cursorColors);
+            Object.assign(cellStyle, multiColorStyle);
+          }
+
+          return (
+            <div
+              key={key}
+              className={cellClasses}
+              style={cellStyle}
+              data-row={cell.row}
+              data-col={cell.col}
+              onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
+            >
+              {cell.clueNumber && (
+                <span className="clue-number">{cell.clueNumber}</span>
+              )}
+              {!cell.isBlack && (
+                <span className="cell-letter">{userEntry || ""}</span>
+              )}
+            </div>
+          );
+        })}
+        </div>
+
+        {/* Right edge indicator cells */}
+        {isZoomMode && edgeCells.right.length > 0 && (
+          <div
+            className="crossword-edge-indicator crossword-edge-indicator--right"
+            style={{
+              gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
+            }}
+          >
+            {edgeCells.right.map(cell => renderEdgeCell(cell, 'right'))}
+          </div>
+        )}
       </div>
+
+      {/* Bottom edge indicator cells */}
+      {isZoomMode && edgeCells.bottom.length > 0 && (
+        <div
+          className="crossword-edge-indicator crossword-edge-indicator--bottom"
+          style={{
+            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
+          }}
+        >
+          {edgeCells.bottom.map(cell => renderEdgeCell(cell, 'bottom'))}
+        </div>
+      )}
     </div>
   );
 }
