@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useLayoutEffect } from "react";
+import { useMemo, useRef, useState, useLayoutEffect, useEffect } from "react";
 import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
 import { useSwipeNavigation, type SwipeDirection } from "../hooks/useSwipeNavigation";
@@ -296,6 +296,17 @@ export function CrosswordGrid({
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Mount guard to prevent tap propagation from library card.
+  // When navigating from library, the finger-up event can propagate to the
+  // newly mounted grid cells. This guard ignores clicks for a brief period.
+  const [isMountGuardActive, setIsMountGuardActive] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMountGuardActive(false);
+    }, 100); // 100ms is enough for the tap to complete
+    return () => clearTimeout(timer);
+  }, []);
 
   // Swipe navigation handlers (only active on touch devices)
   const swipeHandlers = useSwipeNavigation({
@@ -684,7 +695,7 @@ export function CrosswordGrid({
               style={cellStyle}
               data-row={cell.row}
               data-col={cell.col}
-              onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
+              onClick={() => !cell.isBlack && !isMountGuardActive && onCellClick(cell.row, cell.col)}
             >
               {cell.clueNumber && (
                 <span className="clue-number">{cell.clueNumber}</span>
