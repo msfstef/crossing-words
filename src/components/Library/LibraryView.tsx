@@ -3,6 +3,7 @@ import { PuzzleCard } from './PuzzleCard';
 import { LoadingCard } from './LoadingCard';
 import { FAB } from './FAB';
 import { DownloadDialog } from './DownloadDialog';
+import { PuzzleOptionsDialog } from './PuzzleOptionsDialog';
 import { SettingsMenu } from '../SettingsMenu';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
 import { fetchPuzzle } from '../../services/puzzleSources/fetchPuzzle';
@@ -13,6 +14,8 @@ import {
   getPuzzleProgress,
   loadPuzzleById,
   savePuzzle,
+  resetPuzzleProgress,
+  resetPuzzleSharing,
   type PuzzleEntry,
 } from '../../lib/puzzleStorage';
 import type { Puzzle } from '../../types/puzzle';
@@ -114,6 +117,8 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [ghostEntries, setGhostEntries] = useState<GhostEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [optionsDialogOpen, setOptionsDialogOpen] = useState(false);
+  const [selectedPuzzle, setSelectedPuzzle] = useState<{ id: string; title: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track if download dialog has a history entry
@@ -206,7 +211,33 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
       setPuzzles((prev) => prev.filter((p) => p.id !== puzzleId));
     } catch (error) {
       console.error('[LibraryView] Failed to delete puzzle:', error);
+      onError('Failed to delete puzzle');
     }
+  }, [onError]);
+
+  const handleResetPuzzle = useCallback(async (puzzleId: string) => {
+    try {
+      await resetPuzzleProgress(puzzleId);
+      // Reload puzzles to refresh progress
+      await loadPuzzles();
+    } catch (error) {
+      console.error('[LibraryView] Failed to reset puzzle:', error);
+      onError('Failed to reset puzzle');
+    }
+  }, [loadPuzzles, onError]);
+
+  const handleResetSharing = useCallback((puzzleId: string) => {
+    try {
+      resetPuzzleSharing(puzzleId);
+    } catch (error) {
+      console.error('[LibraryView] Failed to reset sharing:', error);
+      onError('Failed to reset sharing');
+    }
+  }, [onError]);
+
+  const handleLongPress = useCallback((puzzleId: string, title: string, source?: string) => {
+    setSelectedPuzzle({ id: puzzleId, title: source ?? title });
+    setOptionsDialogOpen(true);
   }, []);
 
   const handlePuzzleLoaded = useCallback(
@@ -357,6 +388,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
                         progress={entry.progress}
                         onOpen={() => handleOpenPuzzle(entry.id)}
                         onDelete={() => handleDeletePuzzle(entry.id)}
+                        onLongPress={() => handleLongPress(entry.id, entry.title, entry.source)}
                       />
                     )
                   )}
@@ -388,6 +420,18 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
         onClose={closeDownloadDialog}
         onDownload={handleDownload}
       />
+
+      {/* Puzzle options dialog */}
+      {selectedPuzzle && (
+        <PuzzleOptionsDialog
+          isOpen={optionsDialogOpen}
+          puzzleTitle={selectedPuzzle.title}
+          onClose={() => setOptionsDialogOpen(false)}
+          onResetPuzzle={() => selectedPuzzle && handleResetPuzzle(selectedPuzzle.id)}
+          onResetSharing={() => selectedPuzzle && handleResetSharing(selectedPuzzle.id)}
+          onDelete={() => selectedPuzzle && handleDeletePuzzle(selectedPuzzle.id)}
+        />
+      )}
     </div>
   );
 }
