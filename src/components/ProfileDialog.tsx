@@ -42,8 +42,9 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
   const [localNickname, setLocalNickname] = useState(profile.nickname);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [showMaxLengthHint, setShowMaxLengthHint] = useState(false);
+  // Track visibility separately from isOpen prop to allow close animation
+  const [isVisible, setIsVisible] = useState(isOpen);
 
   // Track if file picker is open to prevent click-outside from closing dialog
   const isFilePickerOpen = useRef(false);
@@ -57,24 +58,31 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [isOpen, profile.nickname]);
 
-  // Open/close the dialog element with animation
+  // Handle visibility transitions with animation
+  useEffect(() => {
+    if (isOpen) {
+      // Opening: show immediately
+      setIsVisible(true);
+    } else if (isVisible) {
+      // Closing: wait for animation before hiding
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, CLOSE_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isVisible]);
+
+  // Open/close the native dialog element
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (isOpen) {
-      setIsClosing(false);
+    if (isVisible && isOpen) {
       dialog.showModal();
-    } else if (dialog.open) {
-      // Start closing animation
-      setIsClosing(true);
-      const timer = setTimeout(() => {
-        dialog.close();
-        setIsClosing(false);
-      }, CLOSE_ANIMATION_DURATION);
-      return () => clearTimeout(timer);
+    } else if (!isVisible) {
+      dialog.close();
     }
-  }, [isOpen]);
+  }, [isVisible, isOpen]);
 
   // Handle Escape key and click outside
   useEffect(() => {
@@ -221,10 +229,13 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
   }, [profile.nickname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep dialog mounted during close animation
-  if (!isOpen && !isClosing) {
+  // Only render when visible (stays visible during close animation)
+  if (!isVisible) {
     return null;
   }
+
+  // isClosing = prop says closed but we're still visible (animating out)
+  const isClosing = !isOpen && isVisible;
 
   // Check if device likely has a camera (mobile or tablet)
   const isMobileDevice =
