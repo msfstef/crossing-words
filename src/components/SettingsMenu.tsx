@@ -1,6 +1,95 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import './SettingsMenu.css';
+
+// Long press duration in ms
+const LONG_PRESS_DURATION = 600;
+
+/**
+ * Hook for long-press interaction on touch devices.
+ * Returns handlers and progress state for the filling animation.
+ */
+function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
+  const [progress, setProgress] = useState(0);
+  const [isPressed, setIsPressed] = useState(false);
+  const timerRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const frameRef = useRef<number | null>(null);
+  const completedRef = useRef(false);
+
+  // Check if device supports touch (coarse pointer = touch)
+  const isTouchDevice = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+  );
+
+  const updateProgress = useCallback(() => {
+    const elapsed = Date.now() - startTimeRef.current;
+    const newProgress = Math.min(elapsed / duration, 1);
+    setProgress(newProgress);
+
+    if (newProgress < 1) {
+      frameRef.current = requestAnimationFrame(updateProgress);
+    } else if (!completedRef.current) {
+      completedRef.current = true;
+      onComplete();
+    }
+  }, [duration, onComplete]);
+
+  const startPress = useCallback(() => {
+    if (!isTouchDevice.current) return;
+
+    completedRef.current = false;
+    setIsPressed(true);
+    setProgress(0);
+    startTimeRef.current = Date.now();
+    frameRef.current = requestAnimationFrame(updateProgress);
+  }, [updateProgress]);
+
+  const endPress = useCallback(() => {
+    if (!isTouchDevice.current) return;
+
+    setIsPressed(false);
+    setProgress(0);
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+  }, []);
+
+  const handleClick = useCallback(() => {
+    // Only trigger on click for non-touch devices
+    if (!isTouchDevice.current) {
+      onComplete();
+    }
+  }, [onComplete]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  return {
+    progress,
+    isPressed,
+    isTouchDevice: isTouchDevice.current,
+    handlers: {
+      onTouchStart: startPress,
+      onTouchEnd: endPress,
+      onTouchCancel: endPress,
+      onMouseDown: startPress,
+      onMouseUp: endPress,
+      onMouseLeave: endPress,
+      onClick: handleClick,
+    },
+  };
+}
 
 interface SettingsMenuProps {
   onCheckLetter?: () => void;
@@ -39,6 +128,16 @@ export function SettingsMenu({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+
+  // Long-press handler for reset button
+  const handleReset = useCallback(() => {
+    if (onReset) {
+      onReset();
+      setMenuOpen(false);
+    }
+  }, [onReset]);
+
+  const { progress, isPressed, isTouchDevice, handlers: longPressHandlers } = useLongPress(handleReset);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -164,13 +263,23 @@ export function SettingsMenu({
           {/* Reset button */}
           {onReset && (
             <div className="settings-menu__section">
-              <button
-                className="settings-menu__reset-btn"
-                onClick={() => handleAction(onReset)}
-                data-testid="reset-puzzle"
-              >
-                Reset Puzzle
-              </button>
+              <div className="settings-menu__reset-row">
+                <span className="settings-menu__reset-label">
+                  Reset{isTouchDevice && <span className="settings-menu__reset-hint"> (hold)</span>}
+                </span>
+                <button
+                  type="button"
+                  className={`settings-menu__reset-btn ${isPressed ? 'settings-menu__reset-btn--pressing' : ''}`}
+                  data-testid="reset-puzzle"
+                  {...longPressHandlers}
+                >
+                  <span
+                    className="settings-menu__reset-fill"
+                    style={{ transform: `scaleX(${progress})` }}
+                  />
+                  <span className="settings-menu__reset-text">Clear</span>
+                </button>
+              </div>
             </div>
           )}
 
