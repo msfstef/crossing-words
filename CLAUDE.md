@@ -98,37 +98,69 @@ The P2P test suite covers:
 - **Presence not established**: Tested in `presence.test.ts` presence establishment tests
 - **Peers disappearing**: Tested in `presence.test.ts` and `connection.test.ts` peer tracking tests
 
-### Puzzle Grid Issues
+### UI Layout and Rendering Issues
 
-When fixing issues related to the puzzle grid (sizing, layout, rendering), testing can be tricky because puzzles need to be downloaded or imported first.
+When fixing UI issues related to layout, sizing, or rendering, **both** types of tests are required:
 
-**Approach: Generate a temporary test puzzle**
+**1. Unit tests (Vitest + happy-dom):** Test calculation logic and component rendering with mocked dimensions
+**2. E2E tests (Playwright):** Test actual rendering at various viewport sizes
 
-1. Create a minimal hardcoded puzzle in the code for testing purposes
-2. Use Playwright to interact with it and verify the fix
-3. Remove the hardcoded puzzle once the fix is confirmed
+#### Test Puzzle Generator
 
-Example test puzzle structure:
+Use `src/lib/testPuzzleGenerator.ts` for testing different puzzle sizes:
+
 ```typescript
-const TEST_PUZZLE: Puzzle = {
-  title: "Test Puzzle",
-  author: "Debug",
-  width: 5,
-  height: 5,
-  grid: Array.from({ length: 5 }, (_, row) =>
-    Array.from({ length: 5 }, (_, col) => ({
-      row,
-      col,
-      letter: "A",
-      isBlack: (row === 2 && col === 2), // center black square
-      clueNumber: row === 0 && col === 0 ? 1 : undefined,
-    }))
-  ),
-  clues: {
-    across: [{ number: 1, direction: "across", text: "Test", row: 0, col: 0, length: 5 }],
-    down: [{ number: 1, direction: "down", text: "Test", row: 0, col: 0, length: 5 }],
-  },
-};
+import { createTestPuzzle, TEST_PUZZLES } from '../lib/testPuzzleGenerator';
+
+// Create custom size puzzle
+const puzzle = createTestPuzzle({ width: 21, height: 21 });
+
+// Or use pre-defined sizes
+const miniPuzzle = TEST_PUZZLES.mini;       // 5x5
+const standardPuzzle = TEST_PUZZLES.standard; // 15x15
+const sundayPuzzle = TEST_PUZZLES.sunday;     // 21x21
+const largePuzzle = TEST_PUZZLES.large;       // 25x25
 ```
 
-You can temporarily inject this in `App.tsx` or the relevant component to bypass the need for downloading/importing during debugging.
+#### Grid Sizing Tests
+
+Grid cell sizing logic is in `src/components/CrosswordGrid.tsx`. The key functions are:
+- `calculateCellSize()` - Calculates optimal cell size for given container and puzzle dimensions
+- `getInitialCellSize()` - Estimates cell size from viewport before ResizeObserver kicks in
+
+Unit tests are in `src/__tests__/grid/sizing.test.ts`. Run with:
+```bash
+npm run test:run -- src/__tests__/grid
+```
+
+E2E tests are in `e2e/grid-sizing.spec.ts`. Run with:
+```bash
+npx playwright test e2e/grid-sizing.spec.ts
+```
+
+#### Viewport Sizes to Test
+
+When testing UI layout, cover these common device sizes:
+- Mobile portrait: 375x667 (iPhone 8)
+- Mobile small: 320x568 (iPhone SE)
+- Tablet: 768x1024 (iPad)
+- Desktop: 1920x1080
+
+#### Puzzle Grid Layout Structure
+
+The puzzle grid uses a structured layout to ensure proper sizing:
+
+```
+.solve-layout__grid (flex: 1)
+  └── .puzzle-grid-area (flex: 1, column)
+        ├── .puzzle-grid-header (flex: 0 0 auto)
+        │     ├── .puzzle-title-above-grid
+        │     └── .puzzle-author
+        └── .puzzle-grid-wrapper (flex: 1, min-height: 0)
+              └── CrosswordGrid (100% width/height)
+```
+
+This structure ensures:
+- Title/author take only their natural height
+- Grid wrapper fills remaining space
+- ResizeObserver gets accurate measurements for cell sizing

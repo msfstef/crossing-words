@@ -36,18 +36,65 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
   padding: var(--grid-padding);
   min-height: 0; /* Critical: allow flex child to shrink below content size */
 }
 
-/* Reduce author margin on mobile to save space */
-.solve-layout__grid .puzzle-author {
-  margin-bottom: 0.25rem;
+/**
+ * Puzzle Grid Area: Container that fills the grid slot
+ * Separates title/author from the grid measurement area
+ */
+.puzzle-grid-area {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+/**
+ * Puzzle Grid Header: Contains title and author
+ * Takes only its natural height, doesn't grow
+ */
+.puzzle-grid-header {
+  flex: 0 0 auto;
+  text-align: center;
+  padding-bottom: 0.25rem;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Title styling within header */
+.puzzle-grid-header .puzzle-title-above-grid {
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.5rem;
+}
+
+/* Author styling within header - reduced margin on mobile */
+.puzzle-grid-header .puzzle-author {
+  margin: 0 0 0.25rem 0;
   font-size: 0.75rem;
-  flex-shrink: 0;
+}
+
+/**
+ * Puzzle Grid Wrapper: Contains the CrosswordGrid component
+ * Takes remaining space after header, enabling accurate size measurement
+ */
+.puzzle-grid-wrapper {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .solve-layout__clue-bar {

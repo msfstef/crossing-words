@@ -893,28 +893,34 @@ function App() {
             </div>
           )}
 
-          <h2 className="puzzle-title-above-grid">{puzzle.title}</h2>
-          {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
+          <div className="puzzle-grid-area">
+            <div className="puzzle-grid-header">
+              <h2 className="puzzle-title-above-grid">{puzzle.title}</h2>
+              {puzzle.author && <p className="puzzle-author">by {puzzle.author}</p>}
+            </div>
 
-          <CrosswordGrid
-            puzzle={puzzle}
-            userEntries={userEntries}
-            selectedCell={selectedCell}
-            direction={direction}
-            currentWord={currentWord}
-            onCellClick={handleCellClickWithFollow}
-            collaborators={collaborators}
-            localUserColor={localUser.color}
-            verifiedCells={verifiedCells}
-            errorCells={errorCells}
-            onSwipe={handleSwipeNavigationWithFollow}
-            isTouchDevice={isTouchDevice}
-            referencedClueCells={referencedClueCells}
-            letterReferenceCells={letterReferenceCells}
-            isZoomMode={isZoomMode}
-            zoomViewport={zoomViewport}
-            onToggleZoom={handleToggleZoom}
-          />
+            <div className="puzzle-grid-wrapper">
+              <CrosswordGrid
+                puzzle={puzzle}
+                userEntries={userEntries}
+                selectedCell={selectedCell}
+                direction={direction}
+                currentWord={currentWord}
+                onCellClick={handleCellClickWithFollow}
+                collaborators={collaborators}
+                localUserColor={localUser.color}
+                verifiedCells={verifiedCells}
+                errorCells={errorCells}
+                onSwipe={handleSwipeNavigationWithFollow}
+                isTouchDevice={isTouchDevice}
+                referencedClueCells={referencedClueCells}
+                letterReferenceCells={letterReferenceCells}
+                isZoomMode={isZoomMode}
+                zoomViewport={zoomViewport}
+                onToggleZoom={handleToggleZoom}
+              />
+            </div>
+          </div>
         </>
       )}
     </>

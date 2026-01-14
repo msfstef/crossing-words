@@ -5,34 +5,45 @@ import { useSwipeNavigation, type SwipeDirection } from "../hooks/useSwipeNaviga
 import { usePinchGesture } from "../hooks/usePinchGesture";
 import "./CrosswordGrid.css";
 
+/** Grid gap value in pixels */
+export const GRID_GAP = 2;
+/** Grid padding value in pixels (each side) */
+export const GRID_PADDING = 2;
+/** Minimum cell size in pixels */
+export const MIN_CELL_SIZE = 12;
+/** Maximum cell size in pixels */
+export const MAX_CELL_SIZE = 36;
+
 /**
  * Calculate optimal cell size to fit puzzle within container bounds.
  * Returns cell size in pixels, clamped between min and max.
  */
-function calculateCellSize(
+export function calculateCellSize(
   containerWidth: number,
   containerHeight: number,
   cols: number,
   rows: number,
 ): number {
-  const gap = 2; // --grid-gap value
-  const padding = 4; // grid padding (2px each side)
-  const totalGapX = (cols - 1) * gap + padding;
-  const totalGapY = (rows - 1) * gap + padding;
+  const totalGapX = (cols - 1) * GRID_GAP + GRID_PADDING * 2;
+  const totalGapY = (rows - 1) * GRID_GAP + GRID_PADDING * 2;
 
   const maxCellWidth = (containerWidth - totalGapX) / cols;
   const maxCellHeight = (containerHeight - totalGapY) / rows;
 
   const cellSize = Math.min(maxCellWidth, maxCellHeight);
 
-  // Clamp between 16px (readable minimum) and 36px (comfortable maximum)
-  return Math.max(16, Math.min(cellSize, 36));
+  // Clamp between MIN_CELL_SIZE and MAX_CELL_SIZE
+  return Math.max(MIN_CELL_SIZE, Math.min(cellSize, MAX_CELL_SIZE));
 }
 
 /**
  * Calculate initial cell size estimate from viewport dimensions.
  * Uses known layout constants to provide a starting value that eliminates
  * the flash of 0-size grid. ResizeObserver corrects any discrepancy.
+ *
+ * Since the grid is now in a proper flex container (puzzle-grid-wrapper),
+ * the ResizeObserver will get accurate measurements. This initial estimate
+ * just needs to be close enough to avoid a visible resize flash.
  */
 function getInitialCellSize(
   cols: number,
@@ -46,25 +57,20 @@ function getInitialCellSize(
 
   // Layout constants from SolveLayout.css
   const HEADER_HEIGHT = 48;
-  const CLUE_BAR_HEIGHT = 52;
-  const CLUE_BAR_PADDING = 8; // 0.25rem * 2
+  const CLUE_BAR_HEIGHT = 60; // ~52px + padding
   const KEYBOARD_HEIGHT = 160;
   const GRID_PADDING = 16; // 8px each side
 
-  // Title and author above grid (estimates from CSS)
-  const TITLE_HEIGHT = 24; // ~1.25rem
-  const AUTHOR_HEIGHT = 16; // ~0.75rem + margin
-  const ABOVE_GRID_MARGIN = 8; // margins between elements
+  // Title header area (puzzle-grid-header)
+  // Conservative estimate that accounts for title + author + margins
+  const TITLE_AREA_HEIGHT = 50;
 
-  // Calculate available space
+  // Calculate available space for grid wrapper
   let availableHeight = window.innerHeight
     - HEADER_HEIGHT
     - CLUE_BAR_HEIGHT
-    - CLUE_BAR_PADDING
     - GRID_PADDING
-    - TITLE_HEIGHT
-    - AUTHOR_HEIGHT
-    - ABOVE_GRID_MARGIN;
+    - TITLE_AREA_HEIGHT;
 
   if (isTouchDevice) {
     availableHeight -= KEYBOARD_HEIGHT;
@@ -279,7 +285,7 @@ export function CrosswordGrid({
     onPinchOut: onToggleZoom && isZoomMode ? onToggleZoom : undefined,
   });
   // Determine grid dimensions based on zoom mode
-  const { gridWidth, gridHeight, gridStartRow, gridStartCol } = useMemo(() => {
+  const { gridWidth, gridHeight, gridStartRow: _gridStartRow, gridStartCol: _gridStartCol } = useMemo(() => {
     if (isZoomMode && zoomViewport) {
       return {
         gridWidth: zoomViewport.endCol - zoomViewport.startCol + 1,
@@ -416,7 +422,7 @@ export function CrosswordGrid({
         pinchHandlers.onTouchEnd(e);
       },
       onTouchCancel: (e: React.TouchEvent) => {
-        swipeHandlers.onTouchCancel(e);
+        swipeHandlers.onTouchCancel();
         pinchHandlers.onTouchCancel(e);
       },
     };
