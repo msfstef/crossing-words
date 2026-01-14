@@ -53,15 +53,15 @@
 }
 
 .puzzle-skeleton__grid {
-  /* Create a square that fills available space */
-  width: 100%;
-  max-width: min(100%, 80vh);
-  aspect-ratio: 1;
+  /* Exact dimensions computed by gridSizing utility, set via inline style */
+  /* This matches the CrosswordGrid's computed size exactly */
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 4px;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
   animation-delay: 0.2s;
+  /* Prevent any sizing surprises */
+  flex-shrink: 0;
 }
 
 @keyframes skeleton-pulse {

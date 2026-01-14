@@ -840,7 +840,7 @@ function App() {
     <>
       {isLoading ? (
         <>
-          <PuzzleSkeleton />
+          <PuzzleSkeleton isTouchDevice={isTouchDevice} />
           {waitingForPuzzle && (
             <div className="puzzle-status-overlay">
               <span className="puzzle-status-overlay__text">Joining shared session...</span>

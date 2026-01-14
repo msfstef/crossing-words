@@ -3,6 +3,7 @@ import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
 import { useSwipeNavigation, type SwipeDirection } from "../hooks/useSwipeNavigation";
 import { usePinchGesture } from "../hooks/usePinchGesture";
+import { computeGridDimensions } from "../lib/gridSizing";
 import "./CrosswordGrid.css";
 
 /** Grid gap value in pixels */
@@ -58,48 +59,16 @@ export function calculateCellSize(
 }
 
 /**
- * Calculate initial cell size estimate from viewport dimensions.
- * Uses known layout constants to provide a starting value that eliminates
- * the flash of 0-size grid. ResizeObserver corrects any discrepancy.
- *
- * Since the grid is now in a proper flex container (puzzle-grid-wrapper),
- * the ResizeObserver will get accurate measurements. This initial estimate
- * just needs to be close enough to avoid a visible resize flash.
+ * Get initial cell size using the shared grid sizing utility.
+ * This ensures the grid renders at the same size as PuzzleSkeleton
+ * from the very first frame, eliminating resize flash.
  */
 function getInitialCellSize(
   cols: number,
   rows: number,
   isTouchDevice: boolean
 ): number {
-  // SSR fallback
-  if (typeof window === 'undefined') {
-    return 30;
-  }
-
-  // Layout constants from SolveLayout.css
-  const HEADER_HEIGHT = 48;
-  const CLUE_BAR_HEIGHT = 60; // ~52px + padding
-  const KEYBOARD_HEIGHT = 160;
-  const GRID_PADDING = 16; // 8px each side
-
-  // Title header area (puzzle-grid-header)
-  // Conservative estimate that accounts for title + author + margins
-  const TITLE_AREA_HEIGHT = 50;
-
-  // Calculate available space for grid wrapper
-  let availableHeight = window.innerHeight
-    - HEADER_HEIGHT
-    - CLUE_BAR_HEIGHT
-    - GRID_PADDING
-    - TITLE_AREA_HEIGHT;
-
-  if (isTouchDevice) {
-    availableHeight -= KEYBOARD_HEIGHT;
-  }
-
-  const availableWidth = window.innerWidth - GRID_PADDING;
-
-  return calculateCellSize(availableWidth, availableHeight, cols, rows);
+  return computeGridDimensions(cols, rows, isTouchDevice).cellSize;
 }
 
 interface CrosswordGridProps {
