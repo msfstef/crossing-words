@@ -5,6 +5,22 @@ export type ResolvedTheme = 'light' | 'dark';
 
 const THEME_KEY = 'theme';
 
+// Theme background colors for status bar (must match theme.css)
+const THEME_COLORS = {
+  light: '#f8f6f3',
+  dark: '#141414',
+};
+
+/**
+ * Update the theme-color meta tag for browser/PWA status bar
+ */
+function updateThemeColorMeta(resolvedTheme: ResolvedTheme) {
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', THEME_COLORS[resolvedTheme]);
+  }
+}
+
 /**
  * Get the system's preferred color scheme
  */
@@ -37,7 +53,7 @@ function resolveTheme(theme: Theme): ResolvedTheme {
 
 // Store for theme subscription
 let currentTheme: Theme = getStoredTheme();
-let themeListeners: Set<() => void> = new Set();
+const themeListeners: Set<() => void> = new Set();
 
 function subscribeToTheme(callback: () => void) {
   themeListeners.add(callback);
@@ -51,12 +67,14 @@ function getThemeSnapshot(): Theme {
 function setThemeInternal(theme: Theme) {
   currentTheme = theme;
   localStorage.setItem(THEME_KEY, theme);
-  document.documentElement.dataset.theme = resolveTheme(theme);
+  const resolved = resolveTheme(theme);
+  document.documentElement.dataset.theme = resolved;
+  updateThemeColorMeta(resolved);
   themeListeners.forEach((listener) => listener());
 }
 
 // Store for system preference subscription
-let systemPreferenceListeners: Set<() => void> = new Set();
+const systemPreferenceListeners: Set<() => void> = new Set();
 let cachedSystemTheme: ResolvedTheme = getSystemTheme();
 
 function subscribeToSystemPreference(callback: () => void) {
@@ -69,9 +87,10 @@ function subscribeToSystemPreference(callback: () => void) {
       cachedSystemTheme = getSystemTheme();
       systemPreferenceListeners.forEach((listener) => listener());
 
-      // If user is in 'system' mode, update the DOM theme
+      // If user is in 'system' mode, update the DOM theme and status bar
       if (currentTheme === 'system') {
         document.documentElement.dataset.theme = cachedSystemTheme;
+        updateThemeColorMeta(cachedSystemTheme);
         themeListeners.forEach((listener) => listener());
       }
     };

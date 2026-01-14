@@ -16,8 +16,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CrossingWords" />
 
-    <!-- Theme color -->
-    <meta name="theme-color" content="#1a1a2e" />
+    <!-- Theme color - matches app background for status bar/browser chrome -->
+    <meta name="theme-color" content="#f8f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
 
     <title>Crossing Words</title>
     <!-- Blocking script to prevent flash of wrong theme (FART) -->
@@ -29,6 +30,14 @@
           resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.dataset.theme = resolved;
+        // Update theme-color meta tag to match resolved theme for status bar
+        var themeColor = resolved === 'dark' ? '#141414' : '#f8f6f3';
+        var metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])') ||
+          document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', themeColor);
+          metaThemeColor.removeAttribute('media');
+        }
       })();
     </script>
   </head>
