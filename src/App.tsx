@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { CrosswordGrid } from './components/CrosswordGrid';
 import { NotificationProvider, useNotification, Notification } from './components/Notification';
 import { ClueBar } from './components/ClueBar';
@@ -493,22 +493,34 @@ function AppContent() {
 
   // Animate letters when CRDT data first loads with saved progress
   // Uses a ref to ensure animation only happens ONCE per puzzle session
+  // IMPORTANT: Uses useLayoutEffect to set animation state BEFORE browser paint,
+  // preventing the "flash" where letters appear then disappear and re-animate
   const hasAnimatedLettersRef = useRef(false);
   const [animatingLetters, setAnimatingLetters] = useState(false);
 
-  useEffect(() => {
+  // Use useLayoutEffect to set animation state synchronously before paint
+  // This prevents the flash caused by letters rendering visible, then jumping
+  // to opacity 0 when the animation class is added
+  useLayoutEffect(() => {
     // Only animate once: when ready becomes true with existing entries
     // The ref prevents re-animation on subsequent renders/state changes
     if (!hasAnimatedLettersRef.current && ready && userEntries.size > 0) {
       hasAnimatedLettersRef.current = true;
       setAnimatingLetters(true);
-      // Animation runs for 400ms, then disable to keep typing instant
+    }
+  }, [ready, userEntries.size]);
+
+  // Separate effect to clean up animation class after animation completes
+  // This uses useEffect (not useLayoutEffect) since timing isn't critical
+  useEffect(() => {
+    if (animatingLetters) {
+      // Animation runs for 350ms (CSS), add buffer for safety
       const timer = setTimeout(() => {
         setAnimatingLetters(false);
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [ready, userEntries.size]);
+  }, [animatingLetters]);
 
   // Reset animation flag when puzzle changes (new puzzleId means new session)
   useEffect(() => {
