@@ -194,3 +194,37 @@
   transform: translateX(20px);
   background: #fff;
 }
+
+/* Segmented control (for View mode) */
+.settings-menu__segmented {
+  display: flex;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.settings-menu__segment {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-menu__segment:hover:not(.settings-menu__segment--active) {
+  color: var(--color-text);
+  background: var(--color-bg-secondary);
+}
+
+.settings-menu__segment--active {
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

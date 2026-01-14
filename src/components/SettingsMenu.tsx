@@ -161,25 +161,30 @@ export function SettingsMenu({
           {/* Divider before view/theme */}
           {hasPuzzleActions && <div className="settings-menu__divider" />}
 
-          {/* Zoom toggle */}
+          {/* View Mode (Zoom toggle) */}
           {onToggleZoom && (
             <div className="settings-menu__section">
-              <label className="settings-menu__toggle-row">
-                <span className="settings-menu__toggle-label">
-                  {isZoomMode ? '🔍 Zoomed' : '🔲 Full Grid'}
-                </span>
+              <span className="settings-menu__label">View</span>
+              <div className="settings-menu__segmented" role="radiogroup">
                 <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isZoomMode}
-                  className={`settings-menu__toggle ${isZoomMode ? 'settings-menu__toggle--active' : ''}`}
-                  onClick={onToggleZoom}
-                  data-testid="zoom-toggle"
+                  role="radio"
+                  aria-checked={!isZoomMode}
+                  className={`settings-menu__segment ${!isZoomMode ? 'settings-menu__segment--active' : ''}`}
+                  onClick={isZoomMode ? onToggleZoom : undefined}
+                  data-testid="zoom-toggle-full"
                 >
-                  <span className="settings-menu__toggle-track" />
-                  <span className="settings-menu__toggle-knob" />
+                  Full
                 </button>
-              </label>
+                <button
+                  role="radio"
+                  aria-checked={isZoomMode}
+                  className={`settings-menu__segment ${isZoomMode ? 'settings-menu__segment--active' : ''}`}
+                  onClick={!isZoomMode ? onToggleZoom : undefined}
+                  data-testid="zoom-toggle-zoom"
+                >
+                  Zoom
+                </button>
+              </div>
             </div>
           )}
 
