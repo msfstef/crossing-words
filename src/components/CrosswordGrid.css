@@ -338,106 +338,100 @@
 }
 
 /* ============================================================================
- * Edge Indicators for Zoom Mode
- * Shows partial cells at boundaries to indicate hidden puzzle content
+ * Edge Indicators for Zoom Mode (Unified Grid Approach)
+ * Edge cells are rendered in the same CSS Grid as main cells for perfect alignment.
+ * Grid uses fractional track sizes for edges (0.4 of cell size).
  * ============================================================================ */
 
-/* Container layout for edge indicators + grid */
-.crossword-grid-container--zoomed {
-    flex-direction: column;
-    gap: 0;
-    /* CSS variables for dynamic edge alignment - set by JS */
-    --left-edge-offset: 0px;
-    --right-edge-offset: 0px;
-}
-
-/* Row container for left/grid/right arrangement */
-.crossword-grid-row {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    gap: 0;
-}
-
-/* Edge indicator containers - no gap to feel continuous with grid */
-.crossword-edge-indicator {
-    display: grid;
-    gap: 0;
-    pointer-events: none;
+/* Base styling for all edge cells in the unified grid */
+.crossword-cell--edge {
+    /* Fill the fractional grid track completely */
+    width: 100%;
+    height: 100%;
+    /* Visual styling for edge cells */
+    opacity: 0.85;
     overflow: hidden;
     position: relative;
+    cursor: pointer;
 }
 
-/* Top edge - horizontal strip above grid */
-.crossword-edge-indicator--top {
-    height: calc(var(--cell-size) * 0.4);
-    justify-content: center;
-    /* Align with grid - account for left/right edge widths */
-    margin-left: var(--left-edge-offset);
-    margin-right: var(--right-edge-offset);
-}
-
-/* Bottom edge - horizontal strip below grid */
-.crossword-edge-indicator--bottom {
-    height: calc(var(--cell-size) * 0.4);
-    justify-content: center;
-    /* Align with grid - account for left/right edge widths */
-    margin-left: var(--left-edge-offset);
-    margin-right: var(--right-edge-offset);
-}
-
-/* Left edge - vertical strip beside grid */
-.crossword-edge-indicator--left {
-    width: calc(var(--cell-size) * 0.4);
-    grid-template-columns: 1fr;
-}
-
-/* Right edge - vertical strip beside grid */
-.crossword-edge-indicator--right {
-    width: calc(var(--cell-size) * 0.4);
-    grid-template-columns: 1fr;
-}
-
-/* Edge indicator cells - more visible, continuous with grid */
-.crossword-cell--edge-indicator {
-    opacity: 0.85;
-    pointer-events: none;
-}
-
-/* Top edge cells - show bottom portion with subtle fade */
+/* Top edge cells - content aligned to bottom, fades toward top */
 .crossword-cell--edge-top {
-    clip-path: inset(60% 0 0 0);
-    margin-top: calc(var(--cell-size) * -0.60);
-    /* Subtle gradient mask - mostly visible with slight fade at top */
-    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
-    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    /* Align content to show bottom portion of cell */
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    /* Fade gradient toward the hidden content */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
 }
 
-/* Bottom edge cells - show top portion with subtle fade */
+/* Position letter in top edge cells */
+.crossword-cell--edge-top .cell-letter {
+    /* Offset to show bottom portion of letter */
+    transform: translateY(calc(var(--cell-size) * 0.3));
+}
+
+/* Bottom edge cells - content aligned to top, fades toward bottom */
 .crossword-cell--edge-bottom {
-    clip-path: inset(0 0 60% 0);
-    margin-bottom: calc(var(--cell-size) * -0.60);
-    /* Subtle gradient mask - mostly visible with slight fade at bottom */
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    /* Align content to show top portion of cell */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    /* Fade gradient toward the hidden content */
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
 }
 
-/* Left edge cells - show right portion with subtle fade */
+/* Position letter in bottom edge cells */
+.crossword-cell--edge-bottom .cell-letter {
+    /* Offset to show top portion of letter */
+    transform: translateY(calc(var(--cell-size) * -0.3));
+}
+
+/* Left edge cells - content aligned to right, fades toward left */
 .crossword-cell--edge-left {
-    clip-path: inset(0 0 0 60%);
-    margin-left: calc(var(--cell-size) * -0.60);
-    /* Subtle gradient mask - mostly visible with slight fade at left */
-    mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
-    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    /* Align content to show right portion of cell */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Fade gradient toward the hidden content */
+    mask-image: linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
 }
 
-/* Right edge cells - show left portion with subtle fade */
+/* Position letter in left edge cells */
+.crossword-cell--edge-left .cell-letter {
+    /* Offset to show right portion of letter */
+    transform: translateX(calc(var(--cell-size) * 0.3));
+}
+
+/* Right edge cells - content aligned to left, fades toward right */
 .crossword-cell--edge-right {
-    clip-path: inset(0 60% 0 0);
-    margin-right: calc(var(--cell-size) * -0.60);
-    /* Subtle gradient mask - mostly visible with slight fade at right */
-    mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
-    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    /* Align content to show left portion of cell */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Fade gradient toward the hidden content */
+    mask-image: linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
+    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 100%);
+}
+
+/* Position letter in right edge cells */
+.crossword-cell--edge-right .cell-letter {
+    /* Offset to show left portion of letter */
+    transform: translateX(calc(var(--cell-size) * -0.3));
+}
+
+/* Corner placeholder cells - invisible cells to maintain grid alignment */
+.crossword-cell--corner {
+    /* Fill the grid cell but remain invisible */
+    width: 100%;
+    height: 100%;
+    /* Completely transparent */
+    background: transparent;
+    border: none;
+    pointer-events: none;
 }
 
 /* ============================================================================

@@ -433,56 +433,114 @@ export function CrosswordGrid({
     return cursors;
   }, [collaborators]);
 
-  // Filter cells based on zoom viewport
-  const visibleCells = useMemo(() => {
-    if (isZoomMode && zoomViewport) {
-      return puzzle.grid.flat().filter(cell =>
-        cell.row >= zoomViewport.startRow &&
-        cell.row <= zoomViewport.endRow &&
-        cell.col >= zoomViewport.startCol &&
-        cell.col <= zoomViewport.endCol
-      );
-    }
-    return puzzle.grid.flat();
-  }, [puzzle.grid, isZoomMode, zoomViewport]);
+  // Unified cell data structure for rendering
+  // Includes both main viewport cells and edge cells in the same grid
+  type CellWithEdgeInfo = {
+    cell: typeof puzzle.grid[0][0] | null; // null for corner placeholders
+    edgePosition: 'top' | 'bottom' | 'left' | 'right' | 'corner' | null;
+    isCorner: boolean;
+    key: string;
+  };
 
-  // Compute edge cells for partial cell indicators
-  // These are cells just beyond the viewport boundary that show as hints
-  const edgeCells = useMemo(() => {
+  // Build unified cell list including edge cells in the same grid
+  const unifiedCells = useMemo((): CellWithEdgeInfo[] => {
     if (!isZoomMode || !zoomViewport || !edgeIndicators) {
-      return { top: [], bottom: [], left: [], right: [] };
+      // Non-zoom mode: just return all cells with no edge info
+      return puzzle.grid.flat().map(cell => ({
+        cell,
+        edgePosition: null,
+        isCorner: false,
+        key: `${cell.row},${cell.col}`,
+      }));
     }
 
     const { startRow, endRow, startCol, endCol } = zoomViewport;
     const { height, width } = puzzle;
+    const cells: CellWithEdgeInfo[] = [];
+
+    // Determine actual edge boundaries (accounting for puzzle edges)
+    const hasTopEdge = edgeIndicators.top && startRow > 0;
+    const hasBottomEdge = edgeIndicators.bottom && endRow < height - 1;
+    const hasLeftEdge = edgeIndicators.left && startCol > 0;
+    const hasRightEdge = edgeIndicators.right && endCol < width - 1;
+
+    // Calculate row/col ranges including edges
+    const rowStart = hasTopEdge ? startRow - 1 : startRow;
+    const rowEnd = hasBottomEdge ? endRow + 1 : endRow;
+    const colStart = hasLeftEdge ? startCol - 1 : startCol;
+    const colEnd = hasRightEdge ? endCol + 1 : endCol;
+
+    // Iterate through all cells in the expanded grid (including edges)
+    // IMPORTANT: Include corner placeholders to maintain grid alignment
+    for (let r = rowStart; r <= rowEnd; r++) {
+      for (let c = colStart; c <= colEnd; c++) {
+        // Determine edge position
+        const isTopEdge = hasTopEdge && r === startRow - 1;
+        const isBottomEdge = hasBottomEdge && r === endRow + 1;
+        const isLeftEdge = hasLeftEdge && c === startCol - 1;
+        const isRightEdge = hasRightEdge && c === endCol + 1;
+
+        // Corner cells (intersection of two edges) - add as placeholder for grid alignment
+        const isCorner = (isTopEdge || isBottomEdge) && (isLeftEdge || isRightEdge);
+        if (isCorner) {
+          cells.push({
+            cell: null,
+            edgePosition: 'corner',
+            isCorner: true,
+            key: `corner-${r},${c}`,
+          });
+          continue;
+        }
+
+        const cell = puzzle.grid[r][c];
+        let edgePosition: 'top' | 'bottom' | 'left' | 'right' | null = null;
+        if (isTopEdge) edgePosition = 'top';
+        else if (isBottomEdge) edgePosition = 'bottom';
+        else if (isLeftEdge) edgePosition = 'left';
+        else if (isRightEdge) edgePosition = 'right';
+
+        cells.push({
+          cell,
+          edgePosition,
+          isCorner: false,
+          key: `${cell.row},${cell.col}`,
+        });
+      }
+    }
+
+    return cells;
+  }, [puzzle.grid, isZoomMode, zoomViewport, edgeIndicators]);
+
+  // Compute grid template for unified grid with edge tracks
+  const gridTemplate = useMemo(() => {
+    if (!isZoomMode || !edgeIndicators) {
+      // Non-zoom: regular grid
+      return {
+        columns: `repeat(${gridWidth}, var(--cell-size))`,
+        rows: `repeat(${gridHeight}, var(--cell-size))`,
+      };
+    }
+
+    // Zoom mode: include fractional edge tracks
+    const edgeFraction = EDGE_INDICATOR_FRACTION;
+
+    // Build column template
+    const colParts: string[] = [];
+    if (edgeIndicators.left) colParts.push(`calc(var(--cell-size) * ${edgeFraction})`);
+    colParts.push(`repeat(${gridWidth}, var(--cell-size))`);
+    if (edgeIndicators.right) colParts.push(`calc(var(--cell-size) * ${edgeFraction})`);
+
+    // Build row template
+    const rowParts: string[] = [];
+    if (edgeIndicators.top) rowParts.push(`calc(var(--cell-size) * ${edgeFraction})`);
+    rowParts.push(`repeat(${gridHeight}, var(--cell-size))`);
+    if (edgeIndicators.bottom) rowParts.push(`calc(var(--cell-size) * ${edgeFraction})`);
 
     return {
-      // Top edge: row above viewport (if exists)
-      top: edgeIndicators.top && startRow > 0
-        ? puzzle.grid[startRow - 1].filter(cell =>
-            cell.col >= startCol && cell.col <= endCol
-          )
-        : [],
-      // Bottom edge: row below viewport (if exists)
-      bottom: edgeIndicators.bottom && endRow < height - 1
-        ? puzzle.grid[endRow + 1].filter(cell =>
-            cell.col >= startCol && cell.col <= endCol
-          )
-        : [],
-      // Left edge: column before viewport (if exists)
-      left: edgeIndicators.left && startCol > 0
-        ? puzzle.grid
-            .filter((_, rowIndex) => rowIndex >= startRow && rowIndex <= endRow)
-            .map(row => row[startCol - 1])
-        : [],
-      // Right edge: column after viewport (if exists)
-      right: edgeIndicators.right && endCol < width - 1
-        ? puzzle.grid
-            .filter((_, rowIndex) => rowIndex >= startRow && rowIndex <= endRow)
-            .map(row => row[endCol + 1])
-        : [],
+      columns: colParts.join(' '),
+      rows: rowParts.join(' '),
     };
-  }, [isZoomMode, zoomViewport, edgeIndicators, puzzle.grid, puzzle.height, puzzle.width]);
+  }, [isZoomMode, edgeIndicators, gridWidth, gridHeight]);
 
   // Merge touch handlers (swipe and pinch)
   const touchHandlers = useMemo(() => {
@@ -505,31 +563,6 @@ export function CrosswordGrid({
       },
     };
   }, [swipeHandlers, pinchHandlers]);
-
-  // Helper to render an edge indicator cell (partial visibility, tappable)
-  const renderEdgeCell = (
-    cell: typeof puzzle.grid[0][0],
-    position: 'top' | 'bottom' | 'left' | 'right'
-  ) => {
-    const key = `edge-${position}-${cell.row},${cell.col}`;
-    const userEntry = userEntries.get(`${cell.row},${cell.col}`);
-
-    return (
-      <div
-        key={key}
-        className={`crossword-cell crossword-cell--edge-indicator crossword-cell--edge-${position} ${
-          cell.isBlack ? 'cell--black' : 'cell--white'
-        }`}
-        data-row={cell.row}
-        data-col={cell.col}
-        onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
-      >
-        {!cell.isBlack && (
-          <span className="cell-letter">{userEntry || ""}</span>
-        )}
-      </div>
-    );
-  };
 
   // Compute corner rounding classes for zoom mode
   // Corners should be rounded only when at actual puzzle edge (no hidden content)
@@ -583,47 +616,62 @@ export function CrosswordGrid({
       style={containerStyle as React.CSSProperties}
       {...touchHandlers}
     >
-      {/* Top edge indicator cells */}
-      {isZoomMode && edgeCells.top.length > 0 && (
-        <div
-          className="crossword-edge-indicator crossword-edge-indicator--top"
-          style={{
-            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
-          }}
-        >
-          {edgeCells.top.map(cell => renderEdgeCell(cell, 'top'))}
-        </div>
-      )}
+      {/* Unified grid - includes both main cells and edge cells in same CSS Grid */}
+      <div
+        className={`crossword-grid ${isZoomMode ? `crossword-grid--zoomed ${cornerClasses}` : ''}`}
+        style={{
+          gridTemplateColumns: gridTemplate.columns,
+          gridTemplateRows: gridTemplate.rows,
+        }}
+      >
+        {unifiedCells.map(({ cell, edgePosition, isCorner, key }) => {
+          // Corner placeholders: empty cells for grid alignment
+          if (isCorner || cell === null) {
+            return (
+              <div
+                key={key}
+                className="crossword-cell crossword-cell--corner"
+                aria-hidden="true"
+              />
+            );
+          }
 
-      <div className="crossword-grid-row">
-        {/* Left edge indicator cells */}
-        {isZoomMode && edgeCells.left.length > 0 && (
-          <div
-            className="crossword-edge-indicator crossword-edge-indicator--left"
-            style={{
-              gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
-            }}
-          >
-            {edgeCells.left.map(cell => renderEdgeCell(cell, 'left'))}
-          </div>
-        )}
+          const cellKey = `${cell.row},${cell.col}`;
+          const isEdgeCell = edgePosition !== null;
 
-        <div
-          className={`crossword-grid ${isZoomMode ? `crossword-grid--zoomed ${cornerClasses}` : ''}`}
-          style={{
-            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
-            gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
-          }}
-        >
-        {visibleCells.map((cell) => {
-          const key = `${cell.row},${cell.col}`;
+          // Edge cells: simplified rendering with edge styling
+          if (isEdgeCell) {
+            const userEntry = userEntries.get(cellKey);
+            const edgeCellClasses = [
+              "crossword-cell",
+              "crossword-cell--edge",
+              `crossword-cell--edge-${edgePosition}`,
+              cell.isBlack ? "cell--black" : "cell--white",
+            ].join(" ");
+
+            return (
+              <div
+                key={`edge-${cellKey}`}
+                className={edgeCellClasses}
+                data-row={cell.row}
+                data-col={cell.col}
+                onClick={() => !cell.isBlack && onCellClick(cell.row, cell.col)}
+              >
+                {!cell.isBlack && (
+                  <span className="cell-letter">{userEntry || ""}</span>
+                )}
+              </div>
+            );
+          }
+
+          // Main viewport cells: full rendering with all features
           const isSelected =
             selectedCell?.row === cell.row && selectedCell?.col === cell.col;
           const inWord = isInCurrentWord(cell.row, cell.col);
-          const userEntry = userEntries.get(key);
+          const userEntry = userEntries.get(cellKey);
 
           // Get collaborator highlight colors for this cell (if any)
-          const highlightColors = collaboratorHighlights.get(key);
+          const highlightColors = collaboratorHighlights.get(cellKey);
           // Only show collaborator highlight if not in local user's current word
           const hasCollaboratorHighlight =
             highlightColors && highlightColors.length > 0 && !inWord && !isSelected;
@@ -631,7 +679,7 @@ export function CrosswordGrid({
           const hasOverlappingHighlights = highlightColors && highlightColors.length > 1;
 
           // Get collaborator cursor colors (exact focused cell) - may be multiple!
-          const cursorColors = collaboratorCursors.get(key);
+          const cursorColors = collaboratorCursors.get(cellKey);
           // Show cursor indicators for collaborators on this cell
           const hasCollaboratorCursor = cursorColors && cursorColors.length > 0;
           // Check if local user's selection overlaps with collaborators
@@ -640,14 +688,14 @@ export function CrosswordGrid({
           const collaboratorCount = cursorColors?.length ?? 0;
 
           // Check verification and error status
-          const isVerified = verifiedCells.has(key);
-          const hasError = errorCells.has(key);
+          const isVerified = verifiedCells.has(cellKey);
+          const hasError = errorCells.has(cellKey);
 
           // Check clue reference highlights
           // Whole-clue references: only show when not in current word (avoid visual conflict)
           // Letter-specific references: show even in current word (for "letters X-Y here" patterns)
-          const isReferencedClue = referencedClueCells.has(key) && !inWord && !isSelected;
-          const isReferencedLetter = letterReferenceCells.has(key);
+          const isReferencedClue = referencedClueCells.has(cellKey) && !inWord && !isSelected;
+          const isReferencedLetter = letterReferenceCells.has(cellKey);
 
           // Determine if local user has a color (in collaborative mode)
           const hasLocalColor = Boolean(localUserColor);
@@ -728,7 +776,7 @@ export function CrosswordGrid({
 
           return (
             <div
-              key={key}
+              key={cellKey}
               className={cellClasses}
               style={cellStyle}
               data-row={cell.row}
@@ -745,32 +793,7 @@ export function CrosswordGrid({
             </div>
           );
         })}
-        </div>
-
-        {/* Right edge indicator cells */}
-        {isZoomMode && edgeCells.right.length > 0 && (
-          <div
-            className="crossword-edge-indicator crossword-edge-indicator--right"
-            style={{
-              gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
-            }}
-          >
-            {edgeCells.right.map(cell => renderEdgeCell(cell, 'right'))}
-          </div>
-        )}
       </div>
-
-      {/* Bottom edge indicator cells */}
-      {isZoomMode && edgeCells.bottom.length > 0 && (
-        <div
-          className="crossword-edge-indicator crossword-edge-indicator--bottom"
-          style={{
-            gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
-          }}
-        >
-          {edgeCells.bottom.map(cell => renderEdgeCell(cell, 'bottom'))}
-        </div>
-      )}
     </div>
   );
 }
