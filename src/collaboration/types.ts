@@ -22,6 +22,8 @@ export interface UserInfo {
   name: string;
   /** Hex color for highlighting (e.g., "#ff6b6b") */
   color: string;
+  /** Optional avatar image (base64 data URL) */
+  avatar?: string;
 }
 
 /**

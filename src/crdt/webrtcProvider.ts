@@ -8,7 +8,8 @@
 import { WebrtcProvider } from 'y-webrtc';
 import type { Awareness } from 'y-protocols/awareness';
 import { PuzzleStore } from './puzzleStore';
-import { assignUniqueColor, generateNickname } from '../collaboration/colors';
+import { assignUniqueColor } from '../collaboration/colors';
+import { getProfile } from '../lib/profileStorage';
 
 /**
  * Connection state for P2P sessions.
@@ -131,16 +132,19 @@ export async function createP2PSession(
 
   // Assign a unique color for this user (what others will see)
   // Set awareness state BEFORE connecting to ensure it's ready when peers connect
-  const userName = generateNickname();
+  const profile = await getProfile();
+  const userName = profile.nickname;
+  const userAvatar = profile.avatar;
   const userColor = assignUniqueColor(usedColors, awareness.clientID);
 
   awareness.setLocalStateField('user', {
     name: userName,
     color: userColor,
+    avatar: userAvatar ?? undefined,
   });
   awareness.setLocalStateField('cursor', null);
 
-  console.debug(`[webrtcProvider] Awareness initialized: ${userName} (${userColor}), clientID: ${awareness.clientID}`);
+  console.debug(`[webrtcProvider] Awareness initialized: ${userName} (${userColor}), avatar: ${userAvatar ? 'yes' : 'no'}, clientID: ${awareness.clientID}`);
 
   // Re-check color uniqueness when awareness changes (in case we connected before others)
   // Debounce to avoid excessive re-checks during rapid updates
@@ -170,13 +174,15 @@ export async function createP2PSession(
       });
 
       if (hasConflict) {
-        // Re-assign unique color
+        // Re-assign unique color (preserve name and avatar)
         const newColor = assignUniqueColor(otherColors, awareness.clientID);
         if (newColor.toLowerCase() !== myColor) {
           console.debug('[webrtcProvider] Color conflict detected, reassigning to:', newColor);
+          const currentUser = myState?.user as { name?: string; avatar?: string } | undefined;
           awareness.setLocalStateField('user', {
-            ...myState?.user,
+            name: currentUser?.name ?? userName,
             color: newColor,
+            avatar: currentUser?.avatar,
           });
         }
       }

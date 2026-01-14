@@ -39,12 +39,23 @@ export function CollaboratorAvatars({ collaborators }: CollaboratorAvatarsProps)
         <div
           key={collaborator.clientId}
           className="collaborator-avatar"
-          style={{ backgroundColor: collaborator.user.color }}
+          style={{ borderColor: collaborator.user.color }}
           title={collaborator.user.name}
         >
-          <span className="collaborator-avatar__initials">
-            {getInitials(collaborator.user.name)}
-          </span>
+          {collaborator.user.avatar ? (
+            <img
+              src={collaborator.user.avatar}
+              alt=""
+              className="collaborator-avatar__image"
+            />
+          ) : (
+            <span
+              className="collaborator-avatar__initials"
+              style={{ backgroundColor: collaborator.user.color }}
+            >
+              {getInitials(collaborator.user.name)}
+            </span>
+          )}
         </div>
       ))}
       {overflowCount > 0 && (

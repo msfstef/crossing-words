@@ -1,0 +1,51 @@
+/* ProfileButton - same styling as SettingsMenu button */
+
+.profile-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-subtle, var(--color-border));
+  color: var(--color-text);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+.profile-button:hover {
+  background: var(--color-border);
+  border-color: var(--color-border);
+}
+
+.profile-button:active {
+  transform: scale(0.96);
+}
+
+.profile-button:focus {
+  outline: none;
+}
+
+.profile-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* User icon SVG */
+.profile-button__icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Avatar image */
+.profile-button__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}

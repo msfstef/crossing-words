@@ -6,6 +6,7 @@ import { FAB } from './FAB';
 import { DownloadDialog } from './DownloadDialog';
 import { PuzzleOptionsDialog } from './PuzzleOptionsDialog';
 import { SettingsMenu } from '../SettingsMenu';
+import { ProfileButton } from '../ProfileButton';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
 import { fetchPuzzle } from '../../services/puzzleSources/fetchPuzzle';
 import { importPuzzle } from '../../lib/puzzleImport';
@@ -358,6 +359,7 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
           <h1 className="library-title">Crossing Words</h1>
         </div>
         <div className="library-actions">
+          <ProfileButton />
           <SettingsMenu />
         </div>
       </header>
