@@ -5,6 +5,7 @@ import {
   GRID_PADDING,
   MIN_CELL_SIZE,
   MAX_CELL_SIZE,
+  EDGE_INDICATOR_FRACTION,
 } from '../../components/CrosswordGrid';
 import { createTestPuzzle, TEST_PUZZLES } from '../../lib/testPuzzleGenerator';
 
@@ -185,5 +186,122 @@ describe('Grid Cell Size Calculation', () => {
         expect(gridHeight).toBeLessThanOrEqual(area.height + 1);
       });
     }
+  });
+
+  describe('Edge Indicator Sizing', () => {
+    // Use 15x15 grid at 400x400 container so cell sizes are within the min/max range
+    // Without indicators: (400 - 32) / 15 = 24.53px
+    it('should return same size when no edge indicators', () => {
+      const sizeWithout = calculateCellSize(400, 400, 15, 15);
+      const sizeWithNull = calculateCellSize(400, 400, 15, 15, null);
+      const sizeWithNone = calculateCellSize(400, 400, 15, 15, {
+        top: false,
+        bottom: false,
+        left: false,
+        right: false,
+      });
+
+      expect(sizeWithNull).toBe(sizeWithout);
+      expect(sizeWithNone).toBe(sizeWithout);
+    });
+
+    it('should reduce cell size when left edge indicator is present', () => {
+      const sizeWithout = calculateCellSize(400, 400, 15, 15);
+      const sizeWith = calculateCellSize(400, 400, 15, 15, {
+        top: false,
+        bottom: false,
+        left: true,
+        right: false,
+      });
+
+      expect(sizeWith).toBeLessThan(sizeWithout);
+    });
+
+    it('should reduce cell size when top edge indicator is present', () => {
+      const sizeWithout = calculateCellSize(400, 400, 15, 15);
+      const sizeWith = calculateCellSize(400, 400, 15, 15, {
+        top: true,
+        bottom: false,
+        left: false,
+        right: false,
+      });
+
+      expect(sizeWith).toBeLessThan(sizeWithout);
+    });
+
+    it('should reduce cell size more when multiple edge indicators are present', () => {
+      const sizeWithOne = calculateCellSize(400, 400, 15, 15, {
+        top: false,
+        bottom: false,
+        left: true,
+        right: false,
+      });
+      const sizeWithTwo = calculateCellSize(400, 400, 15, 15, {
+        top: false,
+        bottom: false,
+        left: true,
+        right: true,
+      });
+
+      expect(sizeWithTwo).toBeLessThan(sizeWithOne);
+    });
+
+    it('should account for all four edge indicators', () => {
+      const sizeWithAll = calculateCellSize(400, 400, 15, 15, {
+        top: true,
+        bottom: true,
+        left: true,
+        right: true,
+      });
+
+      // Calculate expected size:
+      // cols + horizontalFraction = 15 + 0.7 = 15.7
+      // rows + verticalFraction = 15 + 0.7 = 15.7
+      // totalGapX = 14*2 + 4 = 32
+      // totalGapY = 14*2 + 4 = 32
+      // maxCellWidth = (400 - 32) / 15.7 = 23.44
+      const totalGap = (15 - 1) * GRID_GAP + GRID_PADDING * 2;
+      const expected = (400 - totalGap) / (15 + 2 * EDGE_INDICATOR_FRACTION);
+
+      expect(sizeWithAll).toBeCloseTo(expected, 1);
+    });
+
+    it('should ensure grid with edge indicators fits in container', () => {
+      const cols = 15;
+      const rows = 15;
+      const containerWidth = 400;
+      const containerHeight = 400;
+      const edgeIndicators = { top: true, bottom: true, left: true, right: true };
+
+      const cellSize = calculateCellSize(
+        containerWidth,
+        containerHeight,
+        cols,
+        rows,
+        edgeIndicators
+      );
+
+      // Calculate total space needed
+      const totalGapX = (cols - 1) * GRID_GAP + GRID_PADDING * 2;
+      const totalGapY = (rows - 1) * GRID_GAP + GRID_PADDING * 2;
+
+      // Grid dimensions
+      const gridWidth = cols * cellSize + totalGapX;
+      const gridHeight = rows * cellSize + totalGapY;
+
+      // Edge indicator dimensions (35% of cell size each)
+      const leftEdge = edgeIndicators.left ? cellSize * EDGE_INDICATOR_FRACTION : 0;
+      const rightEdge = edgeIndicators.right ? cellSize * EDGE_INDICATOR_FRACTION : 0;
+      const topEdge = edgeIndicators.top ? cellSize * EDGE_INDICATOR_FRACTION : 0;
+      const bottomEdge = edgeIndicators.bottom ? cellSize * EDGE_INDICATOR_FRACTION : 0;
+
+      // Total dimensions
+      const totalWidth = gridWidth + leftEdge + rightEdge;
+      const totalHeight = gridHeight + topEdge + bottomEdge;
+
+      // Should fit within container (with small tolerance for floating point)
+      expect(totalWidth).toBeLessThanOrEqual(containerWidth + 1);
+      expect(totalHeight).toBeLessThanOrEqual(containerHeight + 1);
+    });
   });
 });

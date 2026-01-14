@@ -13,22 +13,43 @@ export const GRID_PADDING = 2;
 export const MIN_CELL_SIZE = 12;
 /** Maximum cell size in pixels */
 export const MAX_CELL_SIZE = 36;
+/** Edge indicator size as fraction of cell size */
+export const EDGE_INDICATOR_FRACTION = 0.35;
 
 /**
  * Calculate optimal cell size to fit puzzle within container bounds.
  * Returns cell size in pixels, clamped between min and max.
+ *
+ * When edge indicators are present, accounts for the extra space they take
+ * (35% of cell size per edge).
  */
 export function calculateCellSize(
   containerWidth: number,
   containerHeight: number,
   cols: number,
   rows: number,
+  edgeIndicators?: { top: boolean; bottom: boolean; left: boolean; right: boolean } | null,
 ): number {
   const totalGapX = (cols - 1) * GRID_GAP + GRID_PADDING * 2;
   const totalGapY = (rows - 1) * GRID_GAP + GRID_PADDING * 2;
 
-  const maxCellWidth = (containerWidth - totalGapX) / cols;
-  const maxCellHeight = (containerHeight - totalGapY) / rows;
+  // If edge indicators are present, we need to account for their space.
+  // Edge indicators take EDGE_INDICATOR_FRACTION of cell size each.
+  // We solve: availableWidth = cols * cellSize + totalGapX + (numHorizontalEdges * EDGE_INDICATOR_FRACTION * cellSize)
+  // Which gives: cellSize = (containerWidth - totalGapX) / (cols + numHorizontalEdges * EDGE_INDICATOR_FRACTION)
+
+  let horizontalEdgeFraction = 0;
+  let verticalEdgeFraction = 0;
+
+  if (edgeIndicators) {
+    if (edgeIndicators.left) horizontalEdgeFraction += EDGE_INDICATOR_FRACTION;
+    if (edgeIndicators.right) horizontalEdgeFraction += EDGE_INDICATOR_FRACTION;
+    if (edgeIndicators.top) verticalEdgeFraction += EDGE_INDICATOR_FRACTION;
+    if (edgeIndicators.bottom) verticalEdgeFraction += EDGE_INDICATOR_FRACTION;
+  }
+
+  const maxCellWidth = (containerWidth - totalGapX) / (cols + horizontalEdgeFraction);
+  const maxCellHeight = (containerHeight - totalGapY) / (rows + verticalEdgeFraction);
 
   const cellSize = Math.min(maxCellWidth, maxCellHeight);
 
@@ -320,7 +341,8 @@ export function CrosswordGrid({
 
     const updateCellSize = () => {
       const { width, height } = container.getBoundingClientRect();
-      const newSize = calculateCellSize(width, height, gridWidth, gridHeight);
+      // Pass edge indicators to account for their space in zoom mode
+      const newSize = calculateCellSize(width, height, gridWidth, gridHeight, edgeIndicators);
       setCellSize(newSize);
     };
 
@@ -334,7 +356,7 @@ export function CrosswordGrid({
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, [gridWidth, gridHeight]);
+  }, [gridWidth, gridHeight, edgeIndicators]);
 
   /**
    * Check if a cell is part of the currently selected word
