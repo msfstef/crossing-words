@@ -240,10 +240,10 @@
     gap: 0;
 }
 
-/* Edge indicator containers */
+/* Edge indicator containers - no gap to feel continuous with grid */
 .crossword-edge-indicator {
     display: grid;
-    gap: var(--grid-gap, 2px);
+    gap: 0;
     pointer-events: none;
     overflow: hidden;
     position: relative;
@@ -251,74 +251,74 @@
 
 /* Top edge - horizontal strip above grid */
 .crossword-edge-indicator--top {
-    height: calc(var(--cell-size) * 0.35);
+    height: calc(var(--cell-size) * 0.4);
     justify-content: center;
-    /* Dynamic offset based on whether left edge exists (set by JS) */
-    margin-left: calc(var(--left-edge-offset) + 2px);
-    margin-right: calc(var(--right-edge-offset) + 2px);
+    /* Align with grid - account for left/right edge widths */
+    margin-left: var(--left-edge-offset);
+    margin-right: var(--right-edge-offset);
 }
 
 /* Bottom edge - horizontal strip below grid */
 .crossword-edge-indicator--bottom {
-    height: calc(var(--cell-size) * 0.35);
+    height: calc(var(--cell-size) * 0.4);
     justify-content: center;
-    /* Dynamic offset based on whether left edge exists (set by JS) */
-    margin-left: calc(var(--left-edge-offset) + 2px);
-    margin-right: calc(var(--right-edge-offset) + 2px);
+    /* Align with grid - account for left/right edge widths */
+    margin-left: var(--left-edge-offset);
+    margin-right: var(--right-edge-offset);
 }
 
 /* Left edge - vertical strip beside grid */
 .crossword-edge-indicator--left {
-    width: calc(var(--cell-size) * 0.35);
+    width: calc(var(--cell-size) * 0.4);
     grid-template-columns: 1fr;
 }
 
 /* Right edge - vertical strip beside grid */
 .crossword-edge-indicator--right {
-    width: calc(var(--cell-size) * 0.35);
+    width: calc(var(--cell-size) * 0.4);
     grid-template-columns: 1fr;
 }
 
-/* Edge indicator cells - partial visibility with gradient fade */
+/* Edge indicator cells - more visible, continuous with grid */
 .crossword-cell--edge-indicator {
-    opacity: 0.6;
+    opacity: 0.85;
     pointer-events: none;
 }
 
-/* Top edge cells - show bottom portion with fade */
+/* Top edge cells - show bottom portion with subtle fade */
 .crossword-cell--edge-top {
-    clip-path: inset(65% 0 0 0);
-    margin-top: calc(var(--cell-size) * -0.65);
-    /* Gradient mask for fade effect - darker at visible edge */
-    mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    clip-path: inset(60% 0 0 0);
+    margin-top: calc(var(--cell-size) * -0.60);
+    /* Subtle gradient mask - mostly visible with slight fade at top */
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
 }
 
-/* Bottom edge cells - show top portion with fade */
+/* Bottom edge cells - show top portion with subtle fade */
 .crossword-cell--edge-bottom {
-    clip-path: inset(0 0 65% 0);
-    margin-bottom: calc(var(--cell-size) * -0.65);
-    /* Gradient mask for fade effect - darker at visible edge */
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    clip-path: inset(0 0 60% 0);
+    margin-bottom: calc(var(--cell-size) * -0.60);
+    /* Subtle gradient mask - mostly visible with slight fade at bottom */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
 }
 
-/* Left edge cells - show right portion with fade */
+/* Left edge cells - show right portion with subtle fade */
 .crossword-cell--edge-left {
-    clip-path: inset(0 0 0 65%);
-    margin-left: calc(var(--cell-size) * -0.65);
-    /* Gradient mask for fade effect - darker at visible edge */
-    mask-image: linear-gradient(to left, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    clip-path: inset(0 0 0 60%);
+    margin-left: calc(var(--cell-size) * -0.60);
+    /* Subtle gradient mask - mostly visible with slight fade at left */
+    mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
 }
 
-/* Right edge cells - show left portion with fade */
+/* Right edge cells - show left portion with subtle fade */
 .crossword-cell--edge-right {
-    clip-path: inset(0 65% 0 0);
-    margin-right: calc(var(--cell-size) * -0.65);
-    /* Gradient mask for fade effect - darker at visible edge */
-    mask-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    clip-path: inset(0 60% 0 0);
+    margin-right: calc(var(--cell-size) * -0.60);
+    /* Subtle gradient mask - mostly visible with slight fade at right */
+    mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 100%);
 }
 
 /* ============================================================================

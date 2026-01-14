@@ -14,15 +14,15 @@ export const GRID_PADDING = 2;
 export const MIN_CELL_SIZE = 12;
 /** Maximum cell size in pixels */
 export const MAX_CELL_SIZE = 36;
-/** Edge indicator size as fraction of cell size */
-export const EDGE_INDICATOR_FRACTION = 0.5;
+/** Edge indicator size as fraction of cell size - matches CSS */
+export const EDGE_INDICATOR_FRACTION = 0.4;
 
 /**
  * Calculate optimal cell size to fit puzzle within container bounds.
  * Returns cell size in pixels, clamped between min and max.
  *
  * When edge indicators are present, accounts for the extra space they take
- * (50% of cell size per edge).
+ * (40% of cell size per edge).
  */
 export function calculateCellSize(
   containerWidth: number,
