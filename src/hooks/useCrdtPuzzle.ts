@@ -417,12 +417,46 @@ export function useCrdtPuzzle(
     settingsMap.set('autoCheck', enabled);
   }, []);
 
+  const clearAllEntries = useCallback(() => {
+    const store = storeRef.current;
+    if (!store) return;
+
+    // Clear all entries from the Y.Map
+    const keys = Array.from(store.entries.keys());
+    store.doc.transact(() => {
+      for (const key of keys) {
+        store.entries.delete(key);
+      }
+    });
+
+    // Also clear verified and errors maps
+    const verifiedMap = verifiedMapRef.current;
+    const errorsMap = errorsMapRef.current;
+    if (verifiedMap) {
+      const verifiedKeys = Array.from(verifiedMap.keys());
+      store.doc.transact(() => {
+        for (const key of verifiedKeys) {
+          verifiedMap.delete(key);
+        }
+      });
+    }
+    if (errorsMap) {
+      const errorKeys = Array.from(errorsMap.keys());
+      store.doc.transact(() => {
+        for (const key of errorKeys) {
+          errorsMap.delete(key);
+        }
+      });
+    }
+  }, []);
+
   return {
     entries,
     ready,
     setEntry,
     clearEntry,
     getEntry,
+    clearAllEntries,
     roomId,
     connectionState,
     awareness,

@@ -67,6 +67,8 @@ interface PuzzleStateHook {
   setSelectedCell: (cell: { row: number; col: number } | null) => void;
   /** Set the direction (exposed for follow functionality) */
   setDirection: (direction: 'across' | 'down') => void;
+  /** Clear all entries (reset puzzle) */
+  clearAllEntries: () => void;
 }
 
 /**
@@ -101,6 +103,7 @@ export function usePuzzleState(
     entriesMap,
     autoCheckEnabled,
     setAutoCheck,
+    clearAllEntries,
   } = useCrdtPuzzle(puzzleId, roomId, {
     puzzle: options?.puzzle,
     onPuzzleReceived: options?.onPuzzleReceived,
@@ -1102,5 +1105,6 @@ export function usePuzzleState(
     handleSwipeNavigation,
     setSelectedCell,
     setDirection,
+    clearAllEntries,
   };
 }

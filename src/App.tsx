@@ -402,6 +402,7 @@ function App() {
     handleSwipeNavigation,
     setSelectedCell,
     setDirection,
+    clearAllEntries,
   } = usePuzzleState(puzzle ?? samplePuzzle, puzzleId || 'loading', roomId, puzzleSyncOptions);
 
   // Build set of current word cells for reference highlight exclusion
@@ -807,6 +808,7 @@ function App() {
       onRevealPuzzle={revealPuzzle}
       autoCheckEnabled={autoCheckEnabled}
       onAutoCheckToggle={() => setAutoCheck(!autoCheckEnabled)}
+      onReset={clearAllEntries}
       isZoomMode={isZoomMode}
       onToggleZoom={handleToggleZoom}
     />

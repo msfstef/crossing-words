@@ -11,6 +11,8 @@ interface SettingsMenuProps {
   onRevealPuzzle?: () => void;
   autoCheckEnabled?: boolean;
   onAutoCheckToggle?: () => void;
+  /** Reset puzzle (clear all entries) */
+  onReset?: () => void;
   /** Whether zoom mode is active */
   isZoomMode?: boolean;
   /** Toggle zoom mode */
@@ -30,6 +32,7 @@ export function SettingsMenu({
   onRevealPuzzle,
   autoCheckEnabled = false,
   onAutoCheckToggle,
+  onReset,
   isZoomMode = false,
   onToggleZoom,
 }: SettingsMenuProps) {
@@ -76,36 +79,6 @@ export function SettingsMenu({
       </button>
       {menuOpen && (
         <div className="settings-menu__dropdown" role="menu">
-          {/* Check section */}
-          {hasPuzzleActions && (
-            <div className="settings-menu__section">
-              <span className="settings-menu__label">Check</span>
-              <div className="settings-menu__button-row">
-                <button
-                  className="settings-menu__action-btn"
-                  onClick={() => handleAction(onCheckLetter)}
-                  data-testid="check-letter"
-                >
-                  Letter
-                </button>
-                <button
-                  className="settings-menu__action-btn"
-                  onClick={() => handleAction(onCheckWord)}
-                  data-testid="check-word"
-                >
-                  Word
-                </button>
-                <button
-                  className="settings-menu__action-btn"
-                  onClick={() => handleAction(onCheckPuzzle)}
-                  data-testid="check-puzzle"
-                >
-                  Puzzle
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Reveal section */}
           {hasPuzzleActions && (
             <div className="settings-menu__section">
@@ -136,6 +109,36 @@ export function SettingsMenu({
             </div>
           )}
 
+          {/* Check section */}
+          {hasPuzzleActions && (
+            <div className="settings-menu__section">
+              <span className="settings-menu__label">Check</span>
+              <div className="settings-menu__button-row">
+                <button
+                  className="settings-menu__action-btn"
+                  onClick={() => handleAction(onCheckLetter)}
+                  data-testid="check-letter"
+                >
+                  Letter
+                </button>
+                <button
+                  className="settings-menu__action-btn"
+                  onClick={() => handleAction(onCheckWord)}
+                  data-testid="check-word"
+                >
+                  Word
+                </button>
+                <button
+                  className="settings-menu__action-btn"
+                  onClick={() => handleAction(onCheckPuzzle)}
+                  data-testid="check-puzzle"
+                >
+                  Puzzle
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Auto-check toggle */}
           {onAutoCheckToggle && (
             <div className="settings-menu__section">
@@ -155,6 +158,19 @@ export function SettingsMenu({
                   <span className="settings-menu__toggle-knob" />
                 </button>
               </label>
+            </div>
+          )}
+
+          {/* Reset button */}
+          {onReset && (
+            <div className="settings-menu__section">
+              <button
+                className="settings-menu__reset-btn"
+                onClick={() => handleAction(onReset)}
+                data-testid="reset-puzzle"
+              >
+                Reset Puzzle
+              </button>
             </div>
           )}
 
