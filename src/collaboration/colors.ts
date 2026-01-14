@@ -42,18 +42,19 @@ function isRedOrGreen(hexColor: string): boolean {
 /**
  * Pre-generated palette of visually distinct colors for collaborators.
  * - Excludes red and green to avoid confusion with correct/error indicators
- * - Uses chromaMin: 50 to avoid washed-out colors
- * - lightMin/lightMax ensure colors work on dark backgrounds
+ * - Optimized for visibility in both light and dark modes
+ * - Higher chroma for better contrast and distinctiveness
+ * - Carefully balanced lightness for readability on various backgrounds
  */
 const PALETTE = distinctColors({
-  count: 30, // Generate more to account for filtering
-  chromaMin: 60, // Increased for more saturation and contrast
-  lightMin: 45, // Increased for better visibility on dark backgrounds
-  lightMax: 70, // Slightly decreased max for consistency
+  count: 35, // Generate extra to account for filtering
+  chromaMin: 65, // High saturation for strong color presence
+  lightMin: 50, // Balanced lightness for both light and dark modes
+  lightMax: 75, // Upper bound to maintain vibrancy
 })
   .map((color) => color.hex())
   .filter((hex) => !isRedOrGreen(hex))
-  .slice(0, 20); // Keep up to 20 colors after filtering
+  .slice(0, 20); // Keep up to 20 distinct colors after filtering
 
 /**
  * Adjectives for nickname generation.

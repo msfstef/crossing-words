@@ -173,6 +173,68 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
+ * Generate multi-color border effect for overlapping collaborator cursors.
+ * Creates a visual indication using colored borders when multiple collaborators
+ * focus on the same cell.
+ *
+ * Strategy:
+ * - 1 color: Simple solid outline
+ * - 2 colors: Split border (top/bottom vs left/right in alternating colors)
+ * - 3+ colors: Each side gets a different color (top, right, bottom cycling through colors)
+ *
+ * This approach is performant and creates a clear visual distinction without
+ * requiring complex CSS patterns or pseudo-elements.
+ */
+function createMultiColorBorder(colors: string[]): React.CSSProperties {
+  if (colors.length === 0) return {};
+
+  const alpha = 0.75; // Strong alpha for visibility
+
+  if (colors.length === 1) {
+    // Single collaborator: simple outline
+    return {
+      outline: `2px solid ${hexToRgba(colors[0], alpha)}`,
+      outlineOffset: '-2px',
+      zIndex: 5,
+    };
+  }
+
+  // Multiple collaborators: use box-shadow to create colored segments
+  // This creates distinct colored borders on different sides
+  const thickness = 3;
+
+  if (colors.length === 2) {
+    // Two colors: alternate top/bottom vs left/right
+    const [color1, color2] = colors.map(c => hexToRgba(c, alpha));
+
+    return {
+      boxShadow: `
+        0 -${thickness}px 0 0 ${color1},
+        ${thickness}px 0 0 0 ${color2},
+        0 ${thickness}px 0 0 ${color1},
+        -${thickness}px 0 0 0 ${color2}
+      `,
+      zIndex: 5,
+      position: 'relative',
+    };
+  }
+
+  // Three or more colors: each side gets its own color
+  const [color1, color2, color3] = colors.slice(0, 3).map(c => hexToRgba(c, alpha));
+
+  return {
+    boxShadow: `
+      0 -${thickness}px 0 0 ${color1},
+      ${thickness}px 0 0 0 ${color2},
+      0 ${thickness}px 0 0 ${color3},
+      -${thickness}px 0 0 0 ${colors.length > 3 ? hexToRgba(colors[3], alpha) : color1}
+    `,
+    zIndex: 5,
+    position: 'relative',
+  };
+}
+
+/**
  * CrosswordGrid renders the puzzle grid with cells that can display letters.
  * Cell size is pre-calculated from viewport dimensions for instant rendering,
  * then refined via ResizeObserver to match actual container dimensions.
@@ -267,17 +329,24 @@ export function CrosswordGrid({
   /**
    * Build a map of cursor positions to collaborator colors.
    * Shows exact cell each collaborator is focused on (border indicator).
-   * First collaborator on a cell wins.
+   * Now stores ALL collaborators on a cell (up to 3) for overlap visualization.
    */
   const collaboratorCursors = useMemo(() => {
-    const cursors = new Map<string, string>(); // key -> color
+    const cursors = new Map<string, string[]>(); // key -> colors array
 
     for (const collab of collaborators) {
       if (!collab.cursor) continue;
       const key = `${collab.cursor.row},${collab.cursor.col}`;
-      // First collaborator on cell wins
+
+      // Add this collaborator's color to the cell
       if (!cursors.has(key)) {
-        cursors.set(key, collab.user.color);
+        cursors.set(key, []);
+      }
+
+      const colors = cursors.get(key)!;
+      // Limit to 3 colors to keep visual manageable
+      if (colors.length < 3) {
+        colors.push(collab.user.color);
       }
     }
 
@@ -313,10 +382,10 @@ export function CrosswordGrid({
         const hasCollaboratorHighlight =
           collaboratorColor && !inWord && !isSelected;
 
-        // Get collaborator cursor color (exact focused cell)
-        const cursorColor = collaboratorCursors.get(key);
+        // Get collaborator cursor colors (exact focused cell) - may be multiple!
+        const cursorColors = collaboratorCursors.get(key);
         // Only show cursor if not the local user's selected cell
-        const hasCollaboratorCursor = cursorColor && !isSelected;
+        const hasCollaboratorCursor = cursorColors && cursorColors.length > 0 && !isSelected;
 
         // Check verification and error status
         const isVerified = verifiedCells.has(key);
@@ -371,11 +440,10 @@ export function CrosswordGrid({
         if (hasCollaboratorHighlight) {
           cellStyle.backgroundColor = hexToRgba(collaboratorColor, 0.15);
         }
-        // Collaborator cursor (subtle outline, blends with their highlight)
-        if (hasCollaboratorCursor) {
-          cellStyle.outline = `2px solid ${hexToRgba(cursorColor, 0.35)}`;
-          cellStyle.outlineOffset = '-2px';
-          cellStyle.zIndex = 5;
+        // Collaborator cursor(s) - may be multiple overlapping collaborators!
+        if (hasCollaboratorCursor && cursorColors) {
+          const multiColorStyle = createMultiColorBorder(cursorColors);
+          Object.assign(cellStyle, multiColorStyle);
         }
 
         return (
