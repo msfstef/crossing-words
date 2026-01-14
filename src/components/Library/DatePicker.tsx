@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import './DatePicker.css';
 
 type AvailableDays =
@@ -81,6 +81,41 @@ export function DatePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Track if we have a history entry for the datepicker
+  const hasHistoryEntryRef = useRef(false);
+
+  // Close the datepicker and optionally clean up history
+  const closeDatePicker = useCallback((viaBackButton: boolean = false) => {
+    setIsOpen(false);
+    // Only call history.back() if we have an entry and weren't closed by back button
+    if (hasHistoryEntryRef.current && !viaBackButton) {
+      hasHistoryEntryRef.current = false;
+      window.history.back();
+    } else {
+      hasHistoryEntryRef.current = false;
+    }
+  }, []);
+
+  // Handle back button to close datepicker
+  useEffect(() => {
+    const handlePopstate = () => {
+      if (hasHistoryEntryRef.current) {
+        closeDatePicker(true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, [closeDatePicker]);
+
+  // Push history entry when datepicker opens
+  useEffect(() => {
+    if (isOpen && !hasHistoryEntryRef.current) {
+      window.history.pushState({ type: 'datepicker' }, '');
+      hasHistoryEntryRef.current = true;
+    }
+  }, [isOpen]);
+
   const today = new Date();
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
@@ -129,7 +164,7 @@ export function DatePicker({
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        closeDatePicker();
       }
     }
 
@@ -138,7 +173,7 @@ export function DatePicker({
       return () =>
         document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen]);
+  }, [isOpen, closeDatePicker]);
 
   // Update view when value changes externally
   useEffect(() => {
@@ -177,7 +212,7 @@ export function DatePicker({
 
     if (isAvailable && !isInFuture && !isBeforeMin) {
       onChange(selectedDate);
-      setIsOpen(false);
+      closeDatePicker();
     }
   };
 
@@ -347,7 +382,7 @@ export function DatePicker({
                 todayDate.setHours(12, 0, 0, 0);
                 if (isDayAvailable(todayDate, availableDays)) {
                   onChange(todayDate);
-                  setIsOpen(false);
+                  closeDatePicker();
                 } else {
                   setViewDate(todayDate);
                 }

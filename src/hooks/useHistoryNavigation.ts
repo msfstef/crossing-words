@@ -101,6 +101,13 @@ export function useHistoryNavigation({
 
       // Handle view navigation
       if (state?.type === 'library' || !state) {
+        // Skip if already in library view - the download dialog's popstate handler
+        // or other library-specific handlers will manage their own state
+        if (activeView === 'library') {
+          handlingPopstateRef.current = false;
+          return;
+        }
+
         // Check if URL has a hash indicating a solve session
         // If so, don't navigate to library - let the hashchange handler process it
         const hash = window.location.hash;
@@ -118,7 +125,7 @@ export function useHistoryNavigation({
 
     window.addEventListener('popstate', handlePopstate);
     return () => window.removeEventListener('popstate', handlePopstate);
-  }, [onNavigateToLibrary, onDismissDialog]);
+  }, [activeView, onNavigateToLibrary, onDismissDialog]);
 
   /**
    * Push history entry when navigating from library to solve view.
