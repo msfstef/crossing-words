@@ -10,7 +10,37 @@ Crossing Words is a cross-platform, peer-to-peer multiplayer crossword applicati
 
 Always try to evaluate your work using the Playwright MCP or Chrome extension for end-to-end testing the web app before asking the human partner for a review.
 
-<!-- TODO: Add build, test, and lint commands once the project structure is established -->
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test
+
+# Run tests once and exit
+npm run test:run
+
+# Run only P2P tests
+npm run test:p2p
+
+# Run tests with UI
+npm run test:ui
+```
+
+### Other Commands
+
+```bash
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Lint code
+npm run lint
+```
 
 ### Worktree Isolation
 
@@ -41,6 +71,32 @@ lsof -i :5173-5180 | grep LISTEN
 <!-- TODO: Document high-level architecture once implemented -->
 
 ## Debugging Approaches
+
+### P2P Connectivity Issues
+
+When debugging P2P (peer-to-peer) connection issues, use the automated test suite first:
+
+**Approach: Use the P2P Test Suite**
+
+1. Run the P2P tests to verify the issue: `npm run test:p2p`
+2. Write a new test that reproduces the issue
+3. Fix the issue and verify with tests
+4. See `docs/P2P_TESTING.md` for detailed testing guide
+
+The P2P test suite covers:
+- Connection establishment and lifecycle
+- Disconnection and automatic reconnection
+- Presence tracking via Yjs Awareness
+- Network interruption recovery
+- Stale connection detection
+- Exponential backoff logic
+
+**Common P2P Issues:**
+
+- **Idle tabs losing connection**: Tested in `reconnection.test.ts` visibility change tests
+- **Failed reconnections**: Tested in `reconnection.test.ts` exponential backoff tests
+- **Presence not established**: Tested in `presence.test.ts` presence establishment tests
+- **Peers disappearing**: Tested in `presence.test.ts` and `connection.test.ts` peer tracking tests
 
 ### Puzzle Grid Issues
 
