@@ -178,3 +178,22 @@
     outline: 2px solid var(--color-warning) !important;
     outline-offset: -2px;
 }
+
+/* ============================================================================
+ * Zoom Mode Styles
+ * Provides smooth transitions and visual feedback for zoom mode
+ * ============================================================================ */
+
+.crossword-grid-container--zoomed {
+    /* Optionally add visual feedback that zoom is active */
+}
+
+.crossword-grid--zoomed {
+    /* Smooth transition when entering/exiting zoom mode */
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Prevent accidental browser zoom on pinch gestures */
+.crossword-grid-container {
+    touch-action: pan-x pan-y;
+}

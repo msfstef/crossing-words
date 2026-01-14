@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { Puzzle, Clue } from "../types/puzzle";
 import type { Collaborator } from "../collaboration/types";
 import { useSwipeNavigation, type SwipeDirection } from "../hooks/useSwipeNavigation";
+import { usePinchGesture } from "../hooks/usePinchGesture";
 import "./CrosswordGrid.css";
 
 /**
@@ -97,6 +98,12 @@ interface CrosswordGridProps {
   referencedClueCells?: Set<string>;
   /** Set of cells from letter-range references (individual cell highlight) - "row,col" format */
   letterReferenceCells?: Set<string>;
+  /** Whether zoom mode is active */
+  isZoomMode?: boolean;
+  /** Viewport bounds for zoom mode (startRow, endRow, startCol, endCol) */
+  zoomViewport?: { startRow: number; endRow: number; startCol: number; endCol: number } | null;
+  /** Callback to toggle zoom mode */
+  onToggleZoom?: () => void;
 }
 
 /**
@@ -253,6 +260,9 @@ export function CrosswordGrid({
   isTouchDevice = false,
   referencedClueCells = new Set(),
   letterReferenceCells = new Set(),
+  isZoomMode = false,
+  zoomViewport = null,
+  onToggleZoom,
 }: CrosswordGridProps) {
   // Container ref for measuring available space
   const containerRef = useRef<HTMLDivElement>(null);
@@ -262,10 +272,34 @@ export function CrosswordGrid({
     onSwipe: onSwipe ?? (() => {}),
     enabled: isTouchDevice && Boolean(onSwipe),
   });
+
+  // Pinch gesture handlers for zoom toggle
+  const pinchHandlers = usePinchGesture({
+    onPinchIn: onToggleZoom && !isZoomMode ? onToggleZoom : undefined,
+    onPinchOut: onToggleZoom && isZoomMode ? onToggleZoom : undefined,
+  });
+  // Determine grid dimensions based on zoom mode
+  const { gridWidth, gridHeight, gridStartRow, gridStartCol } = useMemo(() => {
+    if (isZoomMode && zoomViewport) {
+      return {
+        gridWidth: zoomViewport.endCol - zoomViewport.startCol + 1,
+        gridHeight: zoomViewport.endRow - zoomViewport.startRow + 1,
+        gridStartRow: zoomViewport.startRow,
+        gridStartCol: zoomViewport.startCol,
+      };
+    }
+    return {
+      gridWidth: puzzle.width,
+      gridHeight: puzzle.height,
+      gridStartRow: 0,
+      gridStartCol: 0,
+    };
+  }, [isZoomMode, zoomViewport, puzzle.width, puzzle.height]);
+
   // Cell size state - initialize with estimate from viewport dimensions
   // ResizeObserver corrects any discrepancy after mount
   const [cellSize, setCellSize] = useState(() =>
-    getInitialCellSize(puzzle.width, puzzle.height, isTouchDevice)
+    getInitialCellSize(gridWidth, gridHeight, isTouchDevice)
   );
 
   // useLayoutEffect to correct initial estimate and handle dynamic resizing
@@ -277,7 +311,7 @@ export function CrosswordGrid({
 
     const updateCellSize = () => {
       const { width, height } = container.getBoundingClientRect();
-      const newSize = calculateCellSize(width, height, puzzle.width, puzzle.height);
+      const newSize = calculateCellSize(width, height, gridWidth, gridHeight);
       setCellSize(newSize);
     };
 
@@ -291,7 +325,7 @@ export function CrosswordGrid({
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, [puzzle.width, puzzle.height]);
+  }, [gridWidth, gridHeight]);
 
   /**
    * Check if a cell is part of the currently selected word
@@ -353,23 +387,58 @@ export function CrosswordGrid({
     return cursors;
   }, [collaborators]);
 
+  // Filter cells based on zoom viewport
+  const visibleCells = useMemo(() => {
+    if (isZoomMode && zoomViewport) {
+      return puzzle.grid.flat().filter(cell =>
+        cell.row >= zoomViewport.startRow &&
+        cell.row <= zoomViewport.endRow &&
+        cell.col >= zoomViewport.startCol &&
+        cell.col <= zoomViewport.endCol
+      );
+    }
+    return puzzle.grid.flat();
+  }, [puzzle.grid, isZoomMode, zoomViewport]);
+
+  // Merge touch handlers (swipe and pinch)
+  const touchHandlers = useMemo(() => {
+    return {
+      onTouchStart: (e: React.TouchEvent) => {
+        swipeHandlers.onTouchStart(e);
+        pinchHandlers.onTouchStart(e);
+      },
+      onTouchMove: (e: React.TouchEvent) => {
+        swipeHandlers.onTouchMove(e);
+        pinchHandlers.onTouchMove(e);
+      },
+      onTouchEnd: (e: React.TouchEvent) => {
+        swipeHandlers.onTouchEnd(e);
+        pinchHandlers.onTouchEnd(e);
+      },
+      onTouchCancel: (e: React.TouchEvent) => {
+        swipeHandlers.onTouchCancel(e);
+        pinchHandlers.onTouchCancel(e);
+      },
+    };
+  }, [swipeHandlers, pinchHandlers]);
+
   return (
     <div
       ref={containerRef}
-      className="crossword-grid-container"
+      className={`crossword-grid-container ${isZoomMode ? 'crossword-grid-container--zoomed' : ''}`}
       style={{
         '--cell-size': `${cellSize}px`,
       } as React.CSSProperties}
-      {...swipeHandlers}
+      {...touchHandlers}
     >
       <div
-        className="crossword-grid"
+        className={`crossword-grid ${isZoomMode ? 'crossword-grid--zoomed' : ''}`}
         style={{
-          gridTemplateColumns: `repeat(${puzzle.width}, var(--cell-size))`,
-          gridTemplateRows: `repeat(${puzzle.height}, var(--cell-size))`,
+          gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
+          gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,
         }}
       >
-      {puzzle.grid.flat().map((cell) => {
+      {visibleCells.map((cell) => {
         const key = `${cell.row},${cell.col}`;
         const isSelected =
           selectedCell?.row === cell.row && selectedCell?.col === cell.col;
