@@ -17,9 +17,11 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
   const frameRef = useRef<number | null>(null);
   const completedRef = useRef(false);
 
-  // Check if device supports touch (coarse pointer = touch)
+  // Check if device is touch-only (coarse pointer + no hover = phones/tablets)
+  // This excludes touchscreen laptops that also have mouse/trackpad
   const isTouchDevice = useRef(
-    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+    typeof window !== 'undefined' &&
+    window.matchMedia('(pointer: coarse) and (hover: none)').matches
   );
 
   const updateProgress = useCallback(() => {
@@ -32,6 +34,9 @@ function useLongPress(onComplete: () => void, duration = LONG_PRESS_DURATION) {
     } else if (!completedRef.current) {
       completedRef.current = true;
       onComplete();
+      // Reset state after completion so animation is fresh when menu reopens
+      setProgress(0);
+      setIsPressed(false);
     }
   }, [duration, onComplete]);
 
