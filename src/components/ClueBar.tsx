@@ -100,6 +100,7 @@ export function ClueBar({
         onKeyDown={onToggleDirection ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
+            e.stopPropagation(); // Prevent document-level handler from also firing
             onToggleDirection();
           }
         } : undefined}
