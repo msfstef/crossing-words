@@ -11,6 +11,7 @@ import { SolveLayout, SolveHeader } from './components/Layout';
 import { CrosswordKeyboard } from './components/Keyboard';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { useZoomZones } from './hooks/useZoomZones';
+import { usePuzzleClueReferenceMap } from './hooks/usePuzzleClueReferenceMap';
 import { useClueReferences } from './hooks/useClueReferences';
 import { useVerification } from './hooks/useVerification';
 import { useCompletionDetection } from './hooks/useCompletionDetection';
@@ -409,9 +410,12 @@ function App() {
     return new Set(currentWord.map((cell) => `${cell.row},${cell.col}`));
   }, [currentWord]);
 
-  // Use clue reference hook for highlighting referenced clues
+  // Pre-compute all clue references at puzzle load time for O(1) lookup
+  const clueReferenceMap = usePuzzleClueReferenceMap(puzzle);
+
+  // Use clue reference hook for highlighting referenced clues (O(1) lookup)
   const { referencedClueCells, letterReferenceCells } = useClueReferences({
-    puzzle,
+    clueReferenceMap,
     currentClue,
     currentWordCells,
   });

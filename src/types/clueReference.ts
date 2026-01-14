@@ -146,3 +146,28 @@ export interface ExtendedParsedReferences extends ParsedClueReferences {
   /** Whether any answer-spanning references were found */
   hasAnswerSpanning: boolean;
 }
+
+// ============================================================================
+// Pre-computed Clue Reference Types (for O(1) lookup on clue change)
+// ============================================================================
+
+/**
+ * Pre-computed reference data for a single clue.
+ * Stored in a map for O(1) lookup when navigating between clues.
+ */
+export interface PrecomputedClueReference {
+  /** Cells from fully-referenced clues (whole word highlight) - "row,col" format */
+  referencedClueCells: Set<string>;
+  /** Specific cells from letter-range references - "row,col" format */
+  letterReferenceCells: Set<string>;
+  /** Whether this clue has any references */
+  hasReferences: boolean;
+  /** Whether this clue has letter-specific references */
+  hasLetterReferences: boolean;
+}
+
+/**
+ * Map from clue ID (e.g., "17-across") to pre-computed references.
+ * Pre-computed at puzzle load time for instant lookup on clue change.
+ */
+export type ClueReferenceMap = Map<string, PrecomputedClueReference>;

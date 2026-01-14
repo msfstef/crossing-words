@@ -35,6 +35,8 @@ import type {
   ReferenceHighlights,
   ExtendedParsedReferences,
   PatternRegistryConfig,
+  PrecomputedClueReference,
+  ClueReferenceMap,
 } from '../types/clueReference';
 import { PatternRegistry, createDefaultRegistry, getDefaultRegistry } from './patterns';
 
@@ -44,6 +46,8 @@ export type {
   ParsedClueReferences,
   ReferenceHighlights,
   ExtendedParsedReferences,
+  PrecomputedClueReference,
+  ClueReferenceMap,
 };
 
 // Re-export pattern registry for advanced usage
@@ -237,4 +241,53 @@ export function isStarredClue(clueText: string): boolean {
  */
 export function getClueDisplayText(clueText: string): string {
   return isStarredClue(clueText) ? clueText.substring(1) : clueText;
+}
+
+/**
+ * Build a complete clue reference map for a puzzle.
+ * Pre-computes all clue references at puzzle load time for O(1) lookup
+ * when navigating between clues.
+ *
+ * @param puzzle - The puzzle to build the reference map for
+ * @returns Map from clue ID to pre-computed reference data
+ */
+export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
+  const map: ClueReferenceMap = new Map();
+
+  const processClues = (clues: Clue[], direction: 'across' | 'down') => {
+    for (const clue of clues) {
+      const clueId = `${clue.number}-${direction}`;
+
+      // Parse references from clue text
+      const parsed = parseClueReferences(clue.text, clue.number, direction);
+
+      if (parsed.references.length === 0) {
+        // Store empty result to avoid re-parsing
+        map.set(clueId, {
+          referencedClueCells: new Set(),
+          letterReferenceCells: new Set(),
+          hasReferences: false,
+          hasLetterReferences: false,
+        });
+        continue;
+      }
+
+      // Resolve references to cell coordinates
+      const highlights = resolveReferencesToCells(parsed.references, puzzle);
+
+      map.set(clueId, {
+        referencedClueCells: highlights.referencedClueCells,
+        letterReferenceCells: highlights.letterReferenceCells,
+        hasReferences:
+          highlights.referencedClueCells.size > 0 ||
+          highlights.letterReferenceCells.size > 0,
+        hasLetterReferences: parsed.hasLetterReferences,
+      });
+    }
+  };
+
+  processClues(puzzle.clues.across, 'across');
+  processClues(puzzle.clues.down, 'down');
+
+  return map;
 }

@@ -1,18 +1,14 @@
 /**
  * Hook for managing clue reference highlighting.
  *
- * Parses the current clue text for references to other clues
- * and resolves them to cell coordinates for highlighting.
+ * Uses a pre-computed clue reference map for O(1) lookup when navigating
+ * between clues, instead of re-parsing regex patterns on every clue change.
  */
 
 import { useMemo } from 'react';
-import type { Puzzle } from '../types/puzzle';
-import {
-  parseClueReferences,
-  resolveReferencesToCells,
-} from '../utils/clueReferenceParser';
+import type { ClueReferenceMap } from '../types/clueReference';
 
-/** Minimal clue info needed for reference parsing */
+/** Minimal clue info needed for reference lookup */
 interface ClueInfo {
   number: number;
   direction: 'across' | 'down';
@@ -20,8 +16,8 @@ interface ClueInfo {
 }
 
 interface UseClueReferencesOptions {
-  /** The puzzle being solved */
-  puzzle: Puzzle | null;
+  /** Pre-computed clue reference map (from usePuzzleClueReferenceMap) */
+  clueReferenceMap: ClueReferenceMap | null;
   /** The currently selected clue (minimal info needed) */
   currentClue: ClueInfo | null;
   /** Cells in the current word (to exclude from highlighting) */
@@ -39,58 +35,66 @@ interface UseClueReferencesResult {
   hasLetterReferences: boolean;
 }
 
+const emptyResult: UseClueReferencesResult = {
+  referencedClueCells: new Set(),
+  letterReferenceCells: new Set(),
+  hasReferences: false,
+  hasLetterReferences: false,
+};
+
 /**
- * Parse and resolve clue references for highlighting.
+ * Look up pre-computed clue references for highlighting.
+ *
+ * This hook performs O(1) lookup in the pre-computed map instead of
+ * parsing regex patterns on every clue change, eliminating lag when
+ * navigating between clues.
  */
 export function useClueReferences({
-  puzzle,
+  clueReferenceMap,
   currentClue,
   currentWordCells,
 }: UseClueReferencesOptions): UseClueReferencesResult {
   return useMemo(() => {
-    const emptyResult: UseClueReferencesResult = {
-      referencedClueCells: new Set(),
-      letterReferenceCells: new Set(),
-      hasReferences: false,
-      hasLetterReferences: false,
-    };
-
-    if (!puzzle || !currentClue) {
+    if (!clueReferenceMap || !currentClue) {
       return emptyResult;
     }
 
-    // Parse the clue text for references
-    const parsed = parseClueReferences(
-      currentClue.text,
-      currentClue.number,
-      currentClue.direction
-    );
+    // O(1) lookup in pre-computed map
+    const clueId = `${currentClue.number}-${currentClue.direction}`;
+    const precomputed = clueReferenceMap.get(clueId);
 
-    if (parsed.references.length === 0) {
+    if (!precomputed || !precomputed.hasReferences) {
       return emptyResult;
     }
 
-    // Resolve references to cell coordinates
-    const highlights = resolveReferencesToCells(parsed.references, puzzle);
-
-    // Exclude current word cells from whole-clue highlights only
-    // (to avoid visual conflict with current word selection)
-    // Letter-specific references are kept even in current word
-    // (e.g., "letters 2-3 here" should still highlight those cells)
+    // Apply dynamic currentWord exclusion
+    // We need to create a new Set to avoid mutating the cached one
+    let referencedClueCells = precomputed.referencedClueCells;
     if (currentWordCells && currentWordCells.size > 0) {
+      // Only create new Set if we actually need to exclude cells
+      let needsFiltering = false;
       for (const cell of currentWordCells) {
-        highlights.referencedClueCells.delete(cell);
-        // Keep letterReferenceCells - specific letter highlights are important
+        if (precomputed.referencedClueCells.has(cell)) {
+          needsFiltering = true;
+          break;
+        }
+      }
+
+      if (needsFiltering) {
+        referencedClueCells = new Set(precomputed.referencedClueCells);
+        for (const cell of currentWordCells) {
+          referencedClueCells.delete(cell);
+        }
       }
     }
 
     return {
-      referencedClueCells: highlights.referencedClueCells,
-      letterReferenceCells: highlights.letterReferenceCells,
+      referencedClueCells,
+      letterReferenceCells: precomputed.letterReferenceCells,
       hasReferences:
-        highlights.referencedClueCells.size > 0 ||
-        highlights.letterReferenceCells.size > 0,
-      hasLetterReferences: highlights.letterReferenceCells.size > 0,
+        referencedClueCells.size > 0 ||
+        precomputed.letterReferenceCells.size > 0,
+      hasLetterReferences: precomputed.hasLetterReferences,
     };
-  }, [puzzle, currentClue, currentWordCells]);
+  }, [clueReferenceMap, currentClue, currentWordCells]);
 }
