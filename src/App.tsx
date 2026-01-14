@@ -26,6 +26,14 @@ import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
+import {
+  getTestPuzzleFromUrl,
+  createTestPuzzle,
+  TEST_PUZZLES,
+  isDevMode,
+  type TestPuzzleName,
+  type TestPuzzleOptions,
+} from './lib/testPuzzleGenerator';
 import { invalidateProgressCache } from './lib/puzzleCache';
 import {
   parseShareUrl,
@@ -81,22 +89,63 @@ function getSessionFromHash(): { puzzleIdFromUrl?: string; timelineId?: string }
   return {};
 }
 
+/**
+ * Get test puzzle from URL parameters (dev/test mode only).
+ * Supports: ?testPuzzle=mini, ?testPuzzle=custom&width=10&height=10
+ * Returns null if not in dev mode or no test puzzle requested.
+ */
+function getTestPuzzleFromUrlParams(): Puzzle | null {
+  if (!isDevMode()) return null;
+
+  const testPuzzleParam = getTestPuzzleFromUrl();
+  if (!testPuzzleParam) return null;
+
+  // Pre-defined puzzle name
+  if (typeof testPuzzleParam === 'string') {
+    const puzzle = TEST_PUZZLES[testPuzzleParam as TestPuzzleName];
+    if (puzzle) {
+      console.log(`[Test Mode] Loading pre-defined test puzzle: ${testPuzzleParam}`);
+      return puzzle;
+    }
+  }
+
+  // Custom puzzle options
+  if (typeof testPuzzleParam === 'object') {
+    console.log(`[Test Mode] Creating custom test puzzle: ${testPuzzleParam.width}x${testPuzzleParam.height}`);
+    return createTestPuzzle(testPuzzleParam as TestPuzzleOptions);
+  }
+
+  return null;
+}
+
 function App() {
+  // Check for test puzzle from URL parameters (dev mode only)
+  const initialTestPuzzle = useMemo(() => getTestPuzzleFromUrlParams(), []);
+
   // View state: library (home) or solve (puzzle view)
-  // Default to library unless URL has timeline (shared session)
+  // Default to library unless URL has timeline (shared session) OR test puzzle
   const initialSession = getSessionFromHash();
   const [activeView, setActiveView] = useState<'library' | 'solve'>(
-    initialSession.timelineId ? 'solve' : 'library'
+    initialSession.timelineId || initialTestPuzzle ? 'solve' : 'library'
   );
 
-  // Start with null puzzle - will be set when opening from library or joining shared session
-  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [activePuzzleId, setActivePuzzleId] = useState<string>('');
+  // Start with test puzzle if provided, otherwise null
+  // Will be set when opening from library or joining shared session
+  const [puzzle, setPuzzle] = useState<Puzzle | null>(initialTestPuzzle);
+  const [activePuzzleId, setActivePuzzleId] = useState<string>(
+    initialTestPuzzle ? getPuzzleId(initialTestPuzzle) : ''
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Session state: timeline ID for P2P collaboration
   // Initially undefined - will be set after checking for conflicts with URL timeline
-  const [timelineId, setTimelineId] = useState<string | undefined>(undefined);
+  // For test puzzles, generate a timeline immediately to enable P2P features
+  const [timelineId, setTimelineId] = useState<string | undefined>(() => {
+    if (initialTestPuzzle) {
+      return generateTimelineId();
+    }
+    return undefined;
+  });
 
   // Track the timeline ID from URL that needs conflict checking
   const [pendingUrlTimeline, setPendingUrlTimeline] = useState<string | null>(
@@ -109,19 +158,47 @@ function App() {
   );
 
   // Track if we're waiting for a puzzle from a sharer
+  // Test puzzles are never waiting
   const [waitingForPuzzle, setWaitingForPuzzle] = useState(
-    Boolean(initialSession.timelineId && initialSession.puzzleIdFromUrl)
+    !initialTestPuzzle && Boolean(initialSession.timelineId && initialSession.puzzleIdFromUrl)
   );
 
   // Track if initial session load is complete (needed to avoid race condition)
+  // Test puzzles are immediately ready
   const [initialLoadComplete, setInitialLoadComplete] = useState(
-    // If no URL session, we're already done with initial load
-    !initialSession.timelineId || !initialSession.puzzleIdFromUrl
+    // If test puzzle or no URL session, we're already done with initial load
+    Boolean(initialTestPuzzle) || !initialSession.timelineId || !initialSession.puzzleIdFromUrl
   );
 
   // Share dialog state
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+
+  // Expose current puzzle to window for E2E test inspection (dev mode only)
+  useEffect(() => {
+    if (!isDevMode()) return;
+
+    window.__CURRENT_TEST_PUZZLE__ = puzzle ?? undefined;
+
+    // Expose __loadTestPuzzle__ function to allow E2E tests to load puzzles dynamically
+    window.__loadTestPuzzle__ = (name: TestPuzzleName) => {
+      const testPuzzle = TEST_PUZZLES[name];
+      if (testPuzzle) {
+        console.log(`[Test Mode] Loading test puzzle via __loadTestPuzzle__: ${name}`);
+        setPuzzle(testPuzzle);
+        setActivePuzzleId(getPuzzleId(testPuzzle));
+        setActiveView('solve');
+        if (!timelineId) {
+          setTimelineId(generateTimelineId());
+        }
+      }
+    };
+
+    return () => {
+      window.__CURRENT_TEST_PUZZLE__ = undefined;
+      window.__loadTestPuzzle__ = undefined;
+    };
+  }, [puzzle, timelineId]);
 
   // Join dialog state for merge/start-fresh choice
   const [joinDialogState, setJoinDialogState] = useState<{

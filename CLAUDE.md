@@ -8,7 +8,7 @@ Crossing Words is a cross-platform, peer-to-peer multiplayer crossword applicati
 
 ## Build & Development Commands
 
-Always try to evaluate your work using the Playwright MCP or Chrome extension for end-to-end testing the web app before asking the human partner for a review.
+**IMPORTANT: Always E2E test your work before requesting review.** Use the Playwright MCP or Chrome extension to verify changes work correctly in the browser.
 
 ### Testing
 
@@ -27,6 +27,9 @@ npm run test:p2p
 
 # Run tests with UI
 npm run test:ui
+
+# Run Playwright E2E tests
+npx playwright test
 ```
 
 ### Other Commands
@@ -41,6 +44,21 @@ npm run build
 # Lint code
 npm run lint
 ```
+
+### Quick Test Puzzle Loading (Dev Mode)
+
+For rapid testing, load test puzzles via URL parameters:
+
+```bash
+# Start dev server and open with test puzzle
+npm run dev
+# Then navigate to: http://localhost:5173?testPuzzle=standard
+
+# Available sizes: mini (5x5), standard (15x15), sunday (21x21), large (25x25)
+# Custom size: ?testPuzzle=custom&width=10&height=10
+```
+
+**See `docs/PUZZLE_TESTING.md` for comprehensive puzzle testing guide.**
 
 ### Worktree Isolation
 
@@ -110,46 +128,34 @@ When fixing UI issues related to layout, sizing, or rendering, **both** types of
 **1. Unit tests (Vitest + happy-dom):** Test calculation logic and component rendering with mocked dimensions
 **2. E2E tests (Playwright):** Test actual rendering at various viewport sizes
 
-#### Test Puzzle Generator
+**IMPORTANT: See `docs/PUZZLE_TESTING.md` for comprehensive testing guide including:**
+- Test puzzle generator usage and options
+- E2E test helpers for Playwright
+- Viewport sizes to test
+- Testing checklist for puzzle features
 
-Use `src/lib/testPuzzleGenerator.ts` for testing different puzzle sizes:
+#### Quick Reference
 
 ```typescript
+// Unit tests - import from test puzzle generator
 import { createTestPuzzle, TEST_PUZZLES } from '../lib/testPuzzleGenerator';
+const puzzle = TEST_PUZZLES.standard; // 15x15
 
-// Create custom size puzzle
-const puzzle = createTestPuzzle({ width: 21, height: 21 });
-
-// Or use pre-defined sizes
-const miniPuzzle = TEST_PUZZLES.mini;       // 5x5
-const standardPuzzle = TEST_PUZZLES.standard; // 15x15
-const sundayPuzzle = TEST_PUZZLES.sunday;     // 21x21
-const largePuzzle = TEST_PUZZLES.large;       // 25x25
+// E2E tests - use helpers
+import { navigateToTestPuzzle, waitForPuzzleReady } from './helpers/testPuzzleHelpers';
+await navigateToTestPuzzle(page, 'standard');
+await waitForPuzzleReady(page);
 ```
 
-#### Grid Sizing Tests
+#### Key Test Commands
 
-Grid cell sizing logic is in `src/components/CrosswordGrid.tsx`. The key functions are:
-- `calculateCellSize()` - Calculates optimal cell size for given container and puzzle dimensions
-- `getInitialCellSize()` - Estimates cell size from viewport before ResizeObserver kicks in
-
-Unit tests are in `src/__tests__/grid/sizing.test.ts`. Run with:
 ```bash
+# Unit tests for grid sizing
 npm run test:run -- src/__tests__/grid
-```
 
-E2E tests are in `e2e/grid-sizing.spec.ts`. Run with:
-```bash
+# E2E tests for grid
 npx playwright test e2e/grid-sizing.spec.ts
 ```
-
-#### Viewport Sizes to Test
-
-When testing UI layout, cover these common device sizes:
-- Mobile portrait: 375x667 (iPhone 8)
-- Mobile small: 320x568 (iPhone SE)
-- Tablet: 768x1024 (iPad)
-- Desktop: 1920x1080
 
 #### Puzzle Grid Layout Structure
 
