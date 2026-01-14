@@ -516,13 +516,56 @@ export function CrosswordGrid({
     );
   };
 
+  // Compute corner rounding classes for zoom mode
+  // Corners should be rounded only when at actual puzzle edge (no hidden content)
+  const cornerClasses = useMemo(() => {
+    if (!isZoomMode || !edgeIndicators) return '';
+    const classes: string[] = [];
+    // Top-left corner: rounded if no top AND no left edge (at actual puzzle corner)
+    if (!edgeIndicators.top && !edgeIndicators.left) classes.push('grid--rounded-tl');
+    // Top-right corner: rounded if no top AND no right edge
+    if (!edgeIndicators.top && !edgeIndicators.right) classes.push('grid--rounded-tr');
+    // Bottom-left corner: rounded if no bottom AND no left edge
+    if (!edgeIndicators.bottom && !edgeIndicators.left) classes.push('grid--rounded-bl');
+    // Bottom-right corner: rounded if no bottom AND no right edge
+    if (!edgeIndicators.bottom && !edgeIndicators.right) classes.push('grid--rounded-br');
+    return classes.join(' ');
+  }, [isZoomMode, edgeIndicators]);
+
+  // Compute CSS variables for edge alignment and inner shadow
+  const containerStyle = useMemo(() => {
+    const style: React.CSSProperties & { [key: string]: string } = {
+      '--cell-size': `${cellSize}px`,
+    };
+
+    if (isZoomMode && edgeIndicators) {
+      // Set left/right edge offsets for top/bottom alignment
+      const edgeWidth = cellSize * EDGE_INDICATOR_FRACTION;
+      style['--left-edge-offset'] = edgeIndicators.left ? `${edgeWidth}px` : '0px';
+      style['--right-edge-offset'] = edgeIndicators.right ? `${edgeWidth}px` : '0px';
+
+      // Build inner shadow to indicate hidden content
+      // Subtle inset shadow on edges with more content
+      const shadows: string[] = [];
+      const shadowSize = '8px';
+      const shadowColor = 'rgba(0, 0, 0, 0.15)';
+      if (edgeIndicators.top) shadows.push(`inset 0 ${shadowSize} ${shadowSize} -4px ${shadowColor}`);
+      if (edgeIndicators.bottom) shadows.push(`inset 0 -${shadowSize} ${shadowSize} -4px ${shadowColor}`);
+      if (edgeIndicators.left) shadows.push(`inset ${shadowSize} 0 ${shadowSize} -4px ${shadowColor}`);
+      if (edgeIndicators.right) shadows.push(`inset -${shadowSize} 0 ${shadowSize} -4px ${shadowColor}`);
+      if (shadows.length > 0) {
+        style['--edge-shadow'] = shadows.join(', ');
+      }
+    }
+
+    return style;
+  }, [cellSize, isZoomMode, edgeIndicators]);
+
   return (
     <div
       ref={containerRef}
       className={`crossword-grid-container ${isZoomMode ? 'crossword-grid-container--zoomed' : ''}`}
-      style={{
-        '--cell-size': `${cellSize}px`,
-      } as React.CSSProperties}
+      style={containerStyle as React.CSSProperties}
       {...touchHandlers}
     >
       {/* Top edge indicator cells */}
@@ -551,7 +594,7 @@ export function CrosswordGrid({
         )}
 
         <div
-          className={`crossword-grid ${isZoomMode ? 'crossword-grid--zoomed' : ''}`}
+          className={`crossword-grid ${isZoomMode ? `crossword-grid--zoomed ${cornerClasses}` : ''}`}
           style={{
             gridTemplateColumns: `repeat(${gridWidth}, var(--cell-size))`,
             gridTemplateRows: `repeat(${gridHeight}, var(--cell-size))`,

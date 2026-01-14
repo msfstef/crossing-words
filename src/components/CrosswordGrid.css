@@ -207,12 +207,15 @@
 .crossword-grid-container--zoomed {
     flex-direction: column;
     gap: 0;
+    /* CSS variables for dynamic edge alignment - set by JS */
+    --left-edge-offset: 0px;
+    --right-edge-offset: 0px;
 }
 
 /* Row container for left/grid/right arrangement */
 .crossword-grid-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     gap: 0;
 }
@@ -223,20 +226,25 @@
     gap: var(--grid-gap, 2px);
     pointer-events: none;
     overflow: hidden;
+    position: relative;
 }
 
 /* Top edge - horizontal strip above grid */
 .crossword-edge-indicator--top {
     height: calc(var(--cell-size) * 0.35);
     justify-content: center;
-    margin-left: calc(var(--cell-size) * 0.35 + var(--grid-gap, 2px));
+    /* Dynamic offset based on whether left edge exists (set by JS) */
+    margin-left: calc(var(--left-edge-offset) + 2px);
+    margin-right: calc(var(--right-edge-offset) + 2px);
 }
 
 /* Bottom edge - horizontal strip below grid */
 .crossword-edge-indicator--bottom {
     height: calc(var(--cell-size) * 0.35);
     justify-content: center;
-    margin-left: calc(var(--cell-size) * 0.35 + var(--grid-gap, 2px));
+    /* Dynamic offset based on whether left edge exists (set by JS) */
+    margin-left: calc(var(--left-edge-offset) + 2px);
+    margin-right: calc(var(--right-edge-offset) + 2px);
 }
 
 /* Left edge - vertical strip beside grid */
@@ -251,32 +259,88 @@
     grid-template-columns: 1fr;
 }
 
-/* Edge indicator cells - partial visibility */
+/* Edge indicator cells - partial visibility with gradient fade */
 .crossword-cell--edge-indicator {
-    opacity: 0.5;
+    opacity: 0.6;
     pointer-events: none;
 }
 
-/* Top edge cells - show bottom portion */
+/* Top edge cells - show bottom portion with fade */
 .crossword-cell--edge-top {
     clip-path: inset(65% 0 0 0);
     margin-top: calc(var(--cell-size) * -0.65);
+    /* Gradient mask for fade effect - darker at visible edge */
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
 }
 
-/* Bottom edge cells - show top portion */
+/* Bottom edge cells - show top portion with fade */
 .crossword-cell--edge-bottom {
     clip-path: inset(0 0 65% 0);
     margin-bottom: calc(var(--cell-size) * -0.65);
+    /* Gradient mask for fade effect - darker at visible edge */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
 }
 
-/* Left edge cells - show right portion */
+/* Left edge cells - show right portion with fade */
 .crossword-cell--edge-left {
     clip-path: inset(0 0 0 65%);
     margin-left: calc(var(--cell-size) * -0.65);
+    /* Gradient mask for fade effect - darker at visible edge */
+    mask-image: linear-gradient(to left, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
 }
 
-/* Right edge cells - show left portion */
+/* Right edge cells - show left portion with fade */
 .crossword-cell--edge-right {
     clip-path: inset(0 65% 0 0);
     margin-right: calc(var(--cell-size) * -0.65);
+    /* Gradient mask for fade effect - darker at visible edge */
+    mask-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+}
+
+/* ============================================================================
+ * Zoom Mode Corner Radius
+ * Sharp corners when there's hidden content, rounded when at actual puzzle edge
+ * ============================================================================ */
+
+/* In zoom mode, default to sharp corners */
+.crossword-grid--zoomed {
+    border-radius: 0;
+    position: relative;
+}
+
+/* Selectively round corners that are at actual puzzle edges */
+.crossword-grid--zoomed.grid--rounded-tl {
+    border-top-left-radius: 4px;
+}
+
+.crossword-grid--zoomed.grid--rounded-tr {
+    border-top-right-radius: 4px;
+}
+
+.crossword-grid--zoomed.grid--rounded-bl {
+    border-bottom-left-radius: 4px;
+}
+
+.crossword-grid--zoomed.grid--rounded-br {
+    border-bottom-right-radius: 4px;
+}
+
+/* ============================================================================
+ * Inner shadow on grid edges to indicate continuation
+ * ============================================================================ */
+
+/* Shadow overlays for edges with hidden content */
+.crossword-grid--zoomed::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    /* Shadow will be set dynamically based on which edges have content */
+    box-shadow: var(--edge-shadow, none);
+    border-radius: inherit;
 }
