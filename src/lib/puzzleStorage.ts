@@ -7,6 +7,17 @@
 
 import * as Y from 'yjs';
 import type { Puzzle } from '../types/puzzle';
+import {
+  getCachedPuzzleList,
+  setCachedPuzzleList,
+  invalidatePuzzleListCache,
+  getCachedPuzzle,
+  setCachedPuzzle,
+  removeCachedPuzzle,
+  getCachedProgress,
+  setCachedProgress,
+  invalidateProgressCache,
+} from './puzzleCache';
 
 const DB_NAME = 'crossing-words-puzzles';
 const DB_VERSION = 2;
@@ -259,6 +270,9 @@ export async function savePuzzle(
       transaction.oncomplete = () => {
         console.debug('[puzzleStorage] Saved puzzle and metadata:', puzzleId, puzzle.title);
         db.close();
+        // Update caches
+        setCachedPuzzle(puzzleId, puzzle);
+        invalidatePuzzleListCache(); // List order may have changed
         resolve();
       };
 
@@ -275,12 +289,19 @@ export async function savePuzzle(
 
 /**
  * Loads a puzzle by its ID.
- * Used to retrieve puzzles stored via P2P sharing.
+ * Uses in-memory cache for instant retrieval if available.
  *
  * @param puzzleId - The puzzle ID to load
  * @returns The puzzle if found, null otherwise
  */
 export async function loadPuzzleById(puzzleId: string): Promise<Puzzle | null> {
+  // Check cache first
+  const cached = getCachedPuzzle(puzzleId);
+  if (cached) {
+    console.debug('[puzzleStorage] Loaded puzzle from cache:', puzzleId, cached.title);
+    return cached;
+  }
+
   try {
     const db = await openDatabase();
     const transaction = db.transaction(STORE_NAME, 'readonly');
@@ -298,6 +319,8 @@ export async function loadPuzzleById(puzzleId: string): Promise<Puzzle | null> {
         const puzzle = request.result as Puzzle | undefined;
         if (puzzle) {
           console.debug('[puzzleStorage] Loaded puzzle by ID:', puzzleId, puzzle.title);
+          // Add to cache for future access
+          setCachedPuzzle(puzzleId, puzzle);
         } else {
           console.debug('[puzzleStorage] No puzzle found for ID:', puzzleId);
         }
@@ -316,9 +339,17 @@ export async function loadPuzzleById(puzzleId: string): Promise<Puzzle | null> {
 
 /**
  * Lists all saved puzzles with their metadata.
+ * Uses in-memory cache for instant retrieval if available.
  * Returns entries sorted by savedAt (most recent first).
  */
 export async function listAllPuzzles(): Promise<PuzzleEntry[]> {
+  // Check cache first
+  const cached = getCachedPuzzleList();
+  if (cached) {
+    console.debug('[puzzleStorage] Listed', cached.length, 'puzzles from cache');
+    return cached;
+  }
+
   try {
     const db = await openDatabase();
     const transaction = db.transaction(META_STORE_NAME, 'readonly');
@@ -341,8 +372,9 @@ export async function listAllPuzzles(): Promise<PuzzleEntry[]> {
           entries.push(cursor.value as PuzzleEntry);
           cursor.continue();
         } else {
-          // All entries collected
+          // All entries collected - update cache
           console.debug('[puzzleStorage] Listed', entries.length, 'puzzles');
+          setCachedPuzzleList(entries);
           resolve(entries);
         }
       };
@@ -381,6 +413,9 @@ export async function resetPuzzleProgress(puzzleId: string): Promise<void> {
     // Clear timeline mapping
     localStorage.removeItem(`timeline:${puzzleId}`);
     console.debug('[puzzleStorage] Reset timeline entry:', `timeline:${puzzleId}`);
+
+    // Invalidate progress cache
+    invalidateProgressCache(puzzleId);
   } catch (error) {
     console.error('[puzzleStorage] Failed to reset puzzle progress:', error);
     throw error;
@@ -430,6 +465,10 @@ export async function deletePuzzle(puzzleId: string): Promise<void> {
         console.debug('[puzzleStorage] Deleted puzzle:', puzzleId);
         db.close();
 
+        // Update caches
+        removeCachedPuzzle(puzzleId);
+        invalidatePuzzleListCache();
+
         // Clean up CRDT database (y-indexeddb stores progress, entries, durations)
         try {
           const deleteRequest = indexedDB.deleteDatabase(`puzzle-${puzzleId}`);
@@ -467,6 +506,7 @@ export async function deletePuzzle(puzzleId: string): Promise<void> {
 
 /**
  * Gets the progress for a puzzle by decoding the CRDT state.
+ * Uses in-memory cache for instant retrieval if available.
  * Counts actual filled cells from the Yjs 'entries' map and verified cells.
  *
  * @param puzzleId - The puzzle ID to check progress for
@@ -477,6 +517,13 @@ export async function getPuzzleProgress(
   puzzleId: string,
   puzzle: Puzzle
 ): Promise<{ filled: number; verified: number; total: number }> {
+  // Check cache first
+  const cached = getCachedProgress(puzzleId);
+  if (cached) {
+    console.debug('[puzzleStorage] Got progress from cache:', puzzleId);
+    return cached;
+  }
+
   // Count total fillable cells from puzzle grid
   let total = 0;
   for (const row of puzzle.grid) {
@@ -548,7 +595,9 @@ export async function getPuzzleProgress(
 
             console.debug('[puzzleStorage] Puzzle', puzzleId, 'has', filled, 'filled,', verified, 'verified cells');
             doc.destroy();
-            resolve({ filled, verified, total });
+            const progress = { filled, verified, total };
+            setCachedProgress(puzzleId, progress);
+            resolve(progress);
           };
 
           getAllRequest.onerror = () => {

@@ -780,7 +780,7 @@ function App() {
   // Use minimum loading time to prevent jarring flash on fast loads
   // NOTE: This hook must be called before any early returns to maintain consistent hook order
   const isActuallyLoading = waitingForPuzzle || !puzzle || !ready;
-  const isLoading = useMinimumLoadingTime(isActuallyLoading, 300);
+  const isLoading = useMinimumLoadingTime(isActuallyLoading, 250);
 
   // Render Library view
   if (activeView === 'library') {
