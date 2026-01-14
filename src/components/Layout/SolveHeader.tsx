@@ -20,6 +20,10 @@ interface SolveHeaderProps {
   followedCollaborator?: Collaborator | null;
   /** Toggle follow mode */
   onToggleFollow?: () => void;
+  /** Whether zoom mode is active */
+  isZoomMode?: boolean;
+  /** Toggle zoom mode */
+  onToggleZoom?: () => void;
 }
 
 /**
@@ -35,6 +39,8 @@ export function SolveHeader({
   isP2PSession,
   followedCollaborator = null,
   onToggleFollow,
+  isZoomMode = false,
+  onToggleZoom,
 }: SolveHeaderProps) {
   return (
     <header className="solve-header">
@@ -52,6 +58,40 @@ export function SolveHeader({
 
       {/* Spacer - header title removed, now shown above grid */}
       <div className="solve-header__spacer" />
+
+      {/* Zoom toggle button */}
+      {onToggleZoom && (
+        <button
+          type="button"
+          className={`solve-header__zoom ${isZoomMode ? 'solve-header__zoom--active' : ''}`}
+          onClick={onToggleZoom}
+          aria-label={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
+          title={isZoomMode ? 'Exit zoom mode' : 'Enter zoom mode'}
+        >
+          <svg
+            className="solve-header__zoom-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Magnifying glass */}
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+            {/* Plus sign when not zoomed, minus when zoomed */}
+            {isZoomMode ? (
+              <line x1="8" y1="11" x2="14" y2="11" />
+            ) : (
+              <>
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </>
+            )}
+          </svg>
+        </button>
+      )}
 
       {/* Collaborator dots - compact overlapping avatars */}
       {collaborators.length > 0 && (
