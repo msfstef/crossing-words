@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
 import { DatePicker } from './DatePicker';
 import './DownloadDialog.css';
@@ -20,6 +20,29 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
     today.setHours(12, 0, 0, 0);
     return today;
   });
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Handle click outside - use mousedown/touchstart for more reliable detection
+  const handleBackdropInteraction = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    // Only close if clicking/touching directly on the backdrop (not on dialog content)
+    if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -30,15 +53,14 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
     onDownload(sourceId, selectedSource.name, selectedDate);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div className="download-dialog-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="download-dialog-backdrop"
+      onMouseDown={handleBackdropInteraction}
+      onTouchStart={handleBackdropInteraction}
+    >
       <div
+        ref={dialogRef}
         className="download-dialog"
         role="dialog"
         aria-modal="true"
@@ -73,6 +95,7 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
               value={selectedDate}
               onChange={setSelectedDate}
               availableDays={selectedSource?.availableDays}
+              disableHistoryManagement
             />
           </div>
         </div>

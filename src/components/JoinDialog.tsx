@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useDialogHistory } from '../hooks/useDialogHistory';
 import './JoinDialog.css';
 
 interface JoinDialogProps {
@@ -57,6 +58,9 @@ export function JoinDialog({
 }: JoinDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  // Handle back button navigation
+  useDialogHistory(isOpen, onCancel, 'join');
+
   // Open/close the dialog element
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -79,26 +83,44 @@ export function JoinDialog({
       onCancel();
     };
 
+    // Check if event coordinates are outside the dialog bounds
+    const isClickOutside = (clientX: number, clientY: number): boolean => {
+      const rect = dialog.getBoundingClientRect();
+      return (
+        clientX < rect.left ||
+        clientX > rect.right ||
+        clientY < rect.top ||
+        clientY > rect.bottom
+      );
+    };
+
     const handleClick = (e: MouseEvent) => {
       // Close if clicking on the backdrop (outside the dialog content)
-      const rect = dialog.getBoundingClientRect();
-      const isInDialog =
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom;
+      if (isClickOutside(e.clientX, e.clientY)) {
+        onCancel();
+      }
+    };
 
-      if (!isInDialog) {
+    // Handle touch events for mobile - use touchend for consistency
+    const handleTouchEnd = (e: TouchEvent) => {
+      // Only handle single touch
+      if (e.changedTouches.length !== 1) return;
+      const touch = e.changedTouches[0];
+      if (isClickOutside(touch.clientX, touch.clientY)) {
+        // Prevent the subsequent click event from also firing
+        e.preventDefault();
         onCancel();
       }
     };
 
     dialog.addEventListener('cancel', handleCancel);
     dialog.addEventListener('click', handleClick);
+    dialog.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       dialog.removeEventListener('cancel', handleCancel);
       dialog.removeEventListener('click', handleClick);
+      dialog.removeEventListener('touchend', handleTouchEnd);
     };
   }, [onCancel]);
 

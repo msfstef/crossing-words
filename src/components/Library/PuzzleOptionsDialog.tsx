@@ -57,7 +57,7 @@ export function PuzzleOptionsDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
   }, [isOpen]);
 
-  // Close dialog when clicking outside
+  // Close dialog when clicking/touching outside
   useEffect(() => {
     if (!isOpen) return;
 
@@ -67,14 +67,24 @@ export function PuzzleOptionsDialog({
       }
     };
 
+    const handleTouchOutside = (e: TouchEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
+        // Prevent the subsequent click event from also firing
+        e.preventDefault();
+        handleClose();
+      }
+    };
+
     // Add listener after a brief delay to avoid closing immediately
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleTouchOutside);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchOutside);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
   }, [isOpen]);

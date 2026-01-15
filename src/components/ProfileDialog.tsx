@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useProfile } from '../hooks/useProfile';
+import { useDialogHistory } from '../hooks/useDialogHistory';
 import { processAvatarImage } from '../lib/imageUtils';
 import './ProfileDialog.css';
 
@@ -48,6 +49,9 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
 
   // Track if file picker is open to prevent click-outside from closing dialog
   const isFilePickerOpen = useRef(false);
+
+  // Handle back button navigation
+  useDialogHistory(isOpen, onClose, 'profile');
 
   // Sync local nickname with profile when dialog opens
   useEffect(() => {
@@ -94,6 +98,17 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
       onClose();
     };
 
+    // Check if event coordinates are outside the dialog bounds
+    const isClickOutside = (clientX: number, clientY: number): boolean => {
+      const rect = dialog.getBoundingClientRect();
+      return (
+        clientX < rect.left ||
+        clientX > rect.right ||
+        clientY < rect.top ||
+        clientY > rect.bottom
+      );
+    };
+
     const handleClick = (e: MouseEvent) => {
       // Don't close if file picker was just opened
       // (click events can fire after file picker closes)
@@ -101,19 +116,36 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
         return;
       }
 
-      // Only close if clicking directly on the dialog backdrop
-      // (not on the content inside)
-      if (e.target === dialog) {
+      // Close if clicking on the backdrop (outside the dialog content)
+      if (isClickOutside(e.clientX, e.clientY)) {
+        onClose();
+      }
+    };
+
+    // Handle touch events for mobile - use touchend for consistency
+    const handleTouchEnd = (e: TouchEvent) => {
+      // Don't close if file picker was just opened
+      if (isFilePickerOpen.current) {
+        return;
+      }
+      // Only handle single touch
+      if (e.changedTouches.length !== 1) return;
+      const touch = e.changedTouches[0];
+      if (isClickOutside(touch.clientX, touch.clientY)) {
+        // Prevent the subsequent click event from also firing
+        e.preventDefault();
         onClose();
       }
     };
 
     dialog.addEventListener('cancel', handleCancel);
     dialog.addEventListener('click', handleClick);
+    dialog.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       dialog.removeEventListener('cancel', handleCancel);
       dialog.removeEventListener('click', handleClick);
+      dialog.removeEventListener('touchend', handleTouchEnd);
     };
   }, [onClose]);
 

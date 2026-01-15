@@ -14,6 +14,8 @@ interface DatePickerProps {
   availableDays?: AvailableDays;
   maxDate?: Date;
   minDate?: Date;
+  /** When true, disables history management (for use inside dialogs that manage their own history) */
+  disableHistoryManagement?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -74,6 +76,7 @@ export function DatePicker({
   availableDays = 'daily',
   maxDate = new Date(),
   minDate,
+  disableHistoryManagement = false,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => value || new Date());
@@ -88,16 +91,19 @@ export function DatePicker({
   const closeDatePicker = useCallback((viaBackButton: boolean = false) => {
     setIsOpen(false);
     // Only call history.back() if we have an entry and weren't closed by back button
-    if (hasHistoryEntryRef.current && !viaBackButton) {
+    // Skip history management entirely if disabled
+    if (!disableHistoryManagement && hasHistoryEntryRef.current && !viaBackButton) {
       hasHistoryEntryRef.current = false;
       window.history.back();
     } else {
       hasHistoryEntryRef.current = false;
     }
-  }, []);
+  }, [disableHistoryManagement]);
 
-  // Handle back button to close datepicker
+  // Handle back button to close datepicker (only if history management is enabled)
   useEffect(() => {
+    if (disableHistoryManagement) return;
+
     const handlePopstate = () => {
       if (hasHistoryEntryRef.current) {
         closeDatePicker(true);
@@ -106,15 +112,15 @@ export function DatePicker({
 
     window.addEventListener('popstate', handlePopstate);
     return () => window.removeEventListener('popstate', handlePopstate);
-  }, [closeDatePicker]);
+  }, [closeDatePicker, disableHistoryManagement]);
 
-  // Push history entry when datepicker opens
+  // Push history entry when datepicker opens (only if history management is enabled)
   useEffect(() => {
-    if (isOpen && !hasHistoryEntryRef.current) {
+    if (!disableHistoryManagement && isOpen && !hasHistoryEntryRef.current) {
       window.history.pushState({ type: 'datepicker' }, '');
       hasHistoryEntryRef.current = true;
     }
-  }, [isOpen]);
+  }, [isOpen, disableHistoryManagement]);
 
   const today = new Date();
   const viewYear = viewDate.getFullYear();
