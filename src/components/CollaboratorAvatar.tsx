@@ -81,7 +81,7 @@ function useImagePreload(src: string | undefined): { isLoaded: boolean; isVisibl
   // Derive state from props and loaded URLs
   const isLoaded = !!src && loadedUrls.has(src);
   const hasError = !!src && errorUrls.has(src);
-  // Avatar is visible when: no avatar, loaded successfully, or errored (show initials)
+  // Avatar is visible when: no avatar (show initials), loaded successfully, or errored (show initials)
   const isVisible = !src || isLoaded || hasError;
 
   return { isLoaded, isVisible };

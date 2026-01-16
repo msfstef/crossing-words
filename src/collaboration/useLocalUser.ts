@@ -23,11 +23,11 @@ const DEFAULT_USER: UserInfo = {
  * Hook for getting the local user's info from Yjs Awareness.
  *
  * @param awareness - Yjs Awareness instance or null if not in P2P mode
- * @returns Local user's info (name and color)
+ * @returns Local user's info (name and color), or null if in P2P mode but profile not loaded yet
  */
-export function useLocalUser(awareness: Awareness | null): UserInfo {
+export function useLocalUser(awareness: Awareness | null): UserInfo | null {
   // Cache the result to avoid infinite loops in useSyncExternalStore
-  const cachedResult = useRef<UserInfo>(DEFAULT_USER);
+  const cachedResult = useRef<UserInfo | null>(null);
 
   const subscribe = useCallback(
     (callback: () => void) => {
@@ -38,15 +38,16 @@ export function useLocalUser(awareness: Awareness | null): UserInfo {
     [awareness]
   );
 
-  const getSnapshot = useCallback((): UserInfo => {
+  const getSnapshot = useCallback((): UserInfo | null => {
+    // No P2P mode - return default user (no profile to load)
     if (!awareness) return DEFAULT_USER;
 
     const localState = awareness.getLocalState() as { user?: UserInfo } | null;
     if (localState?.user?.name) {
       // Only create a new object if name or avatar changed
       if (
-        cachedResult.current.name !== localState.user.name ||
-        cachedResult.current.avatar !== localState.user.avatar
+        cachedResult.current?.name !== localState.user.name ||
+        cachedResult.current?.avatar !== localState.user.avatar
       ) {
         cachedResult.current = {
           name: localState.user.name,
@@ -57,7 +58,8 @@ export function useLocalUser(awareness: Awareness | null): UserInfo {
       return cachedResult.current;
     }
 
-    return DEFAULT_USER;
+    // P2P mode but profile not loaded yet - return null to indicate loading
+    return null;
   }, [awareness]);
 
   const getServerSnapshot = useCallback(() => DEFAULT_USER, []);

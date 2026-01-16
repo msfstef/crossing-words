@@ -24,6 +24,7 @@ import { useMinimumLoadingTime } from './hooks/useMinimumLoadingTime';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
+import { LOCAL_USER_COLOR } from './collaboration/colors';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
 import {
@@ -1009,7 +1010,7 @@ function AppContent() {
                 currentWord={currentWord}
                 onCellClick={handleCellClickWithFollow}
                 collaborators={collaborators}
-                localUserColor={localUser.color}
+                localUserColor={localUser?.color ?? LOCAL_USER_COLOR}
                 verifiedCells={verifiedCells}
                 errorCells={errorCells}
                 onSwipe={handleSwipeNavigationWithFollow}
