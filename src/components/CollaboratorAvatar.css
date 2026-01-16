@@ -11,6 +11,7 @@
   flex-shrink: 0;
   overflow: hidden;
   box-sizing: border-box;
+  border-style: solid;
 
   /* Start invisible for animation */
   opacity: 0;

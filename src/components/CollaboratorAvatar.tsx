@@ -17,16 +17,18 @@ interface CollaboratorAvatarProps {
 }
 
 /**
- * Get initials from a name (first 1-2 characters).
+ * Get initials from a name.
+ * - Single word: first letter only (e.g., "Potato" → "P")
+ * - Multiple words: first letter of first two words (e.g., "Clued Cross" → "CC", "Ba Na Na" → "BN")
  */
 function getInitials(name: string): string {
   const words = name.split(' ').filter(Boolean);
   if (words.length >= 2) {
-    // Two words: first letter of each
+    // Multiple words: first letter of first two words
     return (words[0][0] + words[1][0]).toUpperCase();
   }
-  // Single word: first two letters
-  return name.slice(0, 2).toUpperCase();
+  // Single word: first letter only
+  return words[0]?.[0]?.toUpperCase() || '?';
 }
 
 /**
@@ -131,9 +133,13 @@ export function CollaboratorAvatar({
           className="collaborator-avatar__image"
         />
       ) : (
-        <span className="collaborator-avatar__initials">
-          {initials}
-        </span>
+        // Only render initials when visible (no avatar, or avatar errored)
+        // This prevents any flash of initials while avatar is loading
+        isVisible && (
+          <span className="collaborator-avatar__initials">
+            {initials}
+          </span>
+        )
       )}
     </div>
   );
