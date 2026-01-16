@@ -1,4 +1,5 @@
 import { useRef, useLayoutEffect, useState } from 'react';
+import { useSwipeNavigation, type SwipeDirection } from '../hooks/useSwipeNavigation';
 import './ClueBar.css';
 
 interface ClueBarProps {
@@ -17,6 +18,10 @@ interface ClueBarProps {
   hasNext?: boolean;
   /** Toggle direction between across and down */
   onToggleDirection?: () => void;
+  /** Callback for swipe navigation (mobile only) */
+  onSwipe?: (direction: SwipeDirection) => void;
+  /** Whether the device supports touch */
+  isTouchDevice?: boolean;
 }
 
 // Font sizes in rem, from largest to smallest
@@ -35,10 +40,18 @@ export function ClueBar({
   hasPrev = false,
   hasNext = false,
   onToggleDirection,
+  onSwipe,
+  isTouchDevice = false,
 }: ClueBarProps) {
   const textRef = useRef<HTMLSpanElement>(null);
   const prevClueTextRef = useRef<string | null>(null);
   const [fontSize, setFontSize] = useState<string>(DEFAULT_FONT_SIZE);
+
+  // Swipe navigation handlers (only active on touch devices)
+  const swipeHandlers = useSwipeNavigation({
+    onSwipe: onSwipe ?? (() => {}),
+    enabled: isTouchDevice && Boolean(onSwipe),
+  });
 
   // Measure text and shrink font progressively until it fits in 2 lines
   // Use useLayoutEffect to measure and set size BEFORE paint (prevents flicker)
@@ -97,7 +110,7 @@ export function ClueBar({
   const directionLabel = clue.direction === 'across' ? 'A' : 'D';
 
   return (
-    <div className="clue-bar">
+    <div className="clue-bar" {...swipeHandlers}>
       <button
         type="button"
         className="clue-bar__nav-btn"

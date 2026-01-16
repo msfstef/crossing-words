@@ -482,29 +482,6 @@ export function usePuzzleState(
   );
 
   /**
-   * Check if the current cell is the last cell (rightmost for across, bottommost for down) in the clue.
-   * @param row - Current row
-   * @param col - Current column
-   * @param dir - Current direction
-   * @returns True if this is the last cell in the clue
-   */
-  const isLastCellInClue = useCallback(
-    (row: number, col: number, dir: 'across' | 'down'): boolean => {
-      const clue = findClueForCell(row, col, dir);
-      if (!clue) return false;
-
-      if (dir === 'across') {
-        // Last cell is at clue.col + clue.length - 1
-        return col === clue.col + clue.length - 1;
-      } else {
-        // Last cell is at clue.row + clue.length - 1
-        return row === clue.row + clue.length - 1;
-      }
-    },
-    [findClueForCell]
-  );
-
-  /**
    * Check if the current cell is the first cell (leftmost for across, topmost for down) in the clue.
    * @param row - Current row
    * @param col - Current column
@@ -566,72 +543,67 @@ export function usePuzzleState(
 
   /**
    * Move to the next cell in the current direction after entering a letter.
-   * Implements smart navigation based on whether we filled the last cell in the clue.
+   *
+   * Logic:
+   * 1. If empty cells remain in current clue → go to next empty cell (may wrap within clue)
+   * 2. If current clue is complete → jump to next clue with empty cells (by clue number)
+   * 3. If ALL puzzle cells filled → stay in place
    */
   const autoAdvance = useCallback(
     (fromRow: number, fromCol: number): void => {
       const currentClue = findClueForCell(fromRow, fromCol, direction);
       if (!currentClue) return;
 
-      const isLast = isLastCellInClue(fromRow, fromCol, direction);
+      // Exclude the current cell since it was just filled (state hasn't updated yet)
+      const excludeCell = { row: fromRow, col: fromCol };
+      const emptyCellsInCurrentClue = countEmptyCellsInClue(currentClue, direction, excludeCell);
 
-      if (isLast) {
-        // We just filled the last cell (rightmost/bottommost) in the clue
-        // Count how many empty cells remain in this clue (AFTER the current fill)
-        // Exclude the current cell since it was just filled (state hasn't updated yet)
-        const excludeCell = { row: fromRow, col: fromCol };
-        const emptyCellsInCurrentClue = countEmptyCellsInClue(currentClue, direction, excludeCell);
-
-        if (emptyCellsInCurrentClue > 0) {
-          // Clue has other empty cells - go to first empty cell in same clue
-          const cell = findFirstEmptyCellInClue(currentClue, direction, excludeCell);
-          setSelectedCell(cell);
-        } else {
-          // This was the only missing cell or all cells are now filled
-          // Go to next empty cell in next clue with empty cells
-          const nextClueWithEmpty = findNextClueWithEmptyCells(
-            currentClue.number,
-            direction,
-            true // Search other direction too
-          );
-
-          if (nextClueWithEmpty) {
-            const cell = findFirstEmptyCellInClue(nextClueWithEmpty.clue, nextClueWithEmpty.direction);
-            setSelectedCell(cell);
-            setDirection(nextClueWithEmpty.direction);
-          } else {
-            // All cells filled - go to first cell of next clue in current direction
-            const clues = direction === 'across' ? puzzle.clues.across : puzzle.clues.down;
-            const sortedClues = [...clues].sort((a, b) => a.number - b.number);
-            const currentIndex = sortedClues.findIndex((c) => c.number === currentClue.number);
-
-            if (currentIndex >= 0 && currentIndex < sortedClues.length - 1) {
-              const nextClue = sortedClues[currentIndex + 1];
-              setSelectedCell({ row: nextClue.row, col: nextClue.col });
-            }
-          }
-        }
-      } else {
-        // Not the last cell - normal auto-advance within the clue
+      if (emptyCellsInCurrentClue > 0) {
+        // Clue has other empty cells - find next empty cell
+        // First try to find one after current position
         const deltaRow = direction === 'down' ? 1 : 0;
         const deltaCol = direction === 'across' ? 1 : 0;
+        const nextCellInDirection = findNextCellWithClue(fromRow, fromCol, deltaRow, deltaCol, direction);
 
-        // Find next cell in same clue
-        const nextCell = findNextCellWithClue(fromRow, fromCol, deltaRow, deltaCol, direction);
-        if (nextCell) {
-          setSelectedCell(nextCell);
+        if (nextCellInDirection) {
+          // Check if this cell is empty (considering we just filled fromRow, fromCol)
+          const nextKey = `${nextCellInDirection.row},${nextCellInDirection.col}`;
+          const isNextEmpty = !userEntries.get(nextKey) && !verifiedCells.has(nextKey);
+
+          if (isNextEmpty) {
+            setSelectedCell(nextCellInDirection);
+            return;
+          }
         }
+
+        // No empty cells after us, wrap to first empty in clue
+        const cell = findFirstEmptyCellInClue(currentClue, direction, excludeCell);
+        setSelectedCell(cell);
+      } else {
+        // Current clue is complete - jump to next clue with empty cells
+        const nextClueWithEmpty = findNextClueWithEmptyCells(
+          currentClue.number,
+          direction,
+          true // Search other direction too
+        );
+
+        if (nextClueWithEmpty) {
+          const cell = findFirstEmptyCellInClue(nextClueWithEmpty.clue, nextClueWithEmpty.direction);
+          setSelectedCell(cell);
+          setDirection(nextClueWithEmpty.direction);
+        }
+        // If no clue has empty cells, stay in place (all puzzle complete)
       }
     },
     [
       direction,
       findClueForCell,
-      isLastCellInClue,
       countEmptyCellsInClue,
       findFirstEmptyCellInClue,
       findNextClueWithEmptyCells,
       findNextCellWithClue,
-      puzzle,
+      userEntries,
+      verifiedCells,
     ]
   );
 
@@ -745,14 +717,20 @@ export function usePuzzleState(
   /**
    * Handle backspace action (for virtual keyboard).
    * Same behavior as physical backspace key.
-   * When at the first cell of a clue and the cell is empty, navigates to the previous clue's last cell.
+   *
+   * Behavior:
+   * - Filled cell: Clear it, stay in place
+   * - Empty cell: Move back one cell (don't clear previous)
+   * - First cell of clue: Navigate to previous clue's last cell (don't clear)
+   * - First cell of first clue: Wrap to last cell of last clue
+   * - Verified cells: Skip over them when moving backwards
    */
   const handleBackspaceAction = useCallback(() => {
     if (!selectedCell) return;
 
     const cellKey = `${selectedCell.row},${selectedCell.col}`;
 
-    // Block deleting verified cells - find previous non-verified cell
+    // Block deleting verified cells - just move back
     if (verifiedCells.has(cellKey)) {
       const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
       if (prevCell) {
@@ -770,114 +748,29 @@ export function usePuzzleState(
 
     const currentEntry = userEntries.get(cellKey);
 
+    // Clear the current cell if it has a letter
     if (currentEntry) {
-      // If current cell has a letter, just clear it (CRDT-backed)
       clearEntry(selectedCell.row, selectedCell.col);
+    }
+
+    // Always move back (whether cell was filled or empty)
+    const isAtFirstCell = isFirstCellInClue(selectedCell.row, selectedCell.col, direction);
+
+    if (isAtFirstCell) {
+      // At the first cell of the clue - navigate to previous clue's last cell
+      const prevClueCell = getPreviousClueLastCell();
+      if (prevClueCell) {
+        setSelectedCell(prevClueCell.cell);
+        setDirection(prevClueCell.dir);
+      }
     } else {
-      // If current cell is empty, try to move back
-      const isAtFirstCell = isFirstCellInClue(selectedCell.row, selectedCell.col, direction);
-
-      if (isAtFirstCell) {
-        // At the first cell of the clue - navigate to previous clue's last cell
-        const prevClueCell = getPreviousClueLastCell();
-        if (prevClueCell) {
-          setSelectedCell(prevClueCell.cell);
-          setDirection(prevClueCell.dir);
-          // Clear the last cell of the previous clue if not verified
-          const prevKey = `${prevClueCell.cell.row},${prevClueCell.cell.col}`;
-          if (!verifiedCells.has(prevKey)) {
-            clearEntry(prevClueCell.cell.row, prevClueCell.cell.col);
-          }
-        }
-      } else {
-        // Not at first cell - move back within the clue
-        const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
-
-        if (prevCell) {
-          const prevKey = `${prevCell.row},${prevCell.col}`;
-          // Only clear if not verified
-          if (!verifiedCells.has(prevKey)) {
-            setSelectedCell(prevCell);
-            clearEntry(prevCell.row, prevCell.col);
-          } else {
-            setSelectedCell(prevCell);
-          }
-        }
+      // Not at first cell - move back within the clue
+      const prevCell = findPrevNonVerifiedCell(selectedCell.row, selectedCell.col);
+      if (prevCell) {
+        setSelectedCell(prevCell);
       }
     }
   }, [selectedCell, userEntries, verifiedCells, clearEntry, findPrevNonVerifiedCell, isFirstCellInClue, direction, getPreviousClueLastCell]);
-
-  /**
-   * Handle keyboard events for navigation and letter input
-   */
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!selectedCell) return;
-
-      const { key } = event;
-      const cellKey = `${selectedCell.row},${selectedCell.col}`;
-
-      // Handle letter keys (A-Z)
-      if (/^[a-zA-Z]$/.test(key)) {
-        event.preventDefault();
-
-        // Block editing verified cells - just advance without editing
-        if (verifiedCells.has(cellKey)) {
-          autoAdvance(selectedCell.row, selectedCell.col);
-          return;
-        }
-
-        // Use CRDT-backed setEntry
-        setEntry(selectedCell.row, selectedCell.col, key.toUpperCase());
-
-        // Auto-advance to next cell
-        autoAdvance(selectedCell.row, selectedCell.col);
-        return;
-      }
-
-      // Handle Backspace - delegate to handleBackspaceAction for consistent behavior
-      if (key === 'Backspace') {
-        event.preventDefault();
-        handleBackspaceAction();
-        return;
-      }
-
-      // Handle Space bar - toggle direction
-      if (key === ' ') {
-        event.preventDefault();
-        toggleDirection();
-        return;
-      }
-
-      // Handle Arrow keys
-      let deltaRow = 0;
-      let deltaCol = 0;
-
-      switch (key) {
-        case 'ArrowUp':
-          deltaRow = -1;
-          break;
-        case 'ArrowDown':
-          deltaRow = 1;
-          break;
-        case 'ArrowLeft':
-          deltaCol = -1;
-          break;
-        case 'ArrowRight':
-          deltaCol = 1;
-          break;
-        default:
-          return; // Not an arrow key
-      }
-
-      event.preventDefault();
-      const nextCell = findNextCell(selectedCell.row, selectedCell.col, deltaRow, deltaCol);
-      if (nextCell) {
-        setSelectedCell(nextCell);
-      }
-    },
-    [selectedCell, autoAdvance, findNextCell, setEntry, verifiedCells, toggleDirection, handleBackspaceAction]
-  );
 
   // Compute current word and clue - memoized to prevent unnecessary re-renders
   // The result object reference stays stable when inputs don't change,
@@ -993,168 +886,107 @@ export function usePuzzleState(
     }
   }, [getCurrentClueNumber, getClueNumbers, getClueNumbersForDirection, direction, goToClue]);
 
+  /**
+   * Handle keyboard events for navigation and letter input
+   */
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!selectedCell) return;
+
+      const { key } = event;
+      const cellKey = `${selectedCell.row},${selectedCell.col}`;
+
+      // Handle letter keys (A-Z)
+      if (/^[a-zA-Z]$/.test(key)) {
+        event.preventDefault();
+
+        // Block editing verified cells - just advance without editing
+        if (verifiedCells.has(cellKey)) {
+          autoAdvance(selectedCell.row, selectedCell.col);
+          return;
+        }
+
+        // Use CRDT-backed setEntry
+        setEntry(selectedCell.row, selectedCell.col, key.toUpperCase());
+
+        // Auto-advance to next cell
+        autoAdvance(selectedCell.row, selectedCell.col);
+        return;
+      }
+
+      // Handle Backspace - delegate to handleBackspaceAction for consistent behavior
+      if (key === 'Backspace') {
+        event.preventDefault();
+        handleBackspaceAction();
+        return;
+      }
+
+      // Handle Space bar - toggle direction
+      if (key === ' ') {
+        event.preventDefault();
+        toggleDirection();
+        return;
+      }
+
+      // Handle Delete key - clear current cell, stay in place
+      if (key === 'Delete') {
+        event.preventDefault();
+        // Don't delete verified cells
+        if (!verifiedCells.has(cellKey)) {
+          clearEntry(selectedCell.row, selectedCell.col);
+        }
+        return;
+      }
+
+      // Handle Tab / Shift+Tab - clue navigation
+      if (key === 'Tab') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          goToPrevClue();
+        } else {
+          goToNextClue();
+        }
+        return;
+      }
+
+      // Handle Arrow keys
+      let deltaRow = 0;
+      let deltaCol = 0;
+
+      switch (key) {
+        case 'ArrowUp':
+          deltaRow = -1;
+          break;
+        case 'ArrowDown':
+          deltaRow = 1;
+          break;
+        case 'ArrowLeft':
+          deltaCol = -1;
+          break;
+        case 'ArrowRight':
+          deltaCol = 1;
+          break;
+        default:
+          return; // Not an arrow key
+      }
+
+      event.preventDefault();
+      const nextCell = findNextCell(selectedCell.row, selectedCell.col, deltaRow, deltaCol);
+      if (nextCell) {
+        setSelectedCell(nextCell);
+      }
+    },
+    [selectedCell, autoAdvance, findNextCell, setEntry, clearEntry, verifiedCells, toggleDirection, handleBackspaceAction, goToNextClue, goToPrevClue]
+  );
+
   // ============================================
   // Swipe Navigation Functions
   // ============================================
 
   /**
-   * Find the next across clue that starts in the same row.
-   * Used for horizontal swipe when on an across clue.
-   *
-   * @param row - The row to search in
-   * @param currentCol - Current column position (start of current clue)
-   * @param delta - Direction: +1 for right, -1 for left
-   * @returns The clue object, or null if none found
-   */
-  const findNextAcrossClueInRow = useCallback(
-    (row: number, currentCol: number, delta: number): Clue | null => {
-      // Get all across clues in this row
-      const cluesInRow = puzzle.clues.across.filter((c) => c.row === row);
-
-      if (delta > 0) {
-        // Moving right: find the first clue that starts after currentCol
-        const sorted = cluesInRow.sort((a, b) => a.col - b.col);
-        for (const clue of sorted) {
-          if (clue.col > currentCol) {
-            return clue;
-          }
-        }
-      } else {
-        // Moving left: find the last clue that starts before currentCol
-        const sorted = cluesInRow.sort((a, b) => b.col - a.col);
-        for (const clue of sorted) {
-          if (clue.col < currentCol) {
-            return clue;
-          }
-        }
-      }
-
-      return null;
-    },
-    [puzzle.clues.across]
-  );
-
-  /**
-   * Find the next across clue in the same column (searching vertically).
-   * Used for vertical swipe when on an across clue.
-   * Searches from the leftmost cell of the current clue.
-   *
-   * @param col - The column to search in (leftmost cell of current clue)
-   * @param currentRow - Current row position
-   * @param delta - Direction: +1 for down, -1 for up
-   * @returns The clue object, or null if none found
-   */
-  const findNextAcrossClueInColumn = useCallback(
-    (col: number, currentRow: number, delta: number): Clue | null => {
-      // Find across clues whose span includes this column
-      const cluesInColumn = puzzle.clues.across.filter(
-        (c) => c.col <= col && c.col + c.length > col
-      );
-
-      if (delta > 0) {
-        // Moving down: find the first clue that starts after currentRow
-        const sorted = cluesInColumn.sort((a, b) => a.row - b.row);
-        for (const clue of sorted) {
-          if (clue.row > currentRow) {
-            return clue;
-          }
-        }
-      } else {
-        // Moving up: find the last clue that starts before currentRow
-        const sorted = cluesInColumn.sort((a, b) => b.row - a.row);
-        for (const clue of sorted) {
-          if (clue.row < currentRow) {
-            return clue;
-          }
-        }
-      }
-
-      return null;
-    },
-    [puzzle.clues.across]
-  );
-
-  /**
-   * Find the next down clue that starts in the same column.
-   * Used for vertical swipe when on a down clue.
-   *
-   * @param col - The column to search in
-   * @param currentRow - Current row position (start of current clue)
-   * @param delta - Direction: +1 for down, -1 for up
-   * @returns The clue object, or null if none found
-   */
-  const findNextDownClueInColumn = useCallback(
-    (col: number, currentRow: number, delta: number): Clue | null => {
-      // Get all down clues in this column
-      const cluesInColumn = puzzle.clues.down.filter((c) => c.col === col);
-
-      if (delta > 0) {
-        // Moving down: find the first clue that starts after currentRow
-        const sorted = cluesInColumn.sort((a, b) => a.row - b.row);
-        for (const clue of sorted) {
-          if (clue.row > currentRow) {
-            return clue;
-          }
-        }
-      } else {
-        // Moving up: find the last clue that starts before currentRow
-        const sorted = cluesInColumn.sort((a, b) => b.row - a.row);
-        for (const clue of sorted) {
-          if (clue.row < currentRow) {
-            return clue;
-          }
-        }
-      }
-
-      return null;
-    },
-    [puzzle.clues.down]
-  );
-
-  /**
-   * Find the next down clue in the same row (searching horizontally).
-   * Used for horizontal swipe when on a down clue.
-   * Searches from the topmost cell of the current clue.
-   *
-   * @param row - The row to search in (topmost cell of current clue)
-   * @param currentCol - Current column position
-   * @param delta - Direction: +1 for right, -1 for left
-   * @returns The clue object, or null if none found
-   */
-  const findNextDownClueInRow = useCallback(
-    (row: number, currentCol: number, delta: number): Clue | null => {
-      // Find down clues whose span includes this row
-      const cluesInRow = puzzle.clues.down.filter(
-        (c) => c.row <= row && c.row + c.length > row
-      );
-
-      if (delta > 0) {
-        // Moving right: find the first clue that starts after currentCol
-        const sorted = cluesInRow.sort((a, b) => a.col - b.col);
-        for (const clue of sorted) {
-          if (clue.col > currentCol) {
-            return clue;
-          }
-        }
-      } else {
-        // Moving left: find the last clue that starts before currentCol
-        const sorted = cluesInRow.sort((a, b) => b.col - a.col);
-        for (const clue of sorted) {
-          if (clue.col < currentCol) {
-            return clue;
-          }
-        }
-      }
-
-      return null;
-    },
-    [puzzle.clues.down]
-  );
-
-  /**
    * Handle swipe navigation.
-   * Routes to appropriate navigation function based on current direction and swipe direction.
-   * Goes to the first empty cell of the target clue, or first cell if all filled.
+   * Moves one cell in the swipe direction (like arrow keys).
+   * Skips black cells, stops at puzzle edges.
    *
    * @param swipeDirection - The direction of the swipe gesture
    */
@@ -1162,49 +994,32 @@ export function usePuzzleState(
     (swipeDirection: 'left' | 'right' | 'up' | 'down') => {
       if (!selectedCell) return;
 
-      // Get current clue to find its start position
-      const currentClue = findClueForCell(selectedCell.row, selectedCell.col, direction);
-      if (!currentClue) return;
+      // Convert swipe direction to delta values (same as arrow keys)
+      let deltaRow = 0;
+      let deltaCol = 0;
 
-      const isAcross = direction === 'across';
-      const isHorizontalSwipe = swipeDirection === 'left' || swipeDirection === 'right';
-
-      let nextClue: Clue | null = null;
-
-      if (isAcross && isHorizontalSwipe) {
-        // Case 1: Across clue + horizontal swipe → move within same row
-        const delta = swipeDirection === 'right' ? 1 : -1;
-        nextClue = findNextAcrossClueInRow(currentClue.row, currentClue.col, delta);
-      } else if (isAcross && !isHorizontalSwipe) {
-        // Case 2: Across clue + vertical swipe → from leftmost cell, move vertically
-        const delta = swipeDirection === 'down' ? 1 : -1;
-        nextClue = findNextAcrossClueInColumn(currentClue.col, currentClue.row, delta);
-      } else if (!isAcross && !isHorizontalSwipe) {
-        // Case 3: Down clue + vertical swipe → move within same column
-        const delta = swipeDirection === 'down' ? 1 : -1;
-        nextClue = findNextDownClueInColumn(currentClue.col, currentClue.row, delta);
-      } else {
-        // Case 4: Down clue + horizontal swipe → from topmost cell, move horizontally
-        const delta = swipeDirection === 'right' ? 1 : -1;
-        nextClue = findNextDownClueInRow(currentClue.row, currentClue.col, delta);
+      switch (swipeDirection) {
+        case 'up':
+          deltaRow = -1;
+          break;
+        case 'down':
+          deltaRow = 1;
+          break;
+        case 'left':
+          deltaCol = -1;
+          break;
+        case 'right':
+          deltaCol = 1;
+          break;
       }
 
-      if (nextClue) {
-        // Go to first empty cell in the clue, or first cell if all filled
-        const nextCell = findFirstEmptyCellInClue(nextClue, nextClue.direction);
+      // Use the same findNextCell logic as arrow keys (skips black cells, stops at edges)
+      const nextCell = findNextCell(selectedCell.row, selectedCell.col, deltaRow, deltaCol);
+      if (nextCell) {
         setSelectedCell(nextCell);
       }
     },
-    [
-      selectedCell,
-      direction,
-      findClueForCell,
-      findNextAcrossClueInRow,
-      findNextAcrossClueInColumn,
-      findNextDownClueInColumn,
-      findNextDownClueInRow,
-      findFirstEmptyCellInClue,
-    ]
+    [selectedCell, findNextCell]
   );
 
   // Compute whether prev/next clue navigation is available

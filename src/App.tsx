@@ -1057,6 +1057,8 @@ function AppContent() {
               hasPrev={hasPrevClue}
               hasNext={hasNextClue}
               onToggleDirection={toggleDirectionWithFollow}
+              onSwipe={handleSwipeNavigationWithFollow}
+              isTouchDevice={isTouchDevice}
             />
           )
         }
@@ -1067,6 +1069,8 @@ function AppContent() {
             <CrosswordKeyboard
               onKeyPress={typeLetterWithFollow}
               onBackspace={handleBackspaceWithFollow}
+              onSwipe={handleSwipeNavigationWithFollow}
+              isTouchDevice={isTouchDevice}
             />
           )
         }
