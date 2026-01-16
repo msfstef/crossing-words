@@ -1,186 +1,53 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-Crossing Words is a cross-platform, peer-to-peer multiplayer crossword application where users can solve crosswords together simultaneously and collaboratively.
+Crossing Words is a cross-platform, peer-to-peer multiplayer crossword application for collaborative solving.
 
-## Build & Development Commands
-
-**IMPORTANT: Always E2E test your work before requesting review.** Use the Playwright MCP or Chrome extension to verify changes work correctly in the browser.
-
-### Testing
+## Commands
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test
-
-# Run tests once and exit
-npm run test:run
-
-# Run only P2P tests
-npm run test:p2p
-
-# Run tests with UI
-npm run test:ui
-
-# Run Playwright E2E tests
-npx playwright test
+npm run dev      # Start dev server (use the port it assigns)
+npm run build    # Production build
+npm run lint     # Lint code
+npm test         # Run unit tests (watch mode)
+npm run test:run # Run unit tests once
+npm run test:p2p # P2P-specific tests
+npx playwright test # E2E tests (when needed)
 ```
 
-### Other Commands
+## Testing Philosophy
 
-```bash
-# Start development server
-npm run dev
+**Prefer unit tests with React Testing Library** for fast feedback. Only use Playwright E2E tests when verifying actual browser rendering behavior.
 
-# Build for production
-npm run build
+### Test Puzzles
 
-# Lint code
-npm run lint
+Load test puzzles via URL params in dev mode:
+```
+http://localhost:<port>?testPuzzle=standard   # 15x15
+http://localhost:<port>?testPuzzle=mini       # 5x5
+http://localhost:<port>?testPuzzle=sunday     # 21x21
+http://localhost:<port>?testPuzzle=custom&width=10&height=10
 ```
 
-### Quick Test Puzzle Loading (Dev Mode)
-
-For rapid testing, load test puzzles via URL parameters:
-
-```bash
-# Start dev server and open with test puzzle
-npm run dev
-# Then navigate to: http://localhost:5173?testPuzzle=standard
-
-# Available sizes: mini (5x5), standard (15x15), sunday (21x21), large (25x25)
-# Custom size: ?testPuzzle=custom&width=10&height=10
+In unit tests:
+```typescript
+import { createTestPuzzle, TEST_PUZZLES } from '../lib/testPuzzleGenerator';
+const puzzle = TEST_PUZZLES.standard;
 ```
 
-**See `docs/PUZZLE_TESTING.md` for comprehensive puzzle testing guide.**
+### Collaboration UI Testing
 
-### Worktree Isolation
-
-When working in a git worktree, other worktrees may be running dev servers or Playwright tests concurrently. To avoid conflicts:
-
-**Dev Server Port**: Before starting a dev server, check if the default port (usually 5173 for Vite) is already in use:
-```bash
-lsof -i :5173
-```
-If occupied, use a different port:
-```bash
-npm run dev -- --port 5174  # or any available port
-```
-
-**Quick port availability check**:
-```bash
-# Find all dev servers running in worktrees
-lsof -i :5173-5180 | grep LISTEN
-```
-
-## Architecture
-
-<!-- TODO: Document high-level architecture once implemented -->
-
-## Debugging Approaches
-
-### Collaboration UI Issues
-
-When implementing or modifying collaboration UI features (cursors, presence indicators, follow mode), use the collaboration test utilities:
-
-**Approach: Use MockAwareness and Test Helpers**
-
-1. Use `MockAwareness` to test hooks and components without network
-2. Use simulation helpers like `simulateCollaboratorJoin`, `simulateCursorMove`
-3. Use scenario builders for complex setups (overlapping cursors, follow mode)
-4. See `docs/P2P_TESTING.md` > "Collaboration UI Testing" section for full guide
+Use `MockAwareness` for testing hooks/components without network:
 
 ```typescript
-// Quick example
 import { MockAwareness, simulateCollaboratorJoin } from '../__tests__/utils/collaborationTestHelpers';
 
 const awareness = new MockAwareness();
 simulateCollaboratorJoin(awareness, { name: 'Alice', cursor: { row: 0, col: 0, direction: 'across' } });
 ```
 
-### P2P Connectivity Issues
+## Debugging Guides
 
-When debugging P2P (peer-to-peer) connection issues, use the automated test suite first:
-
-**Approach: Use the P2P Test Suite**
-
-1. Run the P2P tests to verify the issue: `npm run test:p2p`
-2. Write a new test that reproduces the issue
-3. Fix the issue and verify with tests
-4. See `docs/P2P_TESTING.md` for detailed testing guide
-
-The P2P test suite covers:
-- Connection establishment and lifecycle
-- Disconnection and automatic reconnection
-- Presence tracking via Yjs Awareness
-- Network interruption recovery
-- Stale connection detection
-- Exponential backoff logic
-
-**Common P2P Issues:**
-
-- **Idle tabs losing connection**: Tested in `reconnection.test.ts` visibility change tests
-- **Failed reconnections**: Tested in `reconnection.test.ts` exponential backoff tests
-- **Presence not established**: Tested in `presence.test.ts` presence establishment tests
-- **Peers disappearing**: Tested in `presence.test.ts` and `connection.test.ts` peer tracking tests
-
-### UI Layout and Rendering Issues
-
-When fixing UI issues related to layout, sizing, or rendering, **both** types of tests are required:
-
-**1. Unit tests (Vitest + happy-dom):** Test calculation logic and component rendering with mocked dimensions
-**2. E2E tests (Playwright):** Test actual rendering at various viewport sizes
-
-**IMPORTANT: See `docs/PUZZLE_TESTING.md` for comprehensive testing guide including:**
-- Test puzzle generator usage and options
-- E2E test helpers for Playwright
-- Viewport sizes to test
-- Testing checklist for puzzle features
-
-#### Quick Reference
-
-```typescript
-// Unit tests - import from test puzzle generator
-import { createTestPuzzle, TEST_PUZZLES } from '../lib/testPuzzleGenerator';
-const puzzle = TEST_PUZZLES.standard; // 15x15
-
-// E2E tests - use helpers
-import { navigateToTestPuzzle, waitForPuzzleReady } from './helpers/testPuzzleHelpers';
-await navigateToTestPuzzle(page, 'standard');
-await waitForPuzzleReady(page);
-```
-
-#### Key Test Commands
-
-```bash
-# Unit tests for grid sizing
-npm run test:run -- src/__tests__/grid
-
-# E2E tests for grid
-npx playwright test e2e/grid-sizing.spec.ts
-```
-
-#### Puzzle Grid Layout Structure
-
-The puzzle grid uses a structured layout to ensure proper sizing:
-
-```
-.solve-layout__grid (flex: 1)
-  └── .puzzle-grid-area (flex: 1, column)
-        ├── .puzzle-grid-header (flex: 0 0 auto)
-        │     ├── .puzzle-title-above-grid
-        │     └── .puzzle-author
-        └── .puzzle-grid-wrapper (flex: 1, min-height: 0)
-              └── CrosswordGrid (100% width/height)
-```
-
-This structure ensures:
-- Title/author take only their natural height
-- Grid wrapper fills remaining space
-- ResizeObserver gets accurate measurements for cell sizing
+- **P2P issues**: See `docs/P2P_TESTING.md`
+- **Puzzle/grid testing**: See `docs/PUZZLE_TESTING.md`
