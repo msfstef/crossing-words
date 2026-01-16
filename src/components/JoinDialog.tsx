@@ -69,7 +69,6 @@ export function JoinDialog({
       onClose={onCancel}
       className="join-dialog"
       dialogId="join"
-      showCloseButton={false}
     >
       <h2 className="join-dialog__heading">Join collaborative session?</h2>
 

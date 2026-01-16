@@ -35,7 +35,6 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
       onClose={onClose}
       className="download-dialog"
       dialogId="download"
-      showCloseButton={false}
     >
       <h2 className="download-dialog__title">Download Puzzle</h2>
 
