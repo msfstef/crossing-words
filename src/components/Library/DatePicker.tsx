@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import './DatePicker.css';
 
 /**
@@ -178,21 +178,30 @@ export function DatePicker({
     if (!isOpen) {
       setPositionReady(false);
       setDropdownPosition(null);
+      setOpenUpward(false);
     }
   }, [isOpen]);
 
-  useLayoutEffect(() => {
-    if (!isOpen || !containerRef.current || !dropdownRef.current) return;
+  // Callback ref to position the dropdown when it mounts
+  const positionDropdown = useCallback((node: HTMLDivElement | null) => {
+    // Also store the ref for other uses
+    (dropdownRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
 
-    // Use requestAnimationFrame to ensure the browser has calculated layout
-    // This fixes the issue where offsetHeight is 0 on first render
-    const rafId = requestAnimationFrame(() => {
-      if (!containerRef.current || !dropdownRef.current) return;
+    if (!node || !containerRef.current || positionReady) return;
 
-      const container = containerRef.current;
-      const dropdown = dropdownRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const dropdownHeight = dropdown.offsetHeight;
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+
+    // Set width first so we can measure height
+    node.style.width = `${containerRect.width}px`;
+    node.style.left = `${containerRect.left}px`;
+    node.style.top = '-9999px';
+
+    // Use setTimeout(0) to let the browser calculate layout
+    setTimeout(() => {
+      if (!containerRef.current) return;
+
+      const dropdownHeight = node.offsetHeight;
 
       // Space below the trigger button
       const spaceBelow = window.innerHeight - containerRect.bottom;
@@ -224,15 +233,38 @@ export function DatePicker({
 
       // Calculate fixed position
       const gap = 6; // Gap between trigger and dropdown
+      const minPadding = 8; // Minimum distance from viewport edge
+
       if (shouldOpenUpward) {
+        // Calculate bottom position (distance from viewport bottom to trigger top)
+        let bottom = window.innerHeight - containerRect.top + gap;
+
+        // Check if dropdown would go off the top of the viewport
+        // top = window.innerHeight - bottom - dropdownHeight
+        const calculatedTop = window.innerHeight - bottom - dropdownHeight;
+        if (calculatedTop < minPadding) {
+          // Adjust bottom so top stays at minPadding
+          bottom = window.innerHeight - minPadding - dropdownHeight;
+        }
+
         setDropdownPosition({
-          bottom: window.innerHeight - containerRect.top + gap,
+          bottom,
           left: containerRect.left,
           width: containerRect.width,
         });
       } else {
+        // Calculate top position
+        let top = containerRect.bottom + gap;
+
+        // Check if dropdown would go off the bottom of the viewport
+        const calculatedBottom = top + dropdownHeight;
+        if (calculatedBottom > window.innerHeight - minPadding) {
+          // Adjust top so bottom stays at viewport - minPadding
+          top = window.innerHeight - minPadding - dropdownHeight;
+        }
+
         setDropdownPosition({
-          top: containerRect.bottom + gap,
+          top,
           left: containerRect.left,
           width: containerRect.width,
         });
@@ -240,10 +272,8 @@ export function DatePicker({
 
       // Mark position as ready to show the dropdown
       setPositionReady(true);
-    });
-
-    return () => cancelAnimationFrame(rafId);
-  }, [isOpen]);
+    }, 0);
+  }, [positionReady]);
 
   // Close on outside click
   useEffect(() => {
@@ -357,7 +387,7 @@ export function DatePicker({
 
       {isOpen && (
         <div
-          ref={dropdownRef}
+          ref={positionDropdown}
           className={`datepicker__dropdown datepicker__dropdown--fixed ${openUpward ? 'datepicker__dropdown--upward' : ''} ${!positionReady ? 'datepicker__dropdown--measuring' : ''}`}
           role="dialog"
           aria-modal="true"
