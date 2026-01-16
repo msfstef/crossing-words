@@ -134,7 +134,8 @@ export async function createP2PSession(
   // Set awareness state BEFORE connecting to ensure it's ready when peers connect
   const profile = await getProfile();
   const userName = profile.nickname;
-  const userAvatar = profile.avatar;
+  // Use thumbnail for P2P transmission (smaller, more efficient)
+  const userAvatar = profile.avatarThumbnail;
   const userColor = assignUniqueColor(usedColors, awareness.clientID);
 
   awareness.setLocalStateField('user', {

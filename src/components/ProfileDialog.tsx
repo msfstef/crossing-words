@@ -12,7 +12,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useProfile } from '../hooks/useProfile';
 import { useDialogHistory } from '../hooks/useDialogHistory';
-import { processAvatarImage } from '../lib/imageUtils';
+import { processAvatarImages } from '../lib/imageUtils';
 import './ProfileDialog.css';
 
 /** Duration of the close animation in ms */
@@ -173,8 +173,8 @@ export function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
       setError(null);
 
       try {
-        const dataUrl = await processAvatarImage(file);
-        await setAvatar(dataUrl);
+        const images = await processAvatarImages(file);
+        await setAvatar(images);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to process image');
       } finally {

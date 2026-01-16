@@ -10,19 +10,24 @@ import {
   getNickname,
   saveNickname,
   getAvatar,
-  saveAvatar,
+  getAvatarThumbnail,
+  saveAvatars,
   clearAvatar,
   subscribeToProfile,
   generateCrosswordNickname,
   MAX_NICKNAME_LENGTH,
 } from '../lib/profileStorage';
+import type { ProcessedAvatarImages } from '../lib/imageUtils';
 
 /**
  * Profile state returned by the hook.
  */
 export interface ProfileState {
   nickname: string;
+  /** High-quality avatar for profile dialog (192x192) */
   avatar: string | null;
+  /** Compact thumbnail for collaborator icons and P2P (64x64) */
+  avatarThumbnail: string | null;
   isLoading: boolean;
 }
 
@@ -58,19 +63,24 @@ export function useProfile() {
     getNicknameSnapshot
   );
 
-  // Avatar is async, managed via useState
+  // Avatars are async, managed via useState
   const [avatar, setAvatarState] = useState<string | null>(null);
+  const [avatarThumbnail, setAvatarThumbnailState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load avatar on mount
+  // Load avatars on mount
   useEffect(() => {
     let mounted = true;
 
-    async function loadAvatar() {
+    async function loadAvatars() {
       try {
-        const storedAvatar = await getAvatar();
+        const [storedAvatar, storedThumbnail] = await Promise.all([
+          getAvatar(),
+          getAvatarThumbnail(),
+        ]);
         if (mounted) {
           setAvatarState(storedAvatar);
+          setAvatarThumbnailState(storedThumbnail);
         }
       } finally {
         if (mounted) {
@@ -79,15 +89,18 @@ export function useProfile() {
       }
     }
 
-    loadAvatar();
+    loadAvatars();
 
     // Subscribe to avatar changes
     const unsubscribe = subscribeToProfile(() => {
-      getAvatar().then((newAvatar) => {
-        if (mounted) {
-          setAvatarState(newAvatar);
+      Promise.all([getAvatar(), getAvatarThumbnail()]).then(
+        ([newAvatar, newThumbnail]) => {
+          if (mounted) {
+            setAvatarState(newAvatar);
+            setAvatarThumbnailState(newThumbnail);
+          }
         }
-      });
+      );
     });
 
     return () => {
@@ -102,16 +115,18 @@ export function useProfile() {
     cachedNickname = getNickname(); // Update cache
   }, []);
 
-  // Update avatar
-  const setAvatar = useCallback(async (dataUrl: string) => {
-    await saveAvatar(dataUrl);
-    setAvatarState(dataUrl);
+  // Update avatars (both profile and thumbnail)
+  const setAvatar = useCallback(async (images: ProcessedAvatarImages) => {
+    await saveAvatars(images.profile, images.thumbnail);
+    setAvatarState(images.profile);
+    setAvatarThumbnailState(images.thumbnail);
   }, []);
 
   // Remove avatar
   const removeAvatar = useCallback(async () => {
     await clearAvatar();
     setAvatarState(null);
+    setAvatarThumbnailState(null);
   }, []);
 
   // Generate new random nickname
@@ -125,6 +140,7 @@ export function useProfile() {
     profile: {
       nickname,
       avatar,
+      avatarThumbnail,
       isLoading,
     } as ProfileState,
     setNickname,

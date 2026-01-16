@@ -11,13 +11,17 @@ const AVATAR_DB_NAME = 'crossing-words-profile';
 const AVATAR_DB_VERSION = 1;
 const AVATAR_STORE_NAME = 'avatar';
 const AVATAR_KEY = 'user-avatar';
+const AVATAR_THUMBNAIL_KEY = 'user-avatar-thumbnail';
 
 /**
  * User profile data structure.
  */
 export interface UserProfile {
   nickname: string;
-  avatar: string | null; // Base64 data URL
+  /** High-quality avatar for profile dialog (192x192) */
+  avatar: string | null;
+  /** Compact thumbnail for collaborator icons and P2P (64x64) */
+  avatarThumbnail: string | null;
 }
 
 /**
@@ -173,6 +177,83 @@ export async function getAvatar(): Promise<string | null> {
 }
 
 /**
+ * Gets the stored avatar thumbnail from IndexedDB.
+ * Returns null if no thumbnail is stored.
+ */
+export async function getAvatarThumbnail(): Promise<string | null> {
+  try {
+    const db = await openAvatarDatabase();
+    const transaction = db.transaction(AVATAR_STORE_NAME, 'readonly');
+    const store = transaction.objectStore(AVATAR_STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(AVATAR_THUMBNAIL_KEY);
+
+      request.onerror = () => {
+        console.error('[profileStorage] Failed to get avatar thumbnail:', request.error);
+        reject(request.error);
+      };
+
+      request.onsuccess = () => {
+        const thumbnail = request.result as string | undefined;
+        resolve(thumbnail ?? null);
+      };
+
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('[profileStorage] Error getting avatar thumbnail:', error);
+    return null;
+  }
+}
+
+/**
+ * Saves both profile avatar and thumbnail to IndexedDB.
+ * @param profile - High-quality avatar for profile dialog (192x192)
+ * @param thumbnail - Compact thumbnail for icons and P2P (64x64)
+ */
+export async function saveAvatars(profile: string, thumbnail: string): Promise<void> {
+  try {
+    const db = await openAvatarDatabase();
+    const transaction = db.transaction(AVATAR_STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(AVATAR_STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+      const profileRequest = store.put(profile, AVATAR_KEY);
+      const thumbnailRequest = store.put(thumbnail, AVATAR_THUMBNAIL_KEY);
+
+      profileRequest.onerror = () => {
+        console.error('[profileStorage] Failed to save profile avatar:', profileRequest.error);
+        reject(profileRequest.error);
+      };
+
+      thumbnailRequest.onerror = () => {
+        console.error('[profileStorage] Failed to save avatar thumbnail:', thumbnailRequest.error);
+        reject(thumbnailRequest.error);
+      };
+
+      transaction.oncomplete = () => {
+        console.debug('[profileStorage] Saved both avatar sizes');
+        db.close();
+        notifyProfileListeners();
+        resolve();
+      };
+
+      transaction.onerror = () => {
+        console.error('[profileStorage] Transaction error saving avatars:', transaction.error);
+        reject(transaction.error);
+      };
+    });
+  } catch (error) {
+    console.error('[profileStorage] Error saving avatars:', error);
+    throw error;
+  }
+}
+
+/**
+ * @deprecated Use saveAvatars() to save both profile and thumbnail versions.
  * Saves an avatar to IndexedDB.
  * Avatar should be a base64 data URL (already resized/compressed).
  */
@@ -207,7 +288,7 @@ export async function saveAvatar(dataUrl: string): Promise<void> {
 }
 
 /**
- * Clears the stored avatar from IndexedDB.
+ * Clears both stored avatars (profile and thumbnail) from IndexedDB.
  */
 export async function clearAvatar(): Promise<void> {
   try {
@@ -216,21 +297,29 @@ export async function clearAvatar(): Promise<void> {
     const store = transaction.objectStore(AVATAR_STORE_NAME);
 
     return new Promise((resolve, reject) => {
-      const request = store.delete(AVATAR_KEY);
+      const profileRequest = store.delete(AVATAR_KEY);
+      const thumbnailRequest = store.delete(AVATAR_THUMBNAIL_KEY);
 
-      request.onerror = () => {
-        console.error('[profileStorage] Failed to clear avatar:', request.error);
-        reject(request.error);
+      profileRequest.onerror = () => {
+        console.error('[profileStorage] Failed to clear profile avatar:', profileRequest.error);
+        reject(profileRequest.error);
       };
 
-      request.onsuccess = () => {
-        console.debug('[profileStorage] Cleared avatar');
-        resolve();
+      thumbnailRequest.onerror = () => {
+        console.error('[profileStorage] Failed to clear avatar thumbnail:', thumbnailRequest.error);
+        reject(thumbnailRequest.error);
       };
 
       transaction.oncomplete = () => {
+        console.debug('[profileStorage] Cleared both avatar sizes');
         db.close();
         notifyProfileListeners();
+        resolve();
+      };
+
+      transaction.onerror = () => {
+        console.error('[profileStorage] Transaction error clearing avatars:', transaction.error);
+        reject(transaction.error);
       };
     });
   } catch (error) {
@@ -240,12 +329,15 @@ export async function clearAvatar(): Promise<void> {
 }
 
 /**
- * Gets the full user profile (nickname + avatar).
+ * Gets the full user profile (nickname + both avatar sizes).
  */
 export async function getProfile(): Promise<UserProfile> {
   const nickname = getNickname();
-  const avatar = await getAvatar();
-  return { nickname, avatar };
+  const [avatar, avatarThumbnail] = await Promise.all([
+    getAvatar(),
+    getAvatarThumbnail(),
+  ]);
+  return { nickname, avatar, avatarThumbnail };
 }
 
 // Profile change listeners for useSyncExternalStore
