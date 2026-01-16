@@ -241,7 +241,7 @@
     box-shadow 100ms ease;
 }
 
-.datepicker__day:hover:not(:disabled) {
+.datepicker__day:hover:not(:disabled):not(.datepicker__day--empty) {
   background-color: var(--color-cell-word);
   border-color: var(--color-accent);
   transform: translateY(-1px);
@@ -259,6 +259,7 @@
   background: transparent;
   border-color: transparent;
   cursor: default;
+  pointer-events: none;
 }
 
 /* Today indicator */
