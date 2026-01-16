@@ -101,6 +101,8 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
 
   // Track visibility separately from isOpen prop to allow close animation
   const [isVisible, setIsVisible] = useState(isOpen);
+  // Track if we should skip the open animation (when reopening during close)
+  const skipOpenAnimationRef = useRef(false);
 
   // Expose dialog element via ref
   useImperativeHandle(ref, () => ({
@@ -125,6 +127,31 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
       return () => clearTimeout(timer);
     }
   }, [isOpen, isVisible, animationDuration]);
+
+  // Track when we cancel a close animation (reopening during close)
+  // This prevents the open animation from replaying by using inline styles
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const isClosing = !isOpen && isVisible;
+
+    if (isClosing) {
+      // Starting to close - mark that we're closing and clear any animation override
+      skipOpenAnimationRef.current = true;
+      if (dialog) {
+        dialog.style.animation = '';
+      }
+    } else if (isOpen && isVisible && skipOpenAnimationRef.current) {
+      // Reopened during close - skip the open animation via inline style
+      skipOpenAnimationRef.current = false;
+      if (dialog) {
+        // Override CSS animation with inline style to prevent replay
+        dialog.style.animation = 'none';
+      }
+    } else if (!isVisible) {
+      // Fully closed - reset flag for next fresh open
+      skipOpenAnimationRef.current = false;
+    }
+  }, [isOpen, isVisible]);
 
   // Open/close the native dialog element
   useEffect(() => {
