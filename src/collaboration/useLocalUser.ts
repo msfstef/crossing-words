@@ -43,11 +43,15 @@ export function useLocalUser(awareness: Awareness | null): UserInfo {
 
     const localState = awareness.getLocalState() as { user?: UserInfo } | null;
     if (localState?.user?.name) {
-      // Only create a new object if the name changed
-      if (cachedResult.current.name !== localState.user.name) {
+      // Only create a new object if name or avatar changed
+      if (
+        cachedResult.current.name !== localState.user.name ||
+        cachedResult.current.avatar !== localState.user.avatar
+      ) {
         cachedResult.current = {
           name: localState.user.name,
           color: LOCAL_USER_COLOR,
+          avatar: localState.user.avatar,
         };
       }
       return cachedResult.current;

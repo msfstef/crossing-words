@@ -1038,6 +1038,7 @@ function AppContent() {
             onBack={handleBackToLibrary}
             onShare={handleShare}
             collaborators={collaborators}
+            localUser={localUser}
             settingsMenu={settingsMenuContent}
             followedCollaborator={followedCollaborator}
             onToggleFollow={toggleFollow}

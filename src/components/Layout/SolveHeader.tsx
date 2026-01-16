@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Collaborator } from '../../collaboration/types';
+import type { Collaborator, UserInfo } from '../../collaboration/types';
 import './SolveHeader.css';
 
 interface SolveHeaderProps {
@@ -9,6 +9,8 @@ interface SolveHeaderProps {
   onShare: () => void;
   /** List of connected collaborators */
   collaborators: Collaborator[];
+  /** Local user info for self display */
+  localUser?: UserInfo | null;
   /** Settings menu component */
   settingsMenu: ReactNode;
   /** The collaborator currently being followed, or null if not following */
@@ -25,10 +27,16 @@ export function SolveHeader({
   onBack,
   onShare,
   collaborators,
+  localUser = null,
   settingsMenu,
   followedCollaborator = null,
   onToggleFollow,
 }: SolveHeaderProps) {
+  // Combine local user with remote collaborators for display
+  // Local user shown first, then remote collaborators
+  const allParticipants = localUser
+    ? [{ key: 'self', user: localUser, isSelf: true }, ...collaborators.map(c => ({ key: String(c.clientId), user: c.user, isSelf: false }))]
+    : collaborators.map(c => ({ key: String(c.clientId), user: c.user, isSelf: false }));
   return (
     <header className="solve-header">
       {/* Back button */}
@@ -46,31 +54,31 @@ export function SolveHeader({
       {/* Spacer - header title removed, now shown above grid */}
       <div className="solve-header__spacer" />
 
-      {/* Collaborator dots - compact overlapping avatars */}
-      {collaborators.length > 0 && (
+      {/* Collaborator dots - compact overlapping avatars (including self) */}
+      {allParticipants.length > 0 && (
         <div className="solve-header__collaborators">
-          {collaborators.slice(0, 5).map((collab) => (
+          {allParticipants.slice(0, 5).map((participant) => (
             <div
-              key={collab.clientId}
-              className="solve-header__avatar"
+              key={participant.key}
+              className={`solve-header__avatar${participant.isSelf ? ' solve-header__avatar--self' : ''}`}
               style={{
-                borderColor: collab.user.color,
-                backgroundColor: collab.user.avatar ? 'transparent' : collab.user.color,
+                borderColor: participant.user.color,
+                backgroundColor: participant.user.avatar ? 'transparent' : participant.user.color,
               }}
-              title={collab.user.name}
+              title={participant.isSelf ? `${participant.user.name} (you)` : participant.user.name}
             >
-              {collab.user.avatar && (
+              {participant.user.avatar && (
                 <img
-                  src={collab.user.avatar}
+                  src={participant.user.avatar}
                   alt=""
                   className="solve-header__avatar-image"
                 />
               )}
             </div>
           ))}
-          {collaborators.length > 5 && (
+          {allParticipants.length > 5 && (
             <div className="solve-header__avatar solve-header__avatar--overflow">
-              +{collaborators.length - 5}
+              +{allParticipants.length - 5}
             </div>
           )}
         </div>
