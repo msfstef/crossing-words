@@ -5,8 +5,10 @@
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest",
-        "--isolated"
+        "concurrent-browser-mcp",
+        "--max-instances",
+        "5",
+        "--headless"
       ],
       "env": {}
     }

@@ -28,3 +28,4 @@ test-results/
 .wrangler/
 yarn-debug.log*
 yarn-error.log*
+.worktrees/
