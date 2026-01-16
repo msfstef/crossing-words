@@ -89,13 +89,9 @@
 
 /* Clue text wrapper - contains number and text as inline elements */
 .clue-bar__clue-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
   line-height: 1.4;
   color: var(--color-text);
+  /* Font size is dynamically adjusted by JS to ensure all text fits */
 }
 
 .clue-bar__number {

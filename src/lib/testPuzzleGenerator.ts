@@ -407,6 +407,25 @@ export const TEST_PUZZLES = {
   standardHalfFilled: createTestPuzzle({ width: 15, height: 15, title: 'Standard Half-Filled', prefillPercent: 50 }),
   /** 21x21 with 80% prefilled - near-completion testing */
   sundayNearComplete: createTestPuzzle({ width: 21, height: 21, title: 'Sunday Near Complete', prefillPercent: 80 }),
+  /** 15x15 with very long clues - font sizing testing */
+  longClues: createTestPuzzle({
+    width: 15,
+    height: 15,
+    title: 'Long Clues Test',
+    clueTextGenerator: (num, dir, len) => {
+      // Generate progressively longer clues for testing font scaling
+      if (num === 1) {
+        return 'This is an extraordinarily verbose and needlessly lengthy clue description that would definitely overflow any reasonable clue bar if not properly handled with dynamic font sizing that progressively reduces text size';
+      }
+      if (num === 2) {
+        return 'Another exceptionally long clue that tests font scaling to ensure all text remains visible without truncation or ellipsis while keeping the clue bar at a fixed height';
+      }
+      if (num <= 5) {
+        return `A moderately long clue for testing the intermediate font sizes that sit between the default and minimum values (${len} letters)`;
+      }
+      return `Test clue ${num}-${dir === 'across' ? 'Across' : 'Down'} (${len} letters)`;
+    },
+  }),
 };
 
 /** Type for pre-defined puzzle names */

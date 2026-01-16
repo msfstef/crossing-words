@@ -19,8 +19,11 @@ interface ClueBarProps {
   onToggleDirection?: () => void;
 }
 
-const DEFAULT_FONT_SIZE = '0.9375rem';
-const SMALL_FONT_SIZE = '0.8125rem';
+// Font sizes in rem, from largest to smallest
+// 0.9375rem (15px), 0.875rem (14px), 0.8125rem (13px), 0.75rem (12px), 0.6875rem (11px), 0.625rem (10px)
+const FONT_SIZES = ['0.9375rem', '0.875rem', '0.8125rem', '0.75rem', '0.6875rem', '0.625rem'];
+const DEFAULT_FONT_SIZE = FONT_SIZES[0];
+const MIN_FONT_SIZE = FONT_SIZES[FONT_SIZES.length - 1];
 
 /**
  * ClueBar displays the current clue with prev/next navigation buttons
@@ -37,7 +40,7 @@ export function ClueBar({
   const prevClueTextRef = useRef<string | null>(null);
   const [fontSize, setFontSize] = useState<string>(DEFAULT_FONT_SIZE);
 
-  // Measure text and shrink font if needed to fit in 2 lines
+  // Measure text and shrink font progressively until it fits in 2 lines
   // Use useLayoutEffect to measure and set size BEFORE paint (prevents flicker)
   useLayoutEffect(() => {
     if (!clue || !textRef.current) return;
@@ -51,14 +54,28 @@ export function ClueBar({
 
     const el = textRef.current;
 
-    // Temporarily set to default size for measurement
-    el.style.fontSize = DEFAULT_FONT_SIZE;
+    // Find the largest font size that fits within 2 lines
+    let targetSize = DEFAULT_FONT_SIZE;
 
-    // Measure at default size
-    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
-    const maxHeight = lineHeight * 2; // 2 lines
-    const needsSmallFont = el.scrollHeight > maxHeight + 2;
-    const targetSize = needsSmallFont ? SMALL_FONT_SIZE : DEFAULT_FONT_SIZE;
+    for (const size of FONT_SIZES) {
+      el.style.fontSize = size;
+
+      // Measure at current size
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+      const maxHeight = lineHeight * 2; // 2 lines
+
+      if (el.scrollHeight <= maxHeight + 2) {
+        // This size fits - use it
+        targetSize = size;
+        break;
+      }
+
+      // If we've reached the minimum size, use it regardless
+      if (size === MIN_FONT_SIZE) {
+        targetSize = size;
+        break;
+      }
+    }
 
     // Apply correct size directly to DOM - this ensures correct size even if
     // React doesn't re-render (e.g., when state value hasn't changed)
