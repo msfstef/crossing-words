@@ -8,8 +8,7 @@
  * - Cancel: Stay on local timeline, don't join shared session
  */
 
-import { useEffect, useRef } from 'react';
-import { useDialogHistory } from '../hooks/useDialogHistory';
+import { Dialog } from './Dialog';
 import './JoinDialog.css';
 
 interface JoinDialogProps {
@@ -56,78 +55,6 @@ export function JoinDialog({
   onStartFresh,
   onCancel,
 }: JoinDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  // Handle back button navigation
-  useDialogHistory(isOpen, onCancel, 'join');
-
-  // Open/close the dialog element
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      dialog.showModal();
-    } else {
-      dialog.close();
-    }
-  }, [isOpen]);
-
-  // Handle Escape key and click outside
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleCancel = (e: Event) => {
-      e.preventDefault();
-      onCancel();
-    };
-
-    // Check if event coordinates are outside the dialog bounds
-    const isClickOutside = (clientX: number, clientY: number): boolean => {
-      const rect = dialog.getBoundingClientRect();
-      return (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      );
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      // Close if clicking on the backdrop (outside the dialog content)
-      if (isClickOutside(e.clientX, e.clientY)) {
-        onCancel();
-      }
-    };
-
-    // Handle touch events for mobile - use touchend for consistency
-    const handleTouchEnd = (e: TouchEvent) => {
-      // Only handle single touch
-      if (e.changedTouches.length !== 1) return;
-      const touch = e.changedTouches[0];
-      if (isClickOutside(touch.clientX, touch.clientY)) {
-        // Prevent the subsequent click event from also firing
-        e.preventDefault();
-        onCancel();
-      }
-    };
-
-    dialog.addEventListener('cancel', handleCancel);
-    dialog.addEventListener('click', handleClick);
-    dialog.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      dialog.removeEventListener('cancel', handleCancel);
-      dialog.removeEventListener('click', handleClick);
-      dialog.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [onCancel]);
-
-  if (!isOpen) {
-    return null;
-  }
-
   // Format progress message
   const progressMessage =
     localEntryCount > 0
@@ -137,51 +64,55 @@ export function JoinDialog({
         : 'You have existing progress on this puzzle.';
 
   return (
-    <dialog ref={dialogRef} className="join-dialog">
-      <div className="join-dialog__content">
-        <h2 className="join-dialog__heading">Join collaborative session?</h2>
+    <Dialog
+      isOpen={isOpen}
+      onClose={onCancel}
+      className="join-dialog"
+      dialogId="join"
+      showCloseButton={false}
+    >
+      <h2 className="join-dialog__heading">Join collaborative session?</h2>
 
-        <p className="join-dialog__puzzle-title">{puzzleTitle}</p>
+      <p className="join-dialog__puzzle-title">{puzzleTitle}</p>
 
-        <p className="join-dialog__message">{progressMessage}</p>
+      <p className="join-dialog__message">{progressMessage}</p>
 
-        <p className="join-dialog__question">What would you like to do?</p>
+      <p className="join-dialog__question">What would you like to do?</p>
 
-        <div className="join-dialog__options">
-          <button
-            type="button"
-            className="join-dialog__option join-dialog__option--merge"
-            onClick={onMerge}
-          >
-            <span className="join-dialog__option-title">Merge Progress</span>
-            <span className="join-dialog__option-description">
-              Combine your work with the shared session
-            </span>
-          </button>
+      <div className="join-dialog__options">
+        <button
+          type="button"
+          className="join-dialog__option join-dialog__option--merge"
+          onClick={onMerge}
+        >
+          <span className="join-dialog__option-title">Merge Progress</span>
+          <span className="join-dialog__option-description">
+            Combine your work with the shared session
+          </span>
+        </button>
 
-          <button
-            type="button"
-            className="join-dialog__option join-dialog__option--fresh"
-            onClick={onStartFresh}
-          >
-            <span className="join-dialog__option-title">Start Fresh</span>
-            <span className="join-dialog__option-description">
-              Join without your local progress
-            </span>
-          </button>
+        <button
+          type="button"
+          className="join-dialog__option join-dialog__option--fresh"
+          onClick={onStartFresh}
+        >
+          <span className="join-dialog__option-title">Start Fresh</span>
+          <span className="join-dialog__option-description">
+            Join without your local progress
+          </span>
+        </button>
 
-          <button
-            type="button"
-            className="join-dialog__option join-dialog__option--cancel"
-            onClick={onCancel}
-          >
-            <span className="join-dialog__option-title">Cancel</span>
-            <span className="join-dialog__option-description">
-              Stay with your local progress
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="join-dialog__option join-dialog__option--cancel"
+          onClick={onCancel}
+        >
+          <span className="join-dialog__option-title">Cancel</span>
+          <span className="join-dialog__option-description">
+            Stay with your local progress
+          </span>
+        </button>
       </div>
-    </dialog>
+    </Dialog>
   );
 }

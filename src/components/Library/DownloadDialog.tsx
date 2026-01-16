@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { PUZZLE_SOURCES } from '../../services/puzzleSources/sources';
 import { DatePicker } from './DatePicker';
+import { Dialog } from '../Dialog';
 import './DownloadDialog.css';
 
 interface DownloadDialogProps {
@@ -20,31 +21,6 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
     today.setHours(12, 0, 0, 0);
     return today;
   });
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  // Handle Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Handle click outside - use mousedown/touchstart for more reliable detection
-  const handleBackdropInteraction = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    // Only close if clicking/touching directly on the backdrop (not on dialog content)
-    if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  }, [onClose]);
-
-  if (!isOpen) return null;
 
   const selectedSource = PUZZLE_SOURCES.find((s) => s.id === sourceId);
 
@@ -54,70 +30,62 @@ export function DownloadDialog({ isOpen, onClose, onDownload }: DownloadDialogPr
   };
 
   return (
-    <div
-      className="download-dialog-backdrop"
-      onMouseDown={handleBackdropInteraction}
-      onTouchStart={handleBackdropInteraction}
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="download-dialog"
+      dialogId="download"
+      showCloseButton={false}
     >
-      <div
-        ref={dialogRef}
-        className="download-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="download-dialog-title"
-      >
-        <h2 id="download-dialog-title" className="download-dialog__title">
-          Download Puzzle
-        </h2>
+      <h2 className="download-dialog__title">Download Puzzle</h2>
 
-        <div className="download-dialog__content">
-          <div className="download-dialog__field">
-            <label htmlFor="source-select" className="download-dialog__label">
-              Source
-            </label>
-            <select
-              id="source-select"
-              value={sourceId}
-              onChange={(e) => setSourceId(e.target.value)}
-              className="download-dialog__select"
-            >
-              {PUZZLE_SOURCES.map((source) => (
-                <option key={source.id} value={source.id}>
-                  {source.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="download-dialog__field">
-            <label className="download-dialog__label">Date</label>
-            <DatePicker
-              value={selectedDate}
-              onChange={setSelectedDate}
-              availableDays={selectedSource?.availableDays}
-              disableHistoryManagement
-            />
-          </div>
+      <div className="download-dialog__content">
+        <div className="download-dialog__field">
+          <label htmlFor="source-select" className="download-dialog__label">
+            Source
+          </label>
+          <select
+            id="source-select"
+            value={sourceId}
+            onChange={(e) => setSourceId(e.target.value)}
+            className="download-dialog__select"
+          >
+            {PUZZLE_SOURCES.map((source) => (
+              <option key={source.id} value={source.id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="download-dialog__actions">
-          <button
-            type="button"
-            className="download-dialog__button download-dialog__button--secondary"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="download-dialog__button download-dialog__button--primary"
-            onClick={handleDownload}
-            disabled={!sourceId || !selectedDate}
-          >
-            Download
-          </button>
+        <div className="download-dialog__field">
+          <label className="download-dialog__label">Date</label>
+          <DatePicker
+            value={selectedDate}
+            onChange={setSelectedDate}
+            availableDays={selectedSource?.availableDays}
+            disableHistoryManagement
+          />
         </div>
       </div>
-    </div>
+
+      <div className="download-dialog__actions">
+        <button
+          type="button"
+          className="download-dialog__button download-dialog__button--secondary"
+          onClick={onClose}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="download-dialog__button download-dialog__button--primary"
+          onClick={handleDownload}
+          disabled={!sourceId || !selectedDate}
+        >
+          Download
+        </button>
+      </div>
+    </Dialog>
   );
 }

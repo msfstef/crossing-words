@@ -123,37 +123,13 @@ export function LibraryView({ onOpenPuzzle, onError }: LibraryViewProps) {
   const [selectedPuzzle, setSelectedPuzzle] = useState<{ id: string; title: string; date?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Track if download dialog has a history entry
-  const downloadDialogHistoryRef = useRef(false);
-
-  // Handle back button to close download dialog
-  useEffect(() => {
-    const handlePopstate = () => {
-      if (downloadDialogHistoryRef.current) {
-        downloadDialogHistoryRef.current = false;
-        setDownloadDialogOpen(false);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopstate);
-    return () => window.removeEventListener('popstate', handlePopstate);
-  }, []);
-
-  // Open download dialog with history entry
+  // Dialog open/close handlers - history is handled by the Dialog component
   const openDownloadDialog = useCallback(() => {
-    window.history.pushState({ type: 'dialog', dialogType: 'download' }, '');
-    downloadDialogHistoryRef.current = true;
     setDownloadDialogOpen(true);
   }, []);
 
-  // Close download dialog and clean up history if needed
   const closeDownloadDialog = useCallback(() => {
     setDownloadDialogOpen(false);
-    // Clean up phantom history entry if closed via X button (not back button)
-    if (downloadDialogHistoryRef.current) {
-      downloadDialogHistoryRef.current = false;
-      window.history.back();
-    }
   }, []);
 
   // Load all puzzles on mount

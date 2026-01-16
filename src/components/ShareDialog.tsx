@@ -15,7 +15,7 @@ import {
   copyToClipboard,
   type ShareResult,
 } from '../collaboration/sessionUrl';
-import { useDialogHistory } from '../hooks/useDialogHistory';
+import { Dialog } from './Dialog';
 import './ShareDialog.css';
 
 interface ShareDialogProps {
@@ -49,9 +49,6 @@ interface ShareDialogProps {
  * />
  * ```
  */
-/** Duration of the close animation in ms */
-const CLOSE_ANIMATION_DURATION = 120;
-
 export function ShareDialog({
   isOpen,
   onClose,
@@ -60,98 +57,14 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
-  // Track visibility separately from isOpen prop to allow close animation
-  const [isVisible, setIsVisible] = useState(isOpen);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const copyTimeoutRef = useRef<number | null>(null);
-
-  // Handle back button navigation
-  useDialogHistory(isOpen, onClose, 'share');
 
   // Check if native sharing is supported
   useEffect(() => {
     const shareData = { title: 'Test', url: 'https://example.com' };
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time feature detection on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial capability check on mount
     setCanShare(!!navigator.canShare?.(shareData));
   }, []);
-
-  // Handle visibility transitions with animation
-  useEffect(() => {
-    if (isOpen) {
-      // Opening: show immediately
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary for open/close animation sync
-      setIsVisible(true);
-    } else if (isVisible) {
-      // Closing: wait for animation before hiding
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, CLOSE_ANIMATION_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isVisible]);
-
-  // Open/close the native dialog element
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isVisible && isOpen) {
-      dialog.showModal();
-    } else if (!isVisible) {
-      dialog.close();
-    }
-  }, [isVisible, isOpen]);
-
-  // Handle Escape key and click outside
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleCancel = (e: Event) => {
-      e.preventDefault();
-      onClose();
-    };
-
-    // Check if event coordinates are outside the dialog bounds
-    const isClickOutside = (clientX: number, clientY: number): boolean => {
-      const rect = dialog.getBoundingClientRect();
-      return (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      );
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      // Close if clicking on the backdrop (outside the dialog content)
-      if (isClickOutside(e.clientX, e.clientY)) {
-        onClose();
-      }
-    };
-
-    // Handle touch events for mobile - use touchend for consistency
-    const handleTouchEnd = (e: TouchEvent) => {
-      // Only handle single touch
-      if (e.changedTouches.length !== 1) return;
-      const touch = e.changedTouches[0];
-      if (isClickOutside(touch.clientX, touch.clientY)) {
-        // Prevent the subsequent click event from also firing
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    dialog.addEventListener('cancel', handleCancel);
-    dialog.addEventListener('click', handleClick);
-    dialog.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      dialog.removeEventListener('cancel', handleCancel);
-      dialog.removeEventListener('click', handleClick);
-      dialog.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [onClose]);
 
   // Clear copy feedback timeout on unmount
   useEffect(() => {
@@ -212,73 +125,56 @@ export function ShareDialog({
     [shareUrl, showCopyFeedback]
   );
 
-  // Only render when visible (stays visible during close animation)
-  if (!isVisible) {
-    return null;
-  }
-
-  // isClosing = prop says closed but we're still visible (animating out)
-  const isClosing = !isOpen && isVisible;
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={`share-dialog${isClosing ? ' share-dialog--closing' : ''}`}
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="share-dialog"
+      dialogId="share"
     >
-      <div className="share-dialog__content">
+      <h2 className="share-dialog__heading">Share this puzzle</h2>
+
+      <div className="share-dialog__qr-container">
+        <QRCodeSVG
+          value={shareUrl}
+          size={200}
+          level="H"
+          marginSize={4}
+          bgColor="#ffffff"
+          fgColor="#000000"
+        />
+      </div>
+
+      <div className="share-dialog__url-container">
+        <input
+          type="text"
+          readOnly
+          value={shareUrl}
+          className="share-dialog__url-input"
+          onClick={handleUrlInputClick}
+          aria-label="Share URL - tap to copy"
+        />
+      </div>
+
+      <div className="share-dialog__actions">
         <button
           type="button"
-          className="share-dialog__close"
-          onClick={onClose}
-          aria-label="Close dialog"
+          className="share-dialog__button share-dialog__button--copy"
+          onClick={handleCopyLink}
         >
-          &times;
+          {copyFeedback ?? 'Copy Link'}
         </button>
 
-        <h2 className="share-dialog__heading">Share this puzzle</h2>
-
-        <div className="share-dialog__qr-container">
-          <QRCodeSVG
-            value={shareUrl}
-            size={200}
-            level="H"
-            marginSize={4}
-            bgColor="#ffffff"
-            fgColor="#000000"
-          />
-        </div>
-
-        <div className="share-dialog__url-container">
-          <input
-            type="text"
-            readOnly
-            value={shareUrl}
-            className="share-dialog__url-input"
-            onClick={handleUrlInputClick}
-            aria-label="Share URL - tap to copy"
-          />
-        </div>
-
-        <div className="share-dialog__actions">
+        {canShare && (
           <button
             type="button"
-            className="share-dialog__button share-dialog__button--copy"
-            onClick={handleCopyLink}
+            className="share-dialog__button share-dialog__button--share"
+            onClick={handleShare}
           >
-            {copyFeedback ?? 'Copy Link'}
+            Share
           </button>
-
-          {canShare && (
-            <button
-              type="button"
-              className="share-dialog__button share-dialog__button--share"
-              onClick={handleShare}
-            >
-              Share
-            </button>
-          )}
-        </div>
+        )}
       </div>
-    </dialog>
+    </Dialog>
   );
 }

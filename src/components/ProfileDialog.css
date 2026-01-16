@@ -1,66 +1,10 @@
-/* ProfileDialog - follows ShareDialog pattern */
+/* ProfileDialog - extends base Dialog styles */
 
-.profile-dialog {
-  padding: 0;
-  border: none;
-  background: transparent;
-  margin: auto;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: hidden;
-}
-
-.profile-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(2px);
-}
-
-.profile-dialog__content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+/* Extend base dialog content styles */
+.profile-dialog.dialog .dialog__content {
   align-items: center;
   gap: 1rem;
-  padding: 2rem 1.5rem;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   min-width: 300px;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* Close button */
-.profile-dialog__close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.5rem;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--color-text-muted);
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition:
-    background-color 120ms ease,
-    color 120ms ease;
-}
-
-.profile-dialog__close:hover {
-  background-color: var(--color-bg-tertiary);
-  color: var(--color-text);
-}
-
-/* Only show focus ring for keyboard navigation, not programmatic focus */
-.profile-dialog__close:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
 }
 
 /* Heading */
@@ -284,10 +228,8 @@
 
 /* Mobile responsiveness */
 @media (max-width: 400px) {
-  .profile-dialog__content {
-    padding: 1.5rem 1rem;
+  .profile-dialog.dialog .dialog__content {
     min-width: unset;
-    width: calc(100vw - 2rem);
   }
 
   .profile-dialog__avatar-section {
@@ -302,63 +244,5 @@
 
   .profile-dialog__nickname-section {
     max-width: 100%;
-  }
-}
-
-/* Animation */
-.profile-dialog[open] {
-  animation: profile-dialog-appear 150ms ease-out;
-}
-
-.profile-dialog[open]::backdrop {
-  animation: backdrop-appear 150ms ease-out;
-}
-
-@keyframes profile-dialog-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes backdrop-appear {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Animation - Close */
-.profile-dialog[open].profile-dialog--closing {
-  animation: profile-dialog-disappear 120ms ease-in forwards;
-}
-
-.profile-dialog[open].profile-dialog--closing::backdrop {
-  animation: backdrop-disappear 120ms ease-in forwards;
-}
-
-@keyframes profile-dialog-disappear {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes backdrop-disappear {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
   }
 }

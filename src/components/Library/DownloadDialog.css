@@ -1,24 +1,10 @@
 /* DownloadDialog component styles */
 
-.download-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 1rem;
-}
-
-.download-dialog {
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+/* Extend base dialog styles */
+.download-dialog.dialog .dialog__content {
   width: 100%;
   max-width: 360px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .download-dialog__title {
@@ -140,7 +126,7 @@
 
 /* Mobile adjustments */
 @media (max-width: 400px) {
-  .download-dialog {
+  .download-dialog.dialog .dialog__content {
     padding: 1.25rem;
   }
 

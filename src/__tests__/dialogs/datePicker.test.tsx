@@ -4,7 +4,7 @@
  * Tests for the DatePicker component, especially the disableHistoryManagement prop.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DatePicker } from '../../components/Library/DatePicker';
 

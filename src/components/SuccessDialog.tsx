@@ -5,12 +5,8 @@
  * Offers options to continue viewing the puzzle or return to the library.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { useDialogHistory } from '../hooks/useDialogHistory';
+import { Dialog } from './Dialog';
 import './SuccessDialog.css';
-
-/** Duration of the close animation in ms */
-const CLOSE_ANIMATION_DURATION = 150;
 
 interface SuccessDialogProps {
   /** Whether the dialog is open */
@@ -56,162 +52,61 @@ export function SuccessDialog({
   collaboratorCount = 0,
   duration,
 }: SuccessDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  // Track visibility separately from isOpen prop to allow close animation
-  const [isVisible, setIsVisible] = useState(isOpen);
-
-  // Handle back button navigation
-  useDialogHistory(isOpen, onClose, 'success');
-
-  // Handle visibility transitions with animation
-  useEffect(() => {
-    if (isOpen) {
-      // Opening: show immediately
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Necessary for open/close animation sync
-      setIsVisible(true);
-    } else if (isVisible) {
-      // Closing: wait for animation before hiding
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, CLOSE_ANIMATION_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isVisible]);
-
-  // Open/close the native dialog element
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isVisible && isOpen) {
-      dialog.showModal();
-    } else if (!isVisible) {
-      dialog.close();
-    }
-  }, [isVisible, isOpen]);
-
-  // Handle Escape key and click outside
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleCancel = (e: Event) => {
-      e.preventDefault();
-      onClose();
-    };
-
-    // Check if event coordinates are outside the dialog bounds
-    const isClickOutside = (clientX: number, clientY: number): boolean => {
-      const rect = dialog.getBoundingClientRect();
-      return (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      );
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      // Close if clicking on the backdrop (outside the dialog content)
-      if (isClickOutside(e.clientX, e.clientY)) {
-        onClose();
-      }
-    };
-
-    // Handle touch events for mobile - use touchend for consistency
-    const handleTouchEnd = (e: TouchEvent) => {
-      // Only handle single touch
-      if (e.changedTouches.length !== 1) return;
-      const touch = e.changedTouches[0];
-      if (isClickOutside(touch.clientX, touch.clientY)) {
-        // Prevent the subsequent click event from also firing
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    dialog.addEventListener('cancel', handleCancel);
-    dialog.addEventListener('click', handleClick);
-    dialog.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      dialog.removeEventListener('cancel', handleCancel);
-      dialog.removeEventListener('click', handleClick);
-      dialog.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [onClose]);
-
-  // Only render when visible (stays visible during close animation)
-  if (!isVisible) {
-    return null;
-  }
-
-  // isClosing = prop says closed but we're still visible (animating out)
-  const isClosing = !isOpen && isVisible;
   const isMultiplayer = collaboratorCount > 0;
 
   return (
-    <dialog
-      ref={dialogRef}
-      className={`success-dialog${isClosing ? ' success-dialog--closing' : ''}`}
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="success-dialog"
+      dialogId="success"
     >
-      <div className="success-dialog__content">
+      <div className="success-dialog__icon">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </div>
+
+      <h2 className="success-dialog__heading">Puzzle Complete!</h2>
+
+      <p className="success-dialog__puzzle-title">{puzzleTitle}</p>
+
+      {duration && (
+        <div className="success-dialog__duration">
+          <span className="success-dialog__duration-label">Time</span>
+          <span className="success-dialog__duration-value">{duration}</span>
+        </div>
+      )}
+
+      {isMultiplayer && (
+        <p className="success-dialog__multiplayer-note">
+          Solved together with {collaboratorCount} other{collaboratorCount > 1 ? 's' : ''}
+        </p>
+      )}
+
+      <div className="success-dialog__actions">
         <button
           type="button"
-          className="success-dialog__close"
-          onClick={onClose}
-          aria-label="Close dialog"
+          className="success-dialog__button success-dialog__button--secondary"
+          onClick={onBackToLibrary}
         >
-          &times;
+          Back to Library
         </button>
-
-        <div className="success-dialog__icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
-        </div>
-
-        <h2 className="success-dialog__heading">Puzzle Complete!</h2>
-
-        <p className="success-dialog__puzzle-title">{puzzleTitle}</p>
-
-        {duration && (
-          <div className="success-dialog__duration">
-            <span className="success-dialog__duration-label">Time</span>
-            <span className="success-dialog__duration-value">{duration}</span>
-          </div>
-        )}
-
-        {isMultiplayer && (
-          <p className="success-dialog__multiplayer-note">
-            Solved together with {collaboratorCount} other{collaboratorCount > 1 ? 's' : ''}
-          </p>
-        )}
-
-        <div className="success-dialog__actions">
-          <button
-            type="button"
-            className="success-dialog__button success-dialog__button--secondary"
-            onClick={onBackToLibrary}
-          >
-            Back to Library
-          </button>
-          <button
-            type="button"
-            className="success-dialog__button success-dialog__button--primary"
-            onClick={onClose}
-          >
-            Continue
-          </button>
-        </div>
+        <button
+          type="button"
+          className="success-dialog__button success-dialog__button--primary"
+          onClick={onClose}
+        >
+          Continue
+        </button>
       </div>
-    </dialog>
+    </Dialog>
   );
 }

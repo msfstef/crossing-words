@@ -1,5 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import './PuzzleOptionsDialog.css';
+
+/**
+ * Check if the browser supports CloseWatcher API.
+ */
+function supportsCloseWatcher(): boolean {
+  return typeof window !== 'undefined' && 'CloseWatcher' in window;
+}
+
+// Note: CloseWatcher type is already declared globally in Dialog.tsx
 
 interface PuzzleOptionsDialogProps {
   isOpen: boolean;
@@ -12,8 +21,11 @@ interface PuzzleOptionsDialogProps {
 }
 
 /**
- * Dialog showing options for a puzzle (reset, delete, etc.).
+ * Bottom sheet dialog showing options for a puzzle (reset, delete, etc.).
  * Triggered by long press on a puzzle card.
+ *
+ * Uses CloseWatcher API on supported browsers for Android back button,
+ * falls back to History API on older browsers.
  */
 export function PuzzleOptionsDialog({
   isOpen,
@@ -27,12 +39,13 @@ export function PuzzleOptionsDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
   const historyPushedRef = useRef(false);
+  const closeWatcherRef = useRef<CloseWatcher | null>(null);
 
   // Track touch for swipe down gesture
   const touchStartRef = useRef<{ y: number; time: number } | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsClosing(true);
     // Wait for animation to complete before actually closing
     setTimeout(() => {
@@ -40,7 +53,63 @@ export function PuzzleOptionsDialog({
       setDragOffset(0);
       onClose();
     }, 200); // Match animation duration
-  };
+  }, [onClose]);
+
+  // Set up CloseWatcher for Android back button support
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (supportsCloseWatcher()) {
+      try {
+        const watcher = new CloseWatcher();
+        closeWatcherRef.current = watcher;
+
+        watcher.onclose = () => {
+          handleClose();
+        };
+
+        return () => {
+          watcher.destroy();
+          closeWatcherRef.current = null;
+        };
+      } catch {
+        // CloseWatcher creation can fail if not triggered by user activation
+        // Fall through to history-based handling
+      }
+    }
+  }, [isOpen, handleClose]);
+
+  // Fallback: History-based back button handling for browsers without CloseWatcher
+  useEffect(() => {
+    if (!isOpen || supportsCloseWatcher()) return;
+
+    // Push history state when dialog opens
+    if (!historyPushedRef.current) {
+      window.history.pushState({ type: 'dialog', dialogType: 'puzzle-options' }, '');
+      historyPushedRef.current = true;
+    }
+
+    const handlePopstate = () => {
+      if (historyPushedRef.current) {
+        historyPushedRef.current = false;
+        handleClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => {
+      window.removeEventListener('popstate', handlePopstate);
+    };
+  }, [isOpen, handleClose]);
+
+  // Clean up history when dialog closes normally (not via back button)
+  // Only for browsers without CloseWatcher
+  useEffect(() => {
+    if (!isOpen && historyPushedRef.current && !supportsCloseWatcher()) {
+      historyPushedRef.current = false;
+      window.history.back();
+    }
+  }, [isOpen]);
 
   // Close dialog on Escape key
   useEffect(() => {
@@ -54,8 +123,7 @@ export function PuzzleOptionsDialog({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Close dialog when clicking/touching outside
   useEffect(() => {
@@ -86,40 +154,7 @@ export function PuzzleOptionsDialog({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleTouchOutside);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
-  }, [isOpen]);
-
-  // Handle back button
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Push history state when dialog opens
-    if (!historyPushedRef.current) {
-      window.history.pushState({ type: 'dialog', dialogType: 'puzzle-options' }, '');
-      historyPushedRef.current = true;
-    }
-
-    const handlePopstate = () => {
-      if (historyPushedRef.current) {
-        historyPushedRef.current = false;
-        handleClose();
-      }
-    };
-
-    window.addEventListener('popstate', handlePopstate);
-    return () => {
-      window.removeEventListener('popstate', handlePopstate);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose intentionally excluded to avoid re-registering listener
-  }, [isOpen]);
-
-  // Clean up history when dialog closes normally (not via back button)
-  useEffect(() => {
-    if (!isOpen && historyPushedRef.current) {
-      historyPushedRef.current = false;
-      window.history.back();
-    }
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Handle swipe down gesture on mobile
   const handleTouchStart = (e: React.TouchEvent) => {

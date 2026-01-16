@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import './DatePicker.css';
 
+/**
+ * Check if the browser supports CloseWatcher API.
+ */
+function supportsCloseWatcher(): boolean {
+  return typeof window !== 'undefined' && 'CloseWatcher' in window;
+}
+
+// Note: CloseWatcher type is already declared globally in Dialog.tsx
+
 type AvailableDays =
   | 'daily'
   | 'weekdays'
@@ -84,15 +93,16 @@ export function DatePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Track if we have a history entry for the datepicker
+  // Track if we have a history entry for the datepicker (only used when CloseWatcher not available)
   const hasHistoryEntryRef = useRef(false);
+  const closeWatcherRef = useRef<CloseWatcher | null>(null);
 
   // Close the datepicker and optionally clean up history
   const closeDatePicker = useCallback((viaBackButton: boolean = false) => {
     setIsOpen(false);
     // Only call history.back() if we have an entry and weren't closed by back button
-    // Skip history management entirely if disabled
-    if (!disableHistoryManagement && hasHistoryEntryRef.current && !viaBackButton) {
+    // Skip history management entirely if disabled or using CloseWatcher
+    if (!disableHistoryManagement && !supportsCloseWatcher() && hasHistoryEntryRef.current && !viaBackButton) {
       hasHistoryEntryRef.current = false;
       window.history.back();
     } else {
@@ -100,9 +110,33 @@ export function DatePicker({
     }
   }, [disableHistoryManagement]);
 
-  // Handle back button to close datepicker (only if history management is enabled)
+  // Set up CloseWatcher for Android back button support (when enabled)
   useEffect(() => {
-    if (disableHistoryManagement) return;
+    if (disableHistoryManagement || !isOpen) return;
+
+    if (supportsCloseWatcher()) {
+      try {
+        const watcher = new CloseWatcher();
+        closeWatcherRef.current = watcher;
+
+        watcher.onclose = () => {
+          closeDatePicker(true);
+        };
+
+        return () => {
+          watcher.destroy();
+          closeWatcherRef.current = null;
+        };
+      } catch {
+        // CloseWatcher creation can fail if not triggered by user activation
+        // Fall through to history-based handling
+      }
+    }
+  }, [isOpen, disableHistoryManagement, closeDatePicker]);
+
+  // Fallback: Handle back button to close datepicker (only if history management is enabled and CloseWatcher not available)
+  useEffect(() => {
+    if (disableHistoryManagement || supportsCloseWatcher()) return;
 
     const handlePopstate = () => {
       if (hasHistoryEntryRef.current) {
@@ -114,9 +148,9 @@ export function DatePicker({
     return () => window.removeEventListener('popstate', handlePopstate);
   }, [closeDatePicker, disableHistoryManagement]);
 
-  // Push history entry when datepicker opens (only if history management is enabled)
+  // Push history entry when datepicker opens (only if history management is enabled and CloseWatcher not available)
   useEffect(() => {
-    if (!disableHistoryManagement && isOpen && !hasHistoryEntryRef.current) {
+    if (!disableHistoryManagement && !supportsCloseWatcher() && isOpen && !hasHistoryEntryRef.current) {
       window.history.pushState({ type: 'datepicker' }, '');
       hasHistoryEntryRef.current = true;
     }
