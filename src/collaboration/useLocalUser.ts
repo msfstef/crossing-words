@@ -12,14 +12,6 @@ import type { UserInfo } from './types';
 import { LOCAL_USER_COLOR } from './colors';
 
 /**
- * Default user info when awareness is not available.
- */
-const DEFAULT_USER: UserInfo = {
-  name: 'You',
-  color: LOCAL_USER_COLOR,
-};
-
-/**
  * Hook for getting the local user's info from Yjs Awareness.
  *
  * @param awareness - Yjs Awareness instance or null if not in P2P mode
@@ -39,8 +31,9 @@ export function useLocalUser(awareness: Awareness | null): UserInfo | null {
   );
 
   const getSnapshot = useCallback((): UserInfo | null => {
-    // No P2P mode - return default user (no profile to load)
-    if (!awareness) return DEFAULT_USER;
+    // No awareness - either non-P2P mode or session still being created
+    // Return null to avoid showing placeholder (consumers should handle null gracefully)
+    if (!awareness) return null;
 
     const localState = awareness.getLocalState() as { user?: UserInfo } | null;
     if (localState?.user?.name) {
@@ -58,11 +51,11 @@ export function useLocalUser(awareness: Awareness | null): UserInfo | null {
       return cachedResult.current;
     }
 
-    // P2P mode but profile not loaded yet - return null to indicate loading
+    // Awareness exists but profile not set yet - return null to indicate loading
     return null;
   }, [awareness]);
 
-  const getServerSnapshot = useCallback(() => DEFAULT_USER, []);
+  const getServerSnapshot = useCallback(() => null, []);
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
