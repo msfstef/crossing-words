@@ -170,58 +170,79 @@ export function DatePicker({
     left: number;
     width: number;
   } | null>(null);
+  // Track if position has been calculated (to show dropdown only after positioning)
+  const [positionReady, setPositionReady] = useState(false);
+
+  // Reset position ready state when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setPositionReady(false);
+      setDropdownPosition(null);
+    }
+  }, [isOpen]);
 
   useLayoutEffect(() => {
     if (!isOpen || !containerRef.current || !dropdownRef.current) return;
 
-    const container = containerRef.current;
-    const dropdown = dropdownRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const dropdownHeight = dropdown.offsetHeight;
+    // Use requestAnimationFrame to ensure the browser has calculated layout
+    // This fixes the issue where offsetHeight is 0 on first render
+    const rafId = requestAnimationFrame(() => {
+      if (!containerRef.current || !dropdownRef.current) return;
 
-    // Space below the trigger button
-    const spaceBelow = window.innerHeight - containerRect.bottom;
-    // Space above the trigger button
-    const spaceAbove = containerRect.top;
+      const container = containerRef.current;
+      const dropdown = dropdownRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const dropdownHeight = dropdown.offsetHeight;
 
-    // Add some padding to account for margins
-    const padding = 16;
+      // Space below the trigger button
+      const spaceBelow = window.innerHeight - containerRect.bottom;
+      // Space above the trigger button
+      const spaceAbove = containerRect.top;
 
-    // Determine if dropdown fits in each direction
-    const fitsBelow = spaceBelow >= dropdownHeight + padding;
-    const fitsAbove = spaceAbove >= dropdownHeight + padding;
+      // Add some padding to account for margins
+      const padding = 16;
 
-    // Decision logic:
-    // 1. If fits below, open downward (default)
-    // 2. If doesn't fit below but fits above, open upward
-    // 3. If neither fits, open in direction with more space
-    let shouldOpenUpward: boolean;
-    if (fitsBelow) {
-      shouldOpenUpward = false;
-    } else if (fitsAbove) {
-      shouldOpenUpward = true;
-    } else {
-      // Neither fits - choose direction with more space
-      shouldOpenUpward = spaceAbove > spaceBelow;
-    }
+      // Determine if dropdown fits in each direction
+      const fitsBelow = spaceBelow >= dropdownHeight + padding;
+      const fitsAbove = spaceAbove >= dropdownHeight + padding;
 
-    setOpenUpward(shouldOpenUpward);
+      // Decision logic:
+      // 1. If fits below, open downward (default)
+      // 2. If doesn't fit below but fits above, open upward
+      // 3. If neither fits, open in direction with more space
+      let shouldOpenUpward: boolean;
+      if (fitsBelow) {
+        shouldOpenUpward = false;
+      } else if (fitsAbove) {
+        shouldOpenUpward = true;
+      } else {
+        // Neither fits - choose direction with more space
+        shouldOpenUpward = spaceAbove > spaceBelow;
+      }
 
-    // Calculate fixed position
-    const gap = 6; // Gap between trigger and dropdown
-    if (shouldOpenUpward) {
-      setDropdownPosition({
-        bottom: window.innerHeight - containerRect.top + gap,
-        left: containerRect.left,
-        width: containerRect.width,
-      });
-    } else {
-      setDropdownPosition({
-        top: containerRect.bottom + gap,
-        left: containerRect.left,
-        width: containerRect.width,
-      });
-    }
+      setOpenUpward(shouldOpenUpward);
+
+      // Calculate fixed position
+      const gap = 6; // Gap between trigger and dropdown
+      if (shouldOpenUpward) {
+        setDropdownPosition({
+          bottom: window.innerHeight - containerRect.top + gap,
+          left: containerRect.left,
+          width: containerRect.width,
+        });
+      } else {
+        setDropdownPosition({
+          top: containerRect.bottom + gap,
+          left: containerRect.left,
+          width: containerRect.width,
+        });
+      }
+
+      // Mark position as ready to show the dropdown
+      setPositionReady(true);
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [isOpen]);
 
   // Close on outside click
@@ -337,7 +358,7 @@ export function DatePicker({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className={`datepicker__dropdown datepicker__dropdown--fixed ${openUpward ? 'datepicker__dropdown--upward' : ''}`}
+          className={`datepicker__dropdown datepicker__dropdown--fixed ${openUpward ? 'datepicker__dropdown--upward' : ''} ${!positionReady ? 'datepicker__dropdown--measuring' : ''}`}
           role="dialog"
           aria-modal="true"
           style={

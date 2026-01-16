@@ -76,6 +76,12 @@
   z-index: 10001; /* Above dialog backdrop (typically 10000) */
 }
 
+/* Measuring state - hidden while calculating position */
+.datepicker__dropdown--measuring {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 @keyframes datepicker-slide-in {
   from {
     opacity: 0;
