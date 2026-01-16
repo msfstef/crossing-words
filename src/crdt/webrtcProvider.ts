@@ -241,8 +241,7 @@ export async function createP2PSession(
       reconnectTimeout = null;
       if (!isDestroyed && connectionState === 'disconnected') {
         console.debug('[P2P] Executing scheduled reconnect');
-        provider.disconnect();
-        provider.connect();
+        reconnectWithStatePreservation();
       }
     }, delay);
   };
@@ -277,12 +276,31 @@ export async function createP2PSession(
     updatePeerCount(count);
   });
 
+  /**
+   * Helper to preserve and restore awareness state across disconnect/connect.
+   * When disconnect() is called, y-webrtc may clear local state as part of
+   * departure broadcast. This function saves state before and restores after.
+   */
+  const reconnectWithStatePreservation = () => {
+    // Save local awareness state before disconnect
+    const savedLocalState = awareness.getLocalState();
+
+    provider.disconnect();
+    provider.connect();
+
+    // Restore local awareness state after reconnect
+    if (savedLocalState && typeof savedLocalState === 'object') {
+      Object.entries(savedLocalState).forEach(([key, value]) => {
+        awareness.setLocalStateField(key, value);
+      });
+    }
+  };
+
   // Network online/offline handlers
   const handleOnline = () => {
     console.debug('[P2P] Network online, triggering reconnect');
     resetReconnectAttempts(); // Reset backoff on network recovery
-    provider.disconnect();
-    provider.connect();
+    reconnectWithStatePreservation();
   };
 
   const handleOffline = () => {
@@ -295,8 +313,7 @@ export async function createP2PSession(
     if (document.visibilityState === 'visible' && !isDestroyed) {
       console.debug('[P2P] Page became visible, triggering reconnect');
       resetReconnectAttempts(); // Reset backoff on wake
-      provider.disconnect();
-      provider.connect();
+      reconnectWithStatePreservation();
     }
   };
 
@@ -323,8 +340,7 @@ export async function createP2PSession(
         console.debug('[P2P] Stale connection detected (connected but no peers), forcing reconnect');
         staleConnectionCheckCount = 0;
         resetReconnectAttempts();
-        provider.disconnect();
-        provider.connect();
+        reconnectWithStatePreservation();
       }
     } else {
       staleConnectionCheckCount = 0;
@@ -362,8 +378,7 @@ export async function createP2PSession(
     reconnect: () => {
       console.debug(`[webrtcProvider] Manual reconnection for room: ${roomId}`);
       resetReconnectAttempts(); // Reset backoff on manual reconnect
-      provider.disconnect();
-      provider.connect();
+      reconnectWithStatePreservation();
     },
     destroy: () => {
       console.debug(`[webrtcProvider] Destroying P2P session for room: ${roomId}`);
