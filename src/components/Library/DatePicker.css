@@ -66,6 +66,16 @@
   animation: datepicker-slide-in 150ms ease-out;
 }
 
+/* Fixed positioning variant - escapes parent overflow constraints */
+.datepicker__dropdown--fixed {
+  position: fixed;
+  top: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  z-index: 10001; /* Above dialog backdrop (typically 10000) */
+}
+
 @keyframes datepicker-slide-in {
   from {
     opacity: 0;

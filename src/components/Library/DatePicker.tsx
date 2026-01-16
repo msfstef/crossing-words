@@ -162,7 +162,15 @@ export function DatePicker({
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDayOfMonth = getFirstDayOfMonth(viewYear, viewMonth);
 
-  // Calculate dropdown direction based on available viewport space
+  // Calculate dropdown position based on available viewport space
+  // Uses fixed positioning to escape dialog overflow constraints
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+  } | null>(null);
+
   useLayoutEffect(() => {
     if (!isOpen || !containerRef.current || !dropdownRef.current) return;
 
@@ -187,13 +195,32 @@ export function DatePicker({
     // 1. If fits below, open downward (default)
     // 2. If doesn't fit below but fits above, open upward
     // 3. If neither fits, open in direction with more space
+    let shouldOpenUpward: boolean;
     if (fitsBelow) {
-      setOpenUpward(false);
+      shouldOpenUpward = false;
     } else if (fitsAbove) {
-      setOpenUpward(true);
+      shouldOpenUpward = true;
     } else {
       // Neither fits - choose direction with more space
-      setOpenUpward(spaceAbove > spaceBelow);
+      shouldOpenUpward = spaceAbove > spaceBelow;
+    }
+
+    setOpenUpward(shouldOpenUpward);
+
+    // Calculate fixed position
+    const gap = 6; // Gap between trigger and dropdown
+    if (shouldOpenUpward) {
+      setDropdownPosition({
+        bottom: window.innerHeight - containerRect.top + gap,
+        left: containerRect.left,
+        width: containerRect.width,
+      });
+    } else {
+      setDropdownPosition({
+        top: containerRect.bottom + gap,
+        left: containerRect.left,
+        width: containerRect.width,
+      });
     }
   }, [isOpen]);
 
@@ -310,9 +337,19 @@ export function DatePicker({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className={`datepicker__dropdown ${openUpward ? 'datepicker__dropdown--upward' : ''}`}
+          className={`datepicker__dropdown datepicker__dropdown--fixed ${openUpward ? 'datepicker__dropdown--upward' : ''}`}
           role="dialog"
           aria-modal="true"
+          style={
+            dropdownPosition
+              ? {
+                  top: dropdownPosition.top,
+                  bottom: dropdownPosition.bottom,
+                  left: dropdownPosition.left,
+                  width: dropdownPosition.width,
+                }
+              : undefined
+          }
         >
           <div className="datepicker__header">
             <button
