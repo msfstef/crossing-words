@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Collaborator, UserInfo } from '../../collaboration/types';
+import { CollaboratorAvatar, OverflowAvatar } from '../CollaboratorAvatar';
 import './SolveHeader.css';
 
 interface SolveHeaderProps {
@@ -58,28 +59,21 @@ export function SolveHeader({
       {allParticipants.length > 0 && (
         <div className="solve-header__collaborators">
           {allParticipants.slice(0, 5).map((participant) => (
-            <div
+            <CollaboratorAvatar
               key={participant.key}
-              className={`solve-header__avatar${participant.isSelf ? ' solve-header__avatar--self' : ''}`}
-              style={{
-                borderColor: participant.user.color,
-                backgroundColor: participant.user.avatar ? 'transparent' : participant.user.color,
-              }}
-              title={participant.isSelf ? `${participant.user.name} (you)` : participant.user.name}
-            >
-              {participant.user.avatar && (
-                <img
-                  src={participant.user.avatar}
-                  alt=""
-                  className="solve-header__avatar-image"
-                />
-              )}
-            </div>
+              avatarKey={participant.key}
+              user={participant.user}
+              isSelf={participant.isSelf}
+              size="small"
+              overlapping
+            />
           ))}
           {allParticipants.length > 5 && (
-            <div className="solve-header__avatar solve-header__avatar--overflow">
-              +{allParticipants.length - 5}
-            </div>
+            <OverflowAvatar
+              count={allParticipants.length - 5}
+              size="small"
+              overlapping
+            />
           )}
         </div>
       )}

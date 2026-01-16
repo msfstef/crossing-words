@@ -1,0 +1,103 @@
+/**
+ * CollaboratorAvatar: Animated avatar component with initials fallback
+ */
+
+.collaborator-avatar {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  /* Start invisible for animation */
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Visible state - fade in with spring-like scale */
+.collaborator-avatar--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Small size (default) - 24px */
+.collaborator-avatar--small {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+/* Medium size - 32px */
+.collaborator-avatar--medium {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+/* Overlapping layout (SolveHeader style) */
+.collaborator-avatar--overlapping {
+  margin-left: -8px;
+}
+
+.collaborator-avatar--overlapping:first-child {
+  margin-left: 0;
+}
+
+/* Self indicator */
+.collaborator-avatar--self {
+  /* Subtle distinction for local user */
+}
+
+/* Avatar image */
+.collaborator-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Initials text */
+.collaborator-avatar__initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  line-height: 1;
+  border-radius: 50%;
+  /* Text shadow for better readability on colored backgrounds */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.collaborator-avatar--small .collaborator-avatar__initials {
+  font-size: 9px;
+}
+
+.collaborator-avatar--medium .collaborator-avatar__initials {
+  font-size: 12px;
+}
+
+/* Overflow indicator */
+.collaborator-avatar--overflow {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+}
+
+.collaborator-avatar--overflow .collaborator-avatar__initials {
+  color: var(--color-text);
+  text-shadow: none;
+  font-size: 10px;
+}
+
+.collaborator-avatar--medium.collaborator-avatar--overflow .collaborator-avatar__initials {
+  font-size: 12px;
+}
