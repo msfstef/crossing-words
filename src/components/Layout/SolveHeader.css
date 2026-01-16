@@ -131,6 +131,22 @@
   opacity: 0.9;
 }
 
+/* Disabled state - no collaborators */
+.solve-header__follow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  animation: none;
+}
+
+.solve-header__follow:disabled:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.solve-header__follow:disabled:active {
+  transform: none;
+}
+
 .solve-header__follow-icon {
   width: 18px;
   height: 18px;

@@ -78,14 +78,27 @@ export function SolveHeader({
         </div>
       )}
 
-      {/* Follow button - show when there are collaborators */}
-      {collaborators.length > 0 && onToggleFollow && (
+      {/* Follow button - always visible, disabled when no collaborators */}
+      {onToggleFollow && (
         <button
           type="button"
           className={`solve-header__follow ${followedCollaborator ? 'solve-header__follow--active' : ''}`}
           onClick={onToggleFollow}
-          aria-label={followedCollaborator ? `Following ${followedCollaborator.user.name}` : 'Follow a collaborator'}
-          title={followedCollaborator ? `Following ${followedCollaborator.user.name}` : 'Follow a collaborator'}
+          disabled={collaborators.length === 0}
+          aria-label={
+            collaborators.length === 0
+              ? 'No collaborators to follow'
+              : followedCollaborator
+                ? `Following ${followedCollaborator.user.name}`
+                : 'Follow a collaborator'
+          }
+          title={
+            collaborators.length === 0
+              ? 'No collaborators to follow'
+              : followedCollaborator
+                ? `Following ${followedCollaborator.user.name}`
+                : 'Follow a collaborator'
+          }
           style={followedCollaborator ? { borderColor: followedCollaborator.user.color } : undefined}
         >
           <svg
