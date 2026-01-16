@@ -126,6 +126,7 @@ export function PuzzleOptionsDialog({
   }, [isOpen, handleClose]);
 
   // Close dialog when clicking/touching outside
+  // Uses 'click' and 'touchend' events for consistency with Dialog.tsx
   useEffect(() => {
     if (!isOpen) return;
 
@@ -136,6 +137,7 @@ export function PuzzleOptionsDialog({
     };
 
     const handleTouchOutside = (e: TouchEvent) => {
+      if (e.changedTouches.length !== 1) return;
       if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
         // Prevent the subsequent click event from also firing
         e.preventDefault();
@@ -144,15 +146,16 @@ export function PuzzleOptionsDialog({
     };
 
     // Add listener after a brief delay to avoid closing immediately
+    // (needed for bottom sheets opened via long-press)
     const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleTouchOutside);
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('touchend', handleTouchOutside);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleTouchOutside);
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('touchend', handleTouchOutside);
     };
   }, [isOpen, handleClose]);
 

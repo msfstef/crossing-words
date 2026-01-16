@@ -214,25 +214,19 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [handleClose]);
 
-  // Handle click/touch outside dialog content
+  // Handle click/touch outside dialog content (on the backdrop area)
+  // Since the dialog element fills the viewport, clicks directly on it (not on children)
+  // are backdrop clicks. This is the standard pattern for native <dialog> backdrop detection.
   useEffect(() => {
     if (!closeOnBackdropClick) return;
 
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    const isClickOutside = (clientX: number, clientY: number): boolean => {
-      const rect = dialog.getBoundingClientRect();
-      return (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      );
-    };
-
     const handleClick = (e: MouseEvent) => {
-      if (isClickOutside(e.clientX, e.clientY)) {
+      // Only close if the click was directly on the dialog element (the backdrop area),
+      // not on any of its children (the content)
+      if (e.target === dialog) {
         // Check dynamic callback if provided
         if (shouldCloseOnBackdropClick && !shouldCloseOnBackdropClick()) {
           return;
@@ -242,9 +236,8 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.changedTouches.length !== 1) return;
-      const touch = e.changedTouches[0];
-      if (isClickOutside(touch.clientX, touch.clientY)) {
+      // Only close if the touch was directly on the dialog element (the backdrop area)
+      if (e.target === dialog) {
         // Check dynamic callback if provided
         if (shouldCloseOnBackdropClick && !shouldCloseOnBackdropClick()) {
           return;
@@ -261,7 +254,7 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
       dialog.removeEventListener('click', handleClick);
       dialog.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [closeOnBackdropClick, shouldCloseOnBackdropClick, handleClose]);
+  }, [closeOnBackdropClick, shouldCloseOnBackdropClick, handleClose, isOpen, isVisible]);
 
   // Don't render when fully closed
   if (!isVisible) {
