@@ -24,6 +24,8 @@ import { useMinimumLoadingTime } from './hooks/useMinimumLoadingTime';
 import { useCollaborators } from './collaboration/useCollaborators';
 import { useFollowCollaborator } from './collaboration/useFollowCollaborator';
 import { useLocalUser } from './collaboration/useLocalUser';
+import { useScreenWakeLock } from './hooks/useScreenWakeLock';
+import { useOrientationLock } from './hooks/useOrientationLock';
 import { LOCAL_USER_COLOR } from './collaboration/colors';
 import { samplePuzzle } from './lib/samplePuzzle';
 import { saveCurrentPuzzle, loadPuzzleById, savePuzzle } from './lib/puzzleStorage';
@@ -126,6 +128,11 @@ function getTestPuzzleFromUrlParams(): Puzzle | null {
  */
 function AppContent() {
   const { notify } = useNotification();
+
+  // Lock orientation to portrait on phone-sized devices
+  // This helps respect system orientation preferences on Android
+  useOrientationLock();
+
   // Check for test puzzle from URL parameters (dev mode only)
   const initialTestPuzzle = useMemo(() => getTestPuzzleFromUrlParams(), []);
   // View state: library (home) or solve (puzzle view)
@@ -622,7 +629,7 @@ function AppContent() {
   const localUser = useLocalUser(awareness);
 
   // Follow collaborator functionality - sync cursor to followed collaborator
-  const { followedCollaborator, toggleFollow, disableFollow } = useFollowCollaborator(
+  const { followedCollaborator, toggleFollow, disableFollow, isFollowing } = useFollowCollaborator(
     collaborators,
     awareness,
     useCallback((row: number, col: number, dir: 'across' | 'down') => {
@@ -631,6 +638,10 @@ function AppContent() {
     }, [setSelectedCell, setDirection]),
     { notify }
   );
+
+  // Keep screen awake while following a collaborator
+  // This prevents the device from sleeping and disconnecting the P2P session
+  useScreenWakeLock({ enabled: isFollowing });
 
   // Wrap user interaction handlers to disable follow mode on local movement
   const handleCellClickWithFollow = useCallback((row: number, col: number) => {

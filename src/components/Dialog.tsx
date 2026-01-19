@@ -103,14 +103,21 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
   const [isVisible, setIsVisible] = useState(isOpen);
   // Track if we should skip the open animation (when reopening during close)
   const skipOpenAnimationRef = useRef(false);
+  // Protection period: ignore close events immediately after opening
+  // This prevents race conditions on Android Chrome where CloseWatcher fires immediately
+  const openProtectionRef = useRef(false);
 
   // Expose dialog element via ref
   useImperativeHandle(ref, () => ({
     dialogElement: dialogRef.current,
   }));
 
-  // Stable close handler
+  // Stable close handler with protection against immediate closing
   const handleClose = useCallback(() => {
+    // Ignore close events during the protection period (prevents Android Chrome race condition)
+    if (openProtectionRef.current) {
+      return;
+    }
     onClose();
   }, [onClose]);
 
@@ -127,6 +134,27 @@ export const Dialog = forwardRef<DialogRef, DialogProps>(function Dialog(
       return () => clearTimeout(timer);
     }
   }, [isOpen, isVisible, animationDuration]);
+
+  // Protection period: prevent immediate closing after dialog opens
+  // This fixes a race condition on Android Chrome where CloseWatcher can fire immediately
+  // when the dialog is opened programmatically (not by user interaction)
+  useEffect(() => {
+    if (isOpen && isVisible) {
+      // Enable protection when dialog opens
+      openProtectionRef.current = true;
+
+      // Clear protection after the dialog has had time to stabilize
+      // 200ms is enough to cover any async events while being imperceptible to users
+      const timer = setTimeout(() => {
+        openProtectionRef.current = false;
+      }, 200);
+
+      return () => {
+        clearTimeout(timer);
+        openProtectionRef.current = false;
+      };
+    }
+  }, [isOpen, isVisible]);
 
   // Track when we cancel a close animation (reopening during close)
   // This prevents the open animation from replaying by using inline styles

@@ -314,6 +314,56 @@ export async function createP2PSession(
       console.debug('[P2P] Page became visible, triggering reconnect');
       resetReconnectAttempts(); // Reset backoff on wake
       reconnectWithStatePreservation();
+
+      // Schedule an immediate health check after becoming visible
+      // This catches cases where reconnect appears successful but connection is stale
+      setTimeout(() => {
+        if (!isDestroyed && connectionState === 'connected' && peerCount === 0) {
+          console.debug('[P2P] Post-visibility health check: no peers, forcing reconnect');
+          reconnectWithStatePreservation();
+        }
+      }, 3000); // Check 3 seconds after becoming visible
+    }
+  };
+
+  // Focus event handler - fires when window gains focus (complements visibilitychange)
+  // This catches cases like switching back to the browser from another app
+  let lastFocusTime = Date.now();
+  const handleFocus = () => {
+    if (isDestroyed) return;
+
+    const now = Date.now();
+    const timeSinceLastFocus = now - lastFocusTime;
+    lastFocusTime = now;
+
+    // Only reconnect if it's been more than 5 seconds since last focus
+    // This prevents rapid reconnects during normal focus/blur cycles
+    if (timeSinceLastFocus > 5000) {
+      console.debug('[P2P] Window focused after', Math.round(timeSinceLastFocus / 1000), 'seconds, checking connection');
+
+      // If connection appears stale (connected but no peers), force reconnect
+      if (connectionState === 'connected' && peerCount === 0) {
+        console.debug('[P2P] Connection appears stale on focus, reconnecting');
+        resetReconnectAttempts();
+        reconnectWithStatePreservation();
+      } else if (connectionState === 'disconnected') {
+        console.debug('[P2P] Disconnected on focus, reconnecting');
+        resetReconnectAttempts();
+        reconnectWithStatePreservation();
+      }
+    }
+  };
+
+  // Page show handler - fires when page is shown (including from bfcache)
+  // This is more reliable than visibilitychange for detecting page restoration
+  const handlePageShow = (event: PageTransitionEvent) => {
+    if (isDestroyed) return;
+
+    // persisted indicates the page was restored from back-forward cache
+    if (event.persisted) {
+      console.debug('[P2P] Page restored from bfcache, forcing reconnect');
+      resetReconnectAttempts();
+      reconnectWithStatePreservation();
     }
   };
 
@@ -321,6 +371,8 @@ export async function createP2PSession(
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
   document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('focus', handleFocus);
+  window.addEventListener('pageshow', handlePageShow);
 
   // Periodic health check: verify signaling connection is alive
   // The signaling server expects ping/pong, but y-webrtc handles this internally
@@ -401,6 +453,8 @@ export async function createP2PSession(
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handlePageShow);
 
       // Clear subscribers
       connectionSubscribers.clear();

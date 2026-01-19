@@ -154,16 +154,27 @@ export function ShareDialog({
           onClick={handleUrlInputClick}
           aria-label="Share URL - tap to copy"
         />
+        {/* Show copy feedback below URL when native share is available (mobile) */}
+        {canShare && copyFeedback && (
+          <div className="share-dialog__url-feedback">{copyFeedback}</div>
+        )}
+        {/* Show tap hint when native share is available and no feedback showing */}
+        {canShare && !copyFeedback && (
+          <div className="share-dialog__url-hint">Tap to copy link</div>
+        )}
       </div>
 
       <div className="share-dialog__actions">
-        <button
-          type="button"
-          className="share-dialog__button share-dialog__button--copy"
-          onClick={handleCopyLink}
-        >
-          {copyFeedback ?? 'Copy Link'}
-        </button>
+        {/* On desktop (no native share), show Copy Link button */}
+        {!canShare && (
+          <button
+            type="button"
+            className="share-dialog__button share-dialog__button--copy"
+            onClick={handleCopyLink}
+          >
+            {copyFeedback ?? 'Copy Link'}
+          </button>
+        )}
 
         {canShare && (
           <button

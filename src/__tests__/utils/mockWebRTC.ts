@@ -132,6 +132,27 @@ export class MockP2PNetwork {
   simulateNetworkChange(online: boolean): void {
     window.dispatchEvent(new Event(online ? 'online' : 'offline'));
   }
+
+  /**
+   * Simulate window focus event (user returns to app/tab)
+   */
+  simulateFocus(): void {
+    window.dispatchEvent(new Event('focus'));
+  }
+
+  /**
+   * Simulate pageshow event (page restored from bfcache)
+   */
+  simulatePageShow(persisted: boolean): void {
+    // PageTransitionEvent may not be available in test environment
+    // Use a custom event with the persisted property
+    const event = new Event('pageshow') as PageTransitionEvent;
+    Object.defineProperty(event, 'persisted', {
+      value: persisted,
+      writable: false,
+    });
+    window.dispatchEvent(event);
+  }
 }
 
 /**
