@@ -59,7 +59,10 @@ export default defineConfig(({ command }) => {
           display_override: ["window-controls-overlay", "standalone"],
           start_url: base,
           scope: base,
-          orientation: "any",
+          // Use "natural" to respect device's natural orientation and system settings
+          // On phones this defaults to portrait; tablets may vary
+          // This better respects Android system orientation lock settings
+          orientation: "natural",
           categories: ["games", "entertainment", "education"],
           launch_handler: {
             client_mode: "focus-existing",

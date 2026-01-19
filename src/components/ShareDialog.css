@@ -55,6 +55,23 @@
   border-color: var(--color-text-muted);
 }
 
+/* URL feedback and hint (shown on mobile when native share is available) */
+.share-dialog__url-feedback,
+.share-dialog__url-hint {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.share-dialog__url-feedback {
+  color: var(--color-success, #22c55e);
+  font-weight: 500;
+}
+
+.share-dialog__url-hint {
+  color: var(--color-text-muted);
+}
+
 /* Action buttons */
 .share-dialog__actions {
   display: flex;

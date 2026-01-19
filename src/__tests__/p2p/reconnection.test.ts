@@ -375,6 +375,151 @@ describe('P2P Reconnection', () => {
     });
   });
 
+  describe('Focus Event Recovery', () => {
+    it('should reconnect when window receives focus after being away', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+
+      // Disconnect
+      provider.manualControl.disconnect();
+      expect(session.connectionState).toBe('disconnected');
+
+      // Simulate time passing (>5 seconds to trigger focus reconnect)
+      await vi.advanceTimersByTimeAsync(6000);
+
+      // Simulate focus event
+      network.simulateFocus();
+      await vi.advanceTimersByTimeAsync(100);
+
+      // Should trigger reconnection
+      expect(session.connectionState).toBe('connected');
+    });
+
+    it('should check for stale connection on focus', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+      const originalConnect = provider.connect.bind(provider);
+      let reconnectCalled = false;
+
+      // Simulate time passing
+      await vi.advanceTimersByTimeAsync(6000);
+
+      // Mock connect to track calls
+      provider.connect = vi.fn(() => {
+        reconnectCalled = true;
+        originalConnect();
+      });
+
+      // Session is connected but has 0 peers (stale)
+      expect(session.connectionState).toBe('connected');
+      expect(session.peerCount).toBe(0);
+
+      // Simulate focus event
+      network.simulateFocus();
+      await vi.advanceTimersByTimeAsync(100);
+
+      // Should trigger reconnect due to stale connection
+      expect(reconnectCalled).toBe(true);
+    });
+
+    it('should not reconnect on rapid focus/blur cycles', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+      const connectSpy = vi.spyOn(provider, 'connect');
+      const initialCallCount = connectSpy.mock.calls.length;
+
+      // Rapid focus events (less than 5 seconds apart)
+      for (let i = 0; i < 5; i++) {
+        network.simulateFocus();
+        await vi.advanceTimersByTimeAsync(1000); // 1 second between each
+      }
+
+      // Should not have triggered additional reconnects
+      // since focus events were too close together
+      expect(connectSpy.mock.calls.length).toBe(initialCallCount);
+    });
+  });
+
+  describe('Page Show (bfcache) Recovery', () => {
+    it('should reconnect when page is restored from bfcache', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+      const originalConnect = provider.connect.bind(provider);
+      let reconnectCalled = false;
+
+      provider.connect = vi.fn(() => {
+        reconnectCalled = true;
+        originalConnect();
+      });
+
+      // Simulate page restored from bfcache (persisted = true)
+      network.simulatePageShow(true);
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(reconnectCalled).toBe(true);
+    });
+
+    it('should not reconnect on normal page load (not from bfcache)', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+      const originalConnect = provider.connect.bind(provider);
+      let reconnectCalled = false;
+
+      provider.connect = vi.fn(() => {
+        reconnectCalled = true;
+        originalConnect();
+      });
+
+      // Simulate normal page show (persisted = false)
+      network.simulatePageShow(false);
+      await vi.advanceTimersByTimeAsync(100);
+
+      // Should NOT trigger reconnect
+      expect(reconnectCalled).toBe(false);
+    });
+  });
+
+  describe('Post-Visibility Health Check', () => {
+    it('should perform health check shortly after becoming visible', async () => {
+      session = await createP2PSession(store, 'test-room');
+      await vi.advanceTimersByTimeAsync(150);
+
+      const provider = session.provider as unknown as MockWebrtcProvider;
+      const originalConnect = provider.connect.bind(provider);
+      let reconnectCount = 0;
+
+      provider.connect = vi.fn(() => {
+        reconnectCount++;
+        originalConnect();
+      });
+
+      // Hide then show the page (connected with 0 peers - potentially stale)
+      network.simulateVisibilityChange(true); // hidden
+      network.simulateVisibilityChange(false); // visible
+
+      // Initial reconnect on visibility change
+      await vi.advanceTimersByTimeAsync(100);
+      const initialReconnects = reconnectCount;
+
+      // Wait for post-visibility health check (3 seconds)
+      await vi.advanceTimersByTimeAsync(3100);
+
+      // Should have triggered another reconnect due to health check
+      // (connected but 0 peers is considered stale)
+      expect(reconnectCount).toBeGreaterThan(initialReconnects);
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle rapid connect/disconnect cycles', async () => {
       session = await createP2PSession(store, 'test-room');
