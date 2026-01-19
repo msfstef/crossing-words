@@ -152,19 +152,3 @@ export function useScreenWakeLock({
   };
 }
 
-// TypeScript declaration for Wake Lock API (not yet in standard lib types)
-declare global {
-  interface Navigator {
-    wakeLock?: {
-      request(type: 'screen'): Promise<WakeLockSentinel>;
-    };
-  }
-
-  interface WakeLockSentinel extends EventTarget {
-    readonly released: boolean;
-    readonly type: 'screen';
-    release(): Promise<void>;
-    addEventListener(type: 'release', listener: () => void): void;
-    removeEventListener(type: 'release', listener: () => void): void;
-  }
-}
