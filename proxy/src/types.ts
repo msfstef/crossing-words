@@ -64,14 +64,41 @@ export const STORAGE_KEYS = {
 
 /**
  * TTL constants (in milliseconds)
+ *
+ * Values chosen based on research of multiplayer game frameworks (Colyseus, Socket.IO)
+ * and collaborative app best practices:
+ * - Colyseus recommends 20s reconnection window for games
+ * - Socket.IO defaults to 45s ping timeout (25s interval + 20s timeout)
+ * - Mobile apps need longer timeouts due to tab switching/backgrounding
+ * - Must stay under proxy idle timeouts (typically 60s for AWS ELB)
+ *
+ * For a collaborative puzzle app where users may:
+ * - Switch tabs to look up answers
+ * - Get briefly distracted
+ * - Have flaky mobile connections
+ * We use more generous timeouts than fast-paced games.
  */
 export const TTL = {
-  /** Room expires after 6 hours of inactivity */
+  /** Room expires after 6 hours of inactivity (reasonable for a puzzle session) */
   ROOM_INACTIVITY: 6 * 60 * 60 * 1000,
-  /** Connection marked stale after 2 minutes without ping */
-  CONNECTION_STALE: 2 * 60 * 1000,
-  /** Disconnected visitor cleanup after 30 seconds */
-  VISITOR_RECONNECT_WINDOW: 30 * 1000,
+
+  /**
+   * Connection marked stale after 90 seconds without ping.
+   * Balances quick detection with tolerance for brief tab switches.
+   * Must be < proxy timeouts (60s) but we use hibernation API so this is OK.
+   */
+  CONNECTION_STALE: 90 * 1000,
+
+  /**
+   * Disconnected visitor cleanup after 3 minutes.
+   * Generous window for:
+   * - Mobile app switches (iOS/Android can pause WebSockets)
+   * - Brief network interruptions
+   * - Users looking something up in another tab
+   * Colyseus uses 20s for games; we're more forgiving for casual collaboration.
+   */
+  VISITOR_RECONNECT_WINDOW: 3 * 60 * 1000,
+
   /** Alarm interval - runs every 60 seconds while room is active */
   ALARM_INTERVAL: 60 * 1000,
 } as const;
