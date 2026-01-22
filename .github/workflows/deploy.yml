@@ -1,3 +1,13 @@
+# Deploy to GitHub Pages using gh-pages branch
+#
+# IMPORTANT: This workflow requires GitHub Pages to be configured to deploy from
+# the gh-pages branch. Go to Settings > Pages > Source and select:
+#   - Deploy from a branch
+#   - Branch: gh-pages / (root)
+#
+# This approach is used instead of GitHub Actions artifacts to support PR preview
+# deployments in subdirectories while preserving the main site.
+
 name: Deploy to GitHub Pages
 
 on:
@@ -7,16 +17,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,21 +42,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./dist"
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # Keep PR preview directories when deploying main site
+          keep_files: true
+          # Clean up any stale files from main site, but preserve pr-preview
+          exclude_assets: ""

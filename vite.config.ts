@@ -4,7 +4,10 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
-  const base = command === "build" ? "/crossing-words/" : "/";
+  // Allow custom base path via env for PR previews (e.g., /crossing-words/pr-preview/pr-123/)
+  const base =
+    process.env.VITE_BASE_PATH ||
+    (command === "build" ? "/crossing-words/" : "/");
 
   return {
     base,
