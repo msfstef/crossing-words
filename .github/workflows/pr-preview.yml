@@ -35,7 +35,8 @@ jobs:
           VITE_BASE_PATH: /crossing-words/pr-preview/pr-${{ github.event.pull_request.number }}/
 
       - name: Deploy PR preview
-        uses: peaceiris/actions-gh-pages@v4
+        # v4.0.0 - pinned for security
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
@@ -43,7 +44,8 @@ jobs:
           keep_files: true
 
       - name: Find existing comment
-        uses: peter-evans/find-comment@v3
+        # v3.1.0 - pinned for security
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -51,7 +53,8 @@ jobs:
           body-includes: "## 🚀 PR Preview"
 
       - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v4
+        # v4.0.0 - pinned for security
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
@@ -91,7 +94,8 @@ jobs:
           fi
 
       - name: Find existing comment
-        uses: peter-evans/find-comment@v3
+        # v3.1.0 - pinned for security
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -100,7 +104,8 @@ jobs:
 
       - name: Update comment to indicate cleanup
         if: steps.find-comment.outputs.comment-id != ''
-        uses: peter-evans/create-or-update-comment@v4
+        # v4.0.0 - pinned for security
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
