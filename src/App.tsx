@@ -1080,8 +1080,6 @@ function AppContent() {
             <CrosswordKeyboard
               onKeyPress={typeLetterWithFollow}
               onBackspace={handleBackspaceWithFollow}
-              onSwipe={handleSwipeNavigationWithFollow}
-              isTouchDevice={isTouchDevice}
             />
           )
         }

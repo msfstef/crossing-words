@@ -1,15 +1,10 @@
 import Keyboard from 'react-simple-keyboard';
 import 'react-simple-keyboard/build/css/index.css';
-import { useSwipeNavigation, type SwipeDirection } from '../../hooks/useSwipeNavigation';
 import './CrosswordKeyboard.css';
 
 interface CrosswordKeyboardProps {
   onKeyPress: (key: string) => void;
   onBackspace: () => void;
-  /** Callback for swipe navigation (mobile only) */
-  onSwipe?: (direction: SwipeDirection) => void;
-  /** Whether the device supports touch */
-  isTouchDevice?: boolean;
 }
 
 /**
@@ -20,14 +15,7 @@ interface CrosswordKeyboardProps {
 export function CrosswordKeyboard({
   onKeyPress,
   onBackspace,
-  onSwipe,
-  isTouchDevice = false,
 }: CrosswordKeyboardProps) {
-  // Swipe navigation handlers (only active on touch devices)
-  const swipeHandlers = useSwipeNavigation({
-    onSwipe: onSwipe ?? (() => {}),
-    enabled: isTouchDevice && Boolean(onSwipe),
-  });
 
   // QWERTY layout with backspace on bottom row
   const layout = {
@@ -53,7 +41,7 @@ export function CrosswordKeyboard({
   };
 
   return (
-    <div className="crossword-keyboard" {...swipeHandlers}>
+    <div className="crossword-keyboard">
       <Keyboard
         layout={layout}
         display={display}
