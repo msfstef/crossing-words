@@ -23,18 +23,25 @@ export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
  * ICE server configuration for WebRTC connections.
  * Includes STUN servers for NAT discovery and TURN for relay fallback.
  *
+ * IMPORTANT: Keep under 5 servers to avoid slow ICE candidate discovery.
+ * WebRTC warns: "Using five or more STUN/TURN servers slows down discovery"
+ *
  * STUN: ~75% of connections work with just STUN
  * TURN: Required for ~20-30% of users behind restrictive NATs/firewalls
+ *
+ * Server choices:
+ * - Google STUN: Most reliable, global anycast infrastructure
+ * - Open Relay TURN: Free tier (20GB/month), 99.999% uptime, ports 80/443
+ *   bypass corporate firewalls, TURNS+SSL handles deep packet inspection
  */
 const ICE_SERVERS: RTCIceServer[] = [
-  // STUN servers (free, unlimited)
+  // STUN: Google is highly reliable with global anycast (one server is enough)
   { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:global.stun.twilio.com:3478' },
-  // TURN server (Open Relay free tier - 20GB/month)
+  // TURN: Open Relay on ports that bypass firewalls
+  // - Port 443 (HTTPS port) works through most corporate firewalls
+  // - TURNS (TLS) handles deep packet inspection firewalls
   {
     urls: [
-      'turn:staticauth.openrelay.metered.ca:80',
       'turn:staticauth.openrelay.metered.ca:443',
       'turns:staticauth.openrelay.metered.ca:443',
     ],
@@ -47,15 +54,21 @@ const ICE_SERVERS: RTCIceServer[] = [
  * Get signaling servers from environment variable or default to production.
  * Set VITE_SIGNALING_SERVER to override (e.g., ws://localhost:4444 for local testing).
  * Defaults to production Cloudflare Worker signaling server.
+ *
+ * @param roomId - Room ID to include in the signaling URL for per-room DO routing
  */
-function getSignalingServers(): string[] {
+function getSignalingServers(roomId: string): string[] {
   const customServer = import.meta.env.VITE_SIGNALING_SERVER;
+  const encodedRoomId = encodeURIComponent(roomId);
+
   if (customServer) {
-    return [customServer];
+    // Support custom servers with or without query params
+    const separator = customServer.includes('?') ? '&' : '?';
+    return [`${customServer}${separator}room=${encodedRoomId}`];
   }
 
-  // Default: Cloudflare Worker signaling (works in both dev and prod)
-  return ['wss://crossing-words-proxy.msfstef.workers.dev/signaling'];
+  // Default: Cloudflare Worker signaling with room parameter
+  return [`wss://crossing-words-proxy.msfstef.workers.dev/signaling?room=${encodedRoomId}`];
 }
 
 /**
@@ -110,7 +123,7 @@ export async function createP2PSession(
   console.debug(`[webrtcProvider] Creating P2P session for room: ${roomId}`);
 
   const provider = new WebrtcProvider(roomId, store.doc, {
-    signaling: getSignalingServers(),
+    signaling: getSignalingServers(roomId),
     peerOpts: {
       config: { iceServers: ICE_SERVERS },
     },
@@ -204,6 +217,29 @@ export async function createP2PSession(
   let reconnectAttempts = 0;
   const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
   const BASE_RECONNECT_DELAY = 1000; // Start with 1 second
+
+  // Connection health monitoring via awareness heartbeat
+  // y-webrtc broadcasts awareness updates regularly - if we stop receiving
+  // updates from remote peers, the connection is likely dead
+  let lastRemoteAwarenessUpdate = Date.now();
+  const AWARENESS_STALE_THRESHOLD = 60000; // 60 seconds without remote updates = stale
+
+  const trackRemoteAwarenessUpdate = (changes: {
+    added: number[];
+    updated: number[];
+    removed: number[];
+  }) => {
+    // Check if any changes are from remote clients (not our own clientID)
+    const hasRemoteChanges =
+      changes.added.some((id) => id !== awareness.clientID) ||
+      changes.updated.some((id) => id !== awareness.clientID);
+
+    if (hasRemoteChanges) {
+      lastRemoteAwarenessUpdate = Date.now();
+    }
+  };
+
+  awareness.on('change', trackRemoteAwarenessUpdate);
   let isDestroyed = false;
 
   // Helper to update state and notify subscribers
@@ -271,63 +307,169 @@ export async function createP2PSession(
 
   // Listen to peer connection/disconnection events
   // y-webrtc emits 'peers' events with { added: string[], removed: string[], webrtcPeers: string[] }
-  provider.on('peers', (event: { webrtcPeers?: string[] }) => {
+  // Also track sudden peer loss for connection health monitoring
+  let lastHadPeersAt = 0;
+  let hadPeersRecently = false;
+
+  provider.on('peers', (event: { webrtcPeers?: string[]; removed?: string[] }) => {
     const count = event.webrtcPeers?.length ?? 0;
+    const previousCount = peerCount;
     updatePeerCount(count);
+
+    // Track when we have/had peers for health monitoring
+    if (count > 0) {
+      lastHadPeersAt = Date.now();
+      hadPeersRecently = true;
+    }
+
+    // Detect sudden peer loss: we had peers, now we don't, but signaling is still "connected"
+    // This indicates WebRTC peer connections failed (ICE failure, network change, etc.)
+    if (previousCount > 0 && count === 0 && provider.connected && hadPeersRecently) {
+      const timeSinceHadPeers = Date.now() - lastHadPeersAt;
+
+      // If we just lost all peers (within last 5 seconds of having them), schedule recovery check
+      if (timeSinceHadPeers < 5000) {
+        console.debug('[P2P] Sudden peer loss detected, scheduling recovery check...');
+
+        // Wait to see if peers reconnect (they might just be experiencing brief network issues)
+        // This implements the "wait and see" approach recommended for ICE disconnected state
+        setTimeout(() => {
+          if (isDestroyed) return;
+
+          // If we still have no peers after waiting, and signaling is connected,
+          // the WebRTC connections likely failed - trigger reconnect
+          if (peerCount === 0 && provider.connected && hadPeersRecently) {
+            console.debug('[P2P] Peers did not reconnect after 10s, triggering reconnect...');
+            hadPeersRecently = false; // Reset to avoid repeated reconnects
+            resetReconnectAttempts();
+            reconnectWithStatePreservation();
+          }
+        }, 10000); // Wait 10 seconds (recommended for ICE recovery)
+      }
+    }
   });
 
   /**
    * Helper to preserve and restore awareness state across disconnect/connect.
-   * When disconnect() is called, y-webrtc may clear local state as part of
-   * departure broadcast. This function saves state before and restores after.
+   *
+   * IMPORTANT: y-webrtc's disconnect() broadcasts "I'm leaving" to all peers
+   * and destroys all WebRTC peer connections. This is disruptive!
+   * Only call this when connection is actually broken, not preemptively.
+   *
+   * We add a small delay between disconnect and connect to:
+   * 1. Let peers process the departure before we reconnect
+   * 2. Allow network state to stabilize
+   * 3. Prevent rapid reconnect loops
    */
+  let isReconnecting = false;
   const reconnectWithStatePreservation = () => {
+    // Prevent overlapping reconnect attempts
+    if (isReconnecting) {
+      console.debug('[P2P] Reconnect already in progress, skipping');
+      return;
+    }
+
     // Save local awareness state before disconnect
     const savedLocalState = awareness.getLocalState();
 
+    isReconnecting = true;
+    console.debug('[P2P] Disconnecting for reconnect...');
     provider.disconnect();
-    provider.connect();
 
-    // Restore local awareness state after reconnect
-    if (savedLocalState && typeof savedLocalState === 'object') {
-      Object.entries(savedLocalState).forEach(([key, value]) => {
-        awareness.setLocalStateField(key, value);
-      });
-    }
+    // Small delay before reconnecting to let signaling process the disconnect
+    // and to prevent race conditions with peers
+    setTimeout(() => {
+      if (isDestroyed) {
+        isReconnecting = false;
+        return;
+      }
+
+      console.debug('[P2P] Reconnecting...');
+      provider.connect();
+
+      // Restore local awareness state after reconnect
+      // Wait a tick to ensure provider is connected before setting state
+      setTimeout(() => {
+        isReconnecting = false;
+        if (isDestroyed) return;
+
+        if (savedLocalState && typeof savedLocalState === 'object') {
+          Object.entries(savedLocalState).forEach(([key, value]) => {
+            awareness.setLocalStateField(key, value);
+          });
+          console.debug('[P2P] Awareness state restored after reconnect');
+        }
+      }, 100);
+    }, 200);
   };
 
   // Network online/offline handlers
+  // NOTE: Don't blindly reconnect on 'online' - check if we actually need to
+  // The WebRTC connection might have survived the brief network interruption
   const handleOnline = () => {
-    console.debug('[P2P] Network online, triggering reconnect');
-    resetReconnectAttempts(); // Reset backoff on network recovery
-    reconnectWithStatePreservation();
+    if (isDestroyed) return;
+
+    console.debug('[P2P] Network online detected, checking connection health...');
+
+    // Wait a moment for network to stabilize, then check if we need to reconnect
+    setTimeout(() => {
+      if (isDestroyed) return;
+
+      // Only reconnect if we're actually disconnected
+      // The connection might have survived the brief network interruption
+      if (!provider.connected || connectionState === 'disconnected') {
+        console.debug('[P2P] Connection lost during offline period, reconnecting...');
+        resetReconnectAttempts();
+        reconnectWithStatePreservation();
+      } else {
+        console.debug('[P2P] Connection survived network change, no reconnect needed');
+      }
+    }, 1000);
   };
 
   const handleOffline = () => {
     console.debug('[P2P] Network offline detected');
-    updateState('disconnected');
+    // Don't immediately mark as disconnected - wait to see if connection dies
+    // The WebRTC connection might survive brief offline periods
   };
 
   // Visibility change handler for mobile sleep/wake cycles
+  // IMPORTANT: Don't eagerly disconnect/reconnect on visibility change!
+  // y-webrtc's disconnect() broadcasts "I'm leaving" to peers and destroys
+  // all peer connections. This breaks working connections.
+  // WebRTC connections with active data channels are exempt from Chrome's
+  // heavy throttling, so connections often survive tab switches just fine.
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible' && !isDestroyed) {
-      console.debug('[P2P] Page became visible, triggering reconnect');
-      resetReconnectAttempts(); // Reset backoff on wake
-      reconnectWithStatePreservation();
+      console.debug('[P2P] Page became visible, checking connection health...');
 
-      // Schedule an immediate health check after becoming visible
-      // This catches cases where reconnect appears successful but connection is stale
+      // Don't force reconnect immediately - connections often survive tab switches
+      // Instead, schedule a health check to see if we actually need to reconnect
       setTimeout(() => {
-        if (!isDestroyed && connectionState === 'connected' && peerCount === 0) {
-          console.debug('[P2P] Post-visibility health check: no peers, forcing reconnect');
+        if (isDestroyed) return;
+
+        // Check if signaling WebSocket is still alive by looking at provider state
+        // and whether we've lost all peers unexpectedly
+        const signalingConnected = provider.connected;
+
+        if (!signalingConnected) {
+          console.debug('[P2P] Signaling disconnected while hidden, reconnecting...');
+          resetReconnectAttempts();
           reconnectWithStatePreservation();
+        } else if (connectionState === 'disconnected') {
+          console.debug('[P2P] Connection state is disconnected, reconnecting...');
+          resetReconnectAttempts();
+          reconnectWithStatePreservation();
+        } else {
+          console.debug('[P2P] Connection appears healthy after visibility change');
         }
-      }, 3000); // Check 3 seconds after becoming visible
+      }, 1000); // Wait 1 second to let connection stabilize after tab becomes visible
     }
   };
 
   // Focus event handler - fires when window gains focus (complements visibilitychange)
   // This catches cases like switching back to the browser from another app
+  // NOTE: We're more conservative here - don't force reconnects unless connection is truly dead
   let lastFocusTime = Date.now();
   const handleFocus = () => {
     if (isDestroyed) return;
@@ -336,21 +478,25 @@ export async function createP2PSession(
     const timeSinceLastFocus = now - lastFocusTime;
     lastFocusTime = now;
 
-    // Only reconnect if it's been more than 5 seconds since last focus
-    // This prevents rapid reconnects during normal focus/blur cycles
-    if (timeSinceLastFocus > 5000) {
-      console.debug('[P2P] Window focused after', Math.round(timeSinceLastFocus / 1000), 'seconds, checking connection');
+    // Only check connection after a significant time away (30+ seconds)
+    // Short focus changes don't warrant reconnection checks
+    if (timeSinceLastFocus > 30000) {
+      console.debug('[P2P] Window focused after', Math.round(timeSinceLastFocus / 1000), 'seconds, checking connection...');
 
-      // If connection appears stale (connected but no peers), force reconnect
-      if (connectionState === 'connected' && peerCount === 0) {
-        console.debug('[P2P] Connection appears stale on focus, reconnecting');
-        resetReconnectAttempts();
-        reconnectWithStatePreservation();
-      } else if (connectionState === 'disconnected') {
-        console.debug('[P2P] Disconnected on focus, reconnecting');
-        resetReconnectAttempts();
-        reconnectWithStatePreservation();
-      }
+      // Delay the check to let connection stabilize
+      setTimeout(() => {
+        if (isDestroyed) return;
+
+        // Only reconnect if connection is actually disconnected (not just "no peers")
+        // Having no peers is normal if others left while we were away
+        if (connectionState === 'disconnected' || !provider.connected) {
+          console.debug('[P2P] Connection lost during focus away, reconnecting');
+          resetReconnectAttempts();
+          reconnectWithStatePreservation();
+        } else {
+          console.debug('[P2P] Connection healthy after focus');
+        }
+      }, 1000);
     }
   };
 
@@ -360,10 +506,23 @@ export async function createP2PSession(
     if (isDestroyed) return;
 
     // persisted indicates the page was restored from back-forward cache
+    // bfcache can freeze WebSocket connections, but not always - check first
     if (event.persisted) {
-      console.debug('[P2P] Page restored from bfcache, forcing reconnect');
-      resetReconnectAttempts();
-      reconnectWithStatePreservation();
+      console.debug('[P2P] Page restored from bfcache, checking connection health...');
+
+      // Wait a moment for the page to fully restore, then check connection
+      setTimeout(() => {
+        if (isDestroyed) return;
+
+        // Only reconnect if connection is actually broken
+        if (!provider.connected || connectionState === 'disconnected') {
+          console.debug('[P2P] Connection broken after bfcache restore, reconnecting...');
+          resetReconnectAttempts();
+          reconnectWithStatePreservation();
+        } else {
+          console.debug('[P2P] Connection survived bfcache restore');
+        }
+      }, 500);
     }
   };
 
@@ -374,32 +533,54 @@ export async function createP2PSession(
   window.addEventListener('focus', handleFocus);
   window.addEventListener('pageshow', handlePageShow);
 
-  // Periodic health check: verify signaling connection is alive
-  // The signaling server expects ping/pong, but y-webrtc handles this internally
-  // We just need to monitor if the connection is stale
-  let lastPeerCount = 0;
-  let staleConnectionCheckCount = 0;
+  // Periodic health check: verify connection health using multiple signals
+  // Best practices from WebRTC community:
+  // 1. Monitor signaling WebSocket state
+  // 2. Use awareness updates as heartbeat (if we have peers but no updates, connection is stale)
+  // 3. Don't reconnect just because there are no peers - that's normal!
   const healthCheckInterval = setInterval(() => {
     if (isDestroyed) return;
 
-    // If we're "connected" but peer count hasn't changed in a while
-    // and we have 0 peers, the connection might be stale
-    if (connectionState === 'connected' && peerCount === 0 && lastPeerCount === 0) {
-      staleConnectionCheckCount++;
+    const now = Date.now();
+    const timeSinceRemoteUpdate = now - lastRemoteAwarenessUpdate;
 
-      // After 3 consecutive checks with no peers (3 minutes), force reconnect
-      if (staleConnectionCheckCount >= 3) {
-        console.debug('[P2P] Stale connection detected (connected but no peers), forcing reconnect');
-        staleConnectionCheckCount = 0;
-        resetReconnectAttempts();
-        reconnectWithStatePreservation();
-      }
-    } else {
-      staleConnectionCheckCount = 0;
+    // Check 1: Signaling WebSocket disconnected
+    if (!provider.connected && connectionState !== 'disconnected') {
+      console.debug('[P2P] Health check: signaling disconnected, updating state');
+      updateState('disconnected');
+      // Auto-reconnect will be triggered by the state change handler
+      return;
     }
 
-    lastPeerCount = peerCount;
-  }, 60000); // Check every minute
+    // Check 2: Awareness heartbeat - if we have peers but no awareness updates
+    // for a long time, the WebRTC data channels may be dead even though
+    // signaling appears connected
+    if (
+      peerCount > 0 &&
+      connectionState === 'connected' &&
+      timeSinceRemoteUpdate > AWARENESS_STALE_THRESHOLD
+    ) {
+      console.debug(
+        `[P2P] Health check: no awareness updates from peers in ${Math.round(timeSinceRemoteUpdate / 1000)}s, connection may be stale`
+      );
+      // Give it one more interval before reconnecting - awareness updates
+      // might just be infrequent if users aren't actively editing
+      if (timeSinceRemoteUpdate > AWARENESS_STALE_THRESHOLD * 2) {
+        console.debug('[P2P] Health check: connection stale, triggering reconnect');
+        resetReconnectAttempts();
+        reconnectWithStatePreservation();
+        return;
+      }
+    }
+
+    // Log periodic status for debugging
+    if (connectionState === 'connected') {
+      const updateAge = peerCount > 0 ? `${Math.round(timeSinceRemoteUpdate / 1000)}s ago` : 'n/a';
+      console.debug(
+        `[P2P] Health check: OK (signaling: connected, peers: ${peerCount}, last remote update: ${updateAge})`
+      );
+    }
+  }, 30000); // Check every 30 seconds for more responsive detection
 
   // Create session object with getter for current state
   const session: P2PSession = {
@@ -450,6 +631,7 @@ export async function createP2PSession(
 
       // Remove event listeners
       awareness.off('change', checkColorConflict);
+      awareness.off('change', trackRemoteAwarenessUpdate);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
