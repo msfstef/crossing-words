@@ -47,15 +47,21 @@ const ICE_SERVERS: RTCIceServer[] = [
  * Get signaling servers from environment variable or default to production.
  * Set VITE_SIGNALING_SERVER to override (e.g., ws://localhost:4444 for local testing).
  * Defaults to production Cloudflare Worker signaling server.
+ *
+ * @param roomId - Room ID to include in the signaling URL for per-room DO routing
  */
-function getSignalingServers(): string[] {
+function getSignalingServers(roomId: string): string[] {
   const customServer = import.meta.env.VITE_SIGNALING_SERVER;
+  const encodedRoomId = encodeURIComponent(roomId);
+
   if (customServer) {
-    return [customServer];
+    // Support custom servers with or without query params
+    const separator = customServer.includes('?') ? '&' : '?';
+    return [`${customServer}${separator}room=${encodedRoomId}`];
   }
 
-  // Default: Cloudflare Worker signaling (works in both dev and prod)
-  return ['wss://crossing-words-proxy.msfstef.workers.dev/signaling'];
+  // Default: Cloudflare Worker signaling with room parameter
+  return [`wss://crossing-words-proxy.msfstef.workers.dev/signaling?room=${encodedRoomId}`];
 }
 
 /**
@@ -110,7 +116,7 @@ export async function createP2PSession(
   console.debug(`[webrtcProvider] Creating P2P session for room: ${roomId}`);
 
   const provider = new WebrtcProvider(roomId, store.doc, {
-    signaling: getSignalingServers(),
+    signaling: getSignalingServers(roomId),
     peerOpts: {
       config: { iceServers: ICE_SERVERS },
     },

@@ -227,9 +227,22 @@ export default {
     }
 
     // WebSocket signaling for P2P
-    // Uses single DO instance - y-webrtc handles room isolation via topics
+    // Each room gets its own Durable Object instance for isolation
     if (url.pathname === '/signaling') {
-      const id = env.SIGNALING_ROOM.idFromName('global');
+      const roomId = url.searchParams.get('room');
+      if (!roomId) {
+        return new Response(
+          JSON.stringify({ error: 'room parameter required' }),
+          {
+            status: 400,
+            headers: {
+              ...corsHeaders(origin),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+      const id = env.SIGNALING_ROOM.idFromName(roomId);
       const stub = env.SIGNALING_ROOM.get(id);
       return stub.fetch(request);
     }

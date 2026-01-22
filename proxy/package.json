@@ -1,17 +1,21 @@
 {
   "name": "proxy",
   "version": "1.0.0",
-  "description": "",
+  "description": "Crossing Words signaling proxy server",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --coverage"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
     "@cloudflare/workers-types": "^4.20260111.0",
     "typescript": "^5.9.3",
+    "vitest": "^3.0.0",
     "wrangler": "^4.58.0"
   }
 }
