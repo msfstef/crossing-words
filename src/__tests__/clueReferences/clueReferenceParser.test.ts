@@ -169,6 +169,26 @@ describe('Direct Reference Patterns', () => {
       expect(result.references.map((r) => r.clueNumber)).toEqual([17, 23, 39, 53]);
     });
 
+    it('should parse multi-clue with "or" connector', () => {
+      const result = parseClueReferences(
+        'Narrated by the protagonist, or a hint to the start of 18-, 24-, 41- or 51-Across',
+        62,
+        'across'
+      );
+      expect(result.references).toHaveLength(4);
+      expect(result.references.map((r) => r.clueNumber)).toEqual([18, 24, 41, 51]);
+    });
+
+    it('should parse three-clue reference with "or"', () => {
+      const result = parseClueReferences(
+        'Ozzy Osbourne song, or what you might take in 20-, 28- or 45-Across',
+        1,
+        'across'
+      );
+      expect(result.references).toHaveLength(3);
+      expect(result.references.map((r) => r.clueNumber)).toEqual([20, 28, 45]);
+    });
+
     it('should parse multi-clue Down reference', () => {
       const result = parseClueReferences(
         'Start of a popular aphorism that\'s a hint to 5-, 7- and 32-Down',

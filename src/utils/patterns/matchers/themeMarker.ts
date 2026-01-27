@@ -68,10 +68,11 @@ export const starredReferencePattern: PatternMatcher = createPatternMatcher({
  * Theme hint with multiple clue references
  * Matches: "a hint to 17-, 23-, 39- and 53-Across"
  * Matches: "a hint to the ends of 17-, 26-, 40- and 50-Across"
+ * Also matches: "a hint to the start of 18-, 24-, 41- or 51-Across" (with "or")
  */
 export const themeHintMultiPattern: PatternMatcher = {
   id: 'theme-hint-multi',
-  description: 'Theme hints referencing multiple clues (hint to 17-, 23-, and 48-Across)',
+  description: 'Theme hints referencing multiple clues (hint to 17-, 23-, and/or 48-Across)',
   category: 'theme-marker',
   highlightType: 'theme-hint',
   priority: 15,
@@ -79,9 +80,9 @@ export const themeHintMultiPattern: PatternMatcher = {
     const matches: PatternMatch[] = [];
     const clueText = context.clueText;
 
-    // Pattern: hint/clue/key to [optional: the ends/starts/letters of] N-, M-, and K-Across/Down
+    // Pattern: hint/clue/key to [optional: the ends/starts/letters of] N-, M-, and/or K-Across/Down
     const regex =
-      /(?:hint|clue|key)\s+to\s+(?:the\s+)?(?:(?:ends?|starts?|beginnings?|letters?)\s+of\s+)?((?:\d+[-–,\s]+)+)and\s+(\d+)\s*[-–]?\s*(Across|Down|A|D)/gi;
+      /(?:hint|clue|key)\s+to\s+(?:the\s+)?(?:(?:ends?|starts?|beginnings?|letters?)\s+of\s+)?((?:\d+[-–,\s]+)+)(?:and|or)\s+(\d+)\s*[-–]?\s*(Across|Down|A|D)/gi;
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(clueText)) !== null) {
@@ -96,7 +97,7 @@ export const themeHintMultiPattern: PatternMatcher = {
         );
       }
 
-      // Add the last number (after "and")
+      // Add the last number (after "and" or "or")
       references.push(
         createReference(parseInt(match[2], 10), direction, match.index, match.index + match[0].length)
       );
