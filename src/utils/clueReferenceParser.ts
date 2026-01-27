@@ -244,6 +244,43 @@ export function getClueDisplayText(clueText: string): string {
 }
 
 /**
+ * Find all starred clues and their cells in a puzzle.
+ * Starred clues start with "*" (e.g., "*Toy block that anyone can play with?")
+ *
+ * @param puzzle - The puzzle to search
+ * @returns Set of cell keys for all starred clue answers
+ */
+function findStarredClueCells(puzzle: Puzzle): Set<string> {
+  const starredCells = new Set<string>();
+
+  const processClues = (clues: Clue[]) => {
+    for (const clue of clues) {
+      if (isStarredClue(clue.text)) {
+        // Add all cells in this starred clue's answer
+        for (let i = 0; i < clue.length; i++) {
+          if (clue.direction === 'across') {
+            const col = clue.col + i;
+            if (col < puzzle.width && !puzzle.grid[clue.row][col].isBlack) {
+              starredCells.add(`${clue.row},${col}`);
+            }
+          } else {
+            const row = clue.row + i;
+            if (row < puzzle.height && !puzzle.grid[row][clue.col].isBlack) {
+              starredCells.add(`${row},${clue.col}`);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  processClues(puzzle.clues.across);
+  processClues(puzzle.clues.down);
+
+  return starredCells;
+}
+
+/**
  * Build a complete clue reference map for a puzzle.
  * Pre-computes all clue references at puzzle load time for O(1) lookup
  * when navigating between clues.
@@ -254,14 +291,31 @@ export function getClueDisplayText(clueText: string): string {
 export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
   const map: ClueReferenceMap = new Map();
 
+  // Pre-compute starred clue cells for resolving starred references
+  const starredClueCells = findStarredClueCells(puzzle);
+
   const processClues = (clues: Clue[], direction: 'across' | 'down') => {
     for (const clue of clues) {
       const clueId = `${clue.number}-${direction}`;
 
-      // Parse references from clue text
-      const parsed = parseClueReferences(clue.text, clue.number, direction);
+      // Parse references from clue text with extended results
+      const parsed = parseClueReferencesExtended(clue.text, clue.number, direction);
 
-      if (parsed.references.length === 0) {
+      // Start with cells from explicit references
+      const highlights = resolveReferencesToCells(parsed.references, puzzle);
+
+      // If this clue references starred clues, add all starred clue cells
+      if (parsed.hasStarredMarker && starredClueCells.size > 0) {
+        for (const cell of starredClueCells) {
+          highlights.referencedClueCells.add(cell);
+        }
+      }
+
+      const hasReferences =
+        highlights.referencedClueCells.size > 0 ||
+        highlights.letterReferenceCells.size > 0;
+
+      if (!hasReferences) {
         // Store empty result to avoid re-parsing
         map.set(clueId, {
           referencedClueCells: new Set(),
@@ -272,15 +326,10 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
         continue;
       }
 
-      // Resolve references to cell coordinates
-      const highlights = resolveReferencesToCells(parsed.references, puzzle);
-
       map.set(clueId, {
         referencedClueCells: highlights.referencedClueCells,
         letterReferenceCells: highlights.letterReferenceCells,
-        hasReferences:
-          highlights.referencedClueCells.size > 0 ||
-          highlights.letterReferenceCells.size > 0,
+        hasReferences: true,
         hasLetterReferences: parsed.hasLetterReferences,
       });
     }
