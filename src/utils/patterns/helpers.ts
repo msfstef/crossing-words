@@ -76,7 +76,8 @@ interface RegexMatcherOptions {
    * Extract references from a regex match.
    * @param match - The regex match result
    * @param context - The parsing context
-   * @returns Array of ClueReferences, or null to skip this match
+   * @returns Array of ClueReferences (can be empty for patterns like "starred clues"
+   *          where references are resolved dynamically), or null to skip this match
    */
   extractReferences: (
     match: RegExpExecArray,
@@ -118,7 +119,9 @@ export function createPatternMatcher(
       while ((regexMatch = localRegex.exec(clueText)) !== null) {
         const references = extractReferences(regexMatch, context);
 
-        if (references && references.length > 0) {
+        // null means skip this match, empty array means match but no specific references
+        // (e.g., "starred clues' answers" matches but references are resolved dynamically)
+        if (references !== null) {
           matches.push(
             createMatch(
               regexMatch[0],

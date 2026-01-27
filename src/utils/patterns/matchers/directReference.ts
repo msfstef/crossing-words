@@ -88,14 +88,15 @@ export const afterSayingPattern: PatternMatcher = createPatternMatcher({
 /**
  * Multi-clue references with shared direction
  * Matches: "17-, 23-, 39- and 53-Across", "5-, 7- and 32-Down"
+ * Also matches: "18-, 24-, 41- or 51-Across" (with "or" connector)
  */
 export const multiClueReferencePattern: PatternMatcher = createPatternMatcher({
   id: 'multi-clue-reference',
-  description: 'Multiple clues with shared direction (17-, 23-, and 48-Across)',
+  description: 'Multiple clues with shared direction (17-, 23-, and/or 48-Across)',
   category: 'direct-reference',
   highlightType: 'whole-clue',
   priority: 15, // Higher priority to match before inline references
-  regex: /((?:\d+[-–,\s]+)+)and\s+(\d+)\s*[-–]?\s*(Across|Down|A|D)/gi,
+  regex: /((?:\d+[-–,\s]+)+)(?:and|or)\s+(\d+)\s*[-–]?\s*(Across|Down|A|D)/gi,
   extractReferences: (match) => {
     const direction = normalizeDirection(match[3]);
     const references: ClueReference[] = [];
@@ -108,7 +109,7 @@ export const multiClueReferencePattern: PatternMatcher = createPatternMatcher({
       );
     }
 
-    // Add the last number (after "and")
+    // Add the last number (after "and" or "or")
     references.push(
       createReference(parseInt(match[2], 10), direction, match.index, match.index + match[0].length)
     );
