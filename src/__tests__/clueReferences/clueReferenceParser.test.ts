@@ -331,6 +331,135 @@ describe('Starred Clue Patterns', () => {
       expect(regularData!.referencedClueCells.size).toBe(0);
     });
   });
+
+  describe('Meta Clue Reverse Lookup', () => {
+    it('should provide meta clue cells when focusing on a starred clue', () => {
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', '*Starred clue two', 1, 0, 5),
+          createClue(
+            11,
+            'across',
+            'A hint to the starred clues\' answers',
+            2,
+            0,
+            5
+          ),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // When focusing on starred clue 1, should have meta clue cells
+      const starredClue1Data = map.get('1-across');
+      expect(starredClue1Data).toBeDefined();
+      expect(starredClue1Data!.hasMetaClue).toBe(true);
+      // Should have cells from the revealer clue (5 cells on row 2)
+      expect(starredClue1Data!.metaClueCells.size).toBe(5);
+      expect(starredClue1Data!.metaClueCells.has('2,0')).toBe(true);
+      expect(starredClue1Data!.metaClueCells.has('2,4')).toBe(true);
+
+      // When focusing on starred clue 2, should also have meta clue cells
+      const starredClue2Data = map.get('6-across');
+      expect(starredClue2Data).toBeDefined();
+      expect(starredClue2Data!.hasMetaClue).toBe(true);
+      expect(starredClue2Data!.metaClueCells.size).toBe(5);
+    });
+
+    it('should not provide meta clue cells for non-starred clues', () => {
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', 'Regular clue', 1, 0, 5),
+          createClue(
+            11,
+            'across',
+            'A hint to the starred clues\' answers',
+            2,
+            0,
+            5
+          ),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // Regular clue should not have meta clue cells
+      const regularClueData = map.get('6-across');
+      expect(regularClueData).toBeDefined();
+      expect(regularClueData!.hasMetaClue).toBe(false);
+      expect(regularClueData!.metaClueCells.size).toBe(0);
+    });
+
+    it('should not provide meta clue cells when no revealer exists', () => {
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', '*Starred clue two', 1, 0, 5),
+          createClue(11, 'across', 'Regular clue with no starred reference', 2, 0, 5),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // Starred clues should not have meta clue cells when no revealer exists
+      const starredClueData = map.get('1-across');
+      expect(starredClueData).toBeDefined();
+      expect(starredClueData!.hasMetaClue).toBe(false);
+      expect(starredClueData!.metaClueCells.size).toBe(0);
+    });
+
+    it('should handle multiple meta clues referencing starred clues', () => {
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', 'First hint to the starred answers', 1, 0, 5),
+          createClue(11, 'across', 'Second hint to the starred clues', 2, 0, 5),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // Starred clue should have cells from both meta clues
+      const starredClueData = map.get('1-across');
+      expect(starredClueData).toBeDefined();
+      expect(starredClueData!.hasMetaClue).toBe(true);
+      // Should have cells from both revealers (5 + 5 = 10)
+      expect(starredClueData!.metaClueCells.size).toBe(10);
+    });
+
+    it('should not include self-reference in meta clue cells', () => {
+      // Edge case: a clue that is both starred AND references starred clues
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue, also a hint to the starred answers', 0, 0, 5),
+          createClue(6, 'across', '*Another starred clue', 1, 0, 5),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // Clue 1 is both starred and references starred clues
+      // Its metaClueCells should not include its own cells
+      const clue1Data = map.get('1-across');
+      expect(clue1Data).toBeDefined();
+      // Should not include self in metaClueCells
+      expect(clue1Data!.metaClueCells.has('0,0')).toBe(false);
+      expect(clue1Data!.metaClueCells.has('0,1')).toBe(false);
+
+      // Clue 6 should have clue 1 in its metaClueCells (since clue 1 references starred clues)
+      const clue6Data = map.get('6-across');
+      expect(clue6Data).toBeDefined();
+      expect(clue6Data!.hasMetaClue).toBe(true);
+      expect(clue6Data!.metaClueCells.has('0,0')).toBe(true);
+    });
+  });
 });
 
 describe('Letter Reference Patterns', () => {

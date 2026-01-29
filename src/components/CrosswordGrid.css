@@ -318,6 +318,17 @@
     outline-offset: -2px;
 }
 
+/* Meta clue highlight - the revealer that describes starred clues */
+/* Uses dashed outline to distinguish from the starred clues themselves */
+/* When on a starred clue, this highlights the clue that explains the theme */
+.cell--meta-clue {
+    background-color: color-mix(in srgb, var(--color-accent) 12%, transparent) !important;
+    outline: 2px dashed var(--color-accent-muted) !important;
+    outline-offset: -2px;
+    position: relative;
+    z-index: 2;
+}
+
 /* ============================================================================
  * Zoom Mode Styles
  * Provides smooth transitions and visual feedback for zoom mode

@@ -95,6 +95,8 @@ interface CrosswordGridProps {
   referencedClueCells?: Set<string>;
   /** Set of cells from letter-range references (individual cell highlight) - "row,col" format */
   letterReferenceCells?: Set<string>;
+  /** Set of cells from meta clue(s) that describe this starred clue - "row,col" format */
+  metaClueCells?: Set<string>;
   /** Whether zoom mode is active */
   isZoomMode?: boolean;
   /** Viewport bounds for zoom mode (startRow, endRow, startCol, endCol) */
@@ -288,6 +290,7 @@ export function CrosswordGrid({
   isTouchDevice = false,
   referencedClueCells = new Set(),
   letterReferenceCells = new Set(),
+  metaClueCells = new Set(),
   isZoomMode = false,
   zoomViewport = null,
   edgeIndicators = null,
@@ -696,8 +699,10 @@ export function CrosswordGrid({
           // Check clue reference highlights
           // Whole-clue references: only show when not in current word (avoid visual conflict)
           // Letter-specific references: show even in current word (for "letters X-Y here" patterns)
+          // Meta clue: the revealer clue that describes starred clues (distinct styling)
           const isReferencedClue = referencedClueCells.has(cellKey) && !inWord && !isSelected;
           const isReferencedLetter = letterReferenceCells.has(cellKey);
+          const isMetaClue = metaClueCells.has(cellKey) && !inWord && !isSelected;
 
           // Determine if local user has a color (in collaborative mode)
           const hasLocalColor = Boolean(localUserColor);
@@ -725,6 +730,8 @@ export function CrosswordGrid({
             // Clue reference highlights (champagne/gold color)
             isReferencedClue ? "cell--referenced-clue" : "",
             isReferencedLetter ? "cell--referenced-letter" : "",
+            // Meta clue highlight (revealer that describes starred clues - distinct styling)
+            isMetaClue ? "cell--meta-clue" : "",
           ]
             .filter(Boolean)
             .join(" ");

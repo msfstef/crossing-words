@@ -29,17 +29,23 @@ interface UseClueReferencesResult {
   referencedClueCells: Set<string>;
   /** Specific cells from letter-range references */
   letterReferenceCells: Set<string>;
+  /** Cells from meta clue(s) that reference this clue's starred group */
+  metaClueCells: Set<string>;
   /** Whether the current clue has any references */
   hasReferences: boolean;
   /** Whether the current clue has letter-specific references */
   hasLetterReferences: boolean;
+  /** Whether this clue has a meta clue that describes it */
+  hasMetaClue: boolean;
 }
 
 const emptyResult: UseClueReferencesResult = {
   referencedClueCells: new Set(),
   letterReferenceCells: new Set(),
+  metaClueCells: new Set(),
   hasReferences: false,
   hasLetterReferences: false,
+  hasMetaClue: false,
 };
 
 /**
@@ -88,13 +94,34 @@ export function useClueReferences({
       }
     }
 
+    // Apply same exclusion logic to metaClueCells
+    let metaClueCells = precomputed.metaClueCells;
+    if (currentWordCells && currentWordCells.size > 0 && precomputed.metaClueCells.size > 0) {
+      let needsFiltering = false;
+      for (const cell of currentWordCells) {
+        if (precomputed.metaClueCells.has(cell)) {
+          needsFiltering = true;
+          break;
+        }
+      }
+
+      if (needsFiltering) {
+        metaClueCells = new Set(precomputed.metaClueCells);
+        for (const cell of currentWordCells) {
+          metaClueCells.delete(cell);
+        }
+      }
+    }
+
     return {
       referencedClueCells,
       letterReferenceCells: precomputed.letterReferenceCells,
+      metaClueCells,
       hasReferences:
         referencedClueCells.size > 0 ||
         precomputed.letterReferenceCells.size > 0,
       hasLetterReferences: precomputed.hasLetterReferences,
+      hasMetaClue: precomputed.hasMetaClue,
     };
   }, [clueReferenceMap, currentClue, currentWordCells]);
 }

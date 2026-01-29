@@ -285,6 +285,10 @@ function findStarredClueCells(puzzle: Puzzle): Set<string> {
  * Pre-computes all clue references at puzzle load time for O(1) lookup
  * when navigating between clues.
  *
+ * This function also establishes reverse lookups:
+ * - When a clue references starred clues, it becomes a "meta clue"
+ * - When focusing on a starred clue, we also highlight the meta clue
+ *
  * @param puzzle - The puzzle to build the reference map for
  * @returns Map from clue ID to pre-computed reference data
  */
@@ -294,9 +298,21 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
   // Pre-compute starred clue cells for resolving starred references
   const starredClueCells = findStarredClueCells(puzzle);
 
-  const processClues = (clues: Clue[], direction: 'across' | 'down') => {
+  // Track which clues are starred (for reverse lookup)
+  const starredClueIds = new Set<string>();
+
+  // Track meta clues (clues that reference starred clues) and their cells
+  const metaClueData: { clueId: string; cells: Set<string> }[] = [];
+
+  // First pass: parse all clues and identify meta clues
+  const processCluesFirstPass = (clues: Clue[], direction: 'across' | 'down') => {
     for (const clue of clues) {
       const clueId = `${clue.number}-${direction}`;
+
+      // Track starred clues for reverse lookup
+      if (isStarredClue(clue.text)) {
+        starredClueIds.add(clueId);
+      }
 
       // Parse references from clue text with extended results
       const parsed = parseClueReferencesExtended(clue.text, clue.number, direction);
@@ -304,39 +320,66 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
       // Start with cells from explicit references
       const highlights = resolveReferencesToCells(parsed.references, puzzle);
 
+      // Check if this clue REFERENCES starred clues (not just IS starred)
+      // A meta clue matches patterns like 'starred-reference' or 'hint-to-starred'
+      // (as opposed to 'starred-clue' which identifies clues that ARE starred)
+      const referencesStarredClues = parsed.matchedPatternIds.some(
+        (id) => id === 'starred-reference' || id === 'hint-to-starred'
+      );
+
       // If this clue references starred clues, add all starred clue cells
-      if (parsed.hasStarredMarker && starredClueCells.size > 0) {
+      // and track this as a meta clue for reverse lookup
+      if (referencesStarredClues && starredClueCells.size > 0) {
         for (const cell of starredClueCells) {
           highlights.referencedClueCells.add(cell);
         }
+
+        // Calculate this meta clue's cells for reverse lookup
+        const metaCells = getClueWordCells(clue, puzzle);
+        metaClueData.push({
+          clueId,
+          cells: new Set(metaCells),
+        });
       }
 
       const hasReferences =
         highlights.referencedClueCells.size > 0 ||
         highlights.letterReferenceCells.size > 0;
 
-      if (!hasReferences) {
-        // Store empty result to avoid re-parsing
-        map.set(clueId, {
-          referencedClueCells: new Set(),
-          letterReferenceCells: new Set(),
-          hasReferences: false,
-          hasLetterReferences: false,
-        });
-        continue;
-      }
-
+      // Store initial result (metaClueCells will be populated in second pass)
       map.set(clueId, {
-        referencedClueCells: highlights.referencedClueCells,
-        letterReferenceCells: highlights.letterReferenceCells,
-        hasReferences: true,
+        referencedClueCells: hasReferences ? highlights.referencedClueCells : new Set(),
+        letterReferenceCells: hasReferences ? highlights.letterReferenceCells : new Set(),
+        metaClueCells: new Set(),
+        hasReferences,
         hasLetterReferences: parsed.hasLetterReferences,
+        hasMetaClue: false,
       });
     }
   };
 
-  processClues(puzzle.clues.across, 'across');
-  processClues(puzzle.clues.down, 'down');
+  processCluesFirstPass(puzzle.clues.across, 'across');
+  processCluesFirstPass(puzzle.clues.down, 'down');
+
+  // Second pass: for starred clues, add meta clue cells for reverse highlighting
+  // This allows starring a starred clue to also highlight the revealer/meta clue
+  if (metaClueData.length > 0) {
+    for (const starredClueId of starredClueIds) {
+      const clueData = map.get(starredClueId);
+      if (clueData) {
+        // Add all meta clue cells to this starred clue
+        for (const metaClue of metaClueData) {
+          // Don't add self-reference
+          if (metaClue.clueId !== starredClueId) {
+            for (const cell of metaClue.cells) {
+              clueData.metaClueCells.add(cell);
+            }
+          }
+        }
+        clueData.hasMetaClue = clueData.metaClueCells.size > 0;
+      }
+    }
+  }
 
   return map;
 }
