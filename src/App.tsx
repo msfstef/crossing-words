@@ -555,7 +555,7 @@ function AppContent() {
   const clueReferenceMap = usePuzzleClueReferenceMap(puzzle);
 
   // Use clue reference hook for highlighting referenced clues (O(1) lookup)
-  const { referencedClueCells, letterReferenceCells } = useClueReferences({
+  const { referencedClueCells, letterReferenceCells, metaClueCells } = useClueReferences({
     clueReferenceMap,
     currentClue,
     currentWordCells,
@@ -1028,6 +1028,7 @@ function AppContent() {
                 isTouchDevice={isTouchDevice}
                 referencedClueCells={referencedClueCells}
                 letterReferenceCells={letterReferenceCells}
+                metaClueCells={metaClueCells}
                 isZoomMode={isZoomMode}
                 zoomViewport={zoomViewport}
                 edgeIndicators={edgeIndicators}

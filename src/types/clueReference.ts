@@ -160,10 +160,14 @@ export interface PrecomputedClueReference {
   referencedClueCells: Set<string>;
   /** Specific cells from letter-range references - "row,col" format */
   letterReferenceCells: Set<string>;
+  /** Cells from the meta clue that references this clue's starred group - "row,col" format */
+  metaClueCells: Set<string>;
   /** Whether this clue has any references */
   hasReferences: boolean;
   /** Whether this clue has letter-specific references */
   hasLetterReferences: boolean;
+  /** Whether this clue has a meta clue that describes it */
+  hasMetaClue: boolean;
 }
 
 /**
