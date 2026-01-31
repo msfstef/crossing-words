@@ -281,6 +281,17 @@ describe('Starred Clue Patterns', () => {
       expect(result.hasStarredMarker).toBe(true);
     });
 
+    it('should detect "each starred clue\'s answer" reference (singular possessive)', () => {
+      // Regression test: January 30 Universal crossword format
+      const result = parseClueReferencesExtended(
+        '"Just listen to what I have to say," and a hint to a sound you must ignore when reading each starred clue\'s answer',
+        1,
+        'across'
+      );
+      expect(result.hasStarredMarker).toBe(true);
+      expect(result.matchedPatternIds).toContain('starred-reference');
+    });
+
     it('should not detect starred reference in unrelated clues', () => {
       const result = parseClueReferencesExtended('Ocean liner', 1, 'across');
       expect(result.hasStarredMarker).toBe(false);
@@ -458,6 +469,111 @@ describe('Starred Clue Patterns', () => {
       expect(clue6Data).toBeDefined();
       expect(clue6Data!.hasMetaClue).toBe(true);
       expect(clue6Data!.metaClueCells.has('0,0')).toBe(true);
+    });
+
+    it('should detect meta clue that references starred clues by number', () => {
+      // Regression test: January 30 Universal crossword format
+      // Meta clue references starred clues by number, not by saying "starred"
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', '*Starred clue two', 1, 0, 5),
+          createClue(
+            11,
+            'across',
+            'A hint to 1- and 6-Across',
+            2,
+            0,
+            5
+          ),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // The meta clue (11-Across) should highlight the starred clues
+      const metaClueData = map.get('11-across');
+      expect(metaClueData).toBeDefined();
+      expect(metaClueData!.hasReferences).toBe(true);
+      // Should have cells from both starred clues (10 cells total: 5 + 5)
+      expect(metaClueData!.referencedClueCells.size).toBe(10);
+
+      // When focusing on starred clue 1, should have meta clue cells
+      const starredClue1Data = map.get('1-across');
+      expect(starredClue1Data).toBeDefined();
+      expect(starredClue1Data!.hasMetaClue).toBe(true);
+      // Should have cells from the revealer clue (5 cells on row 2)
+      expect(starredClue1Data!.metaClueCells.size).toBe(5);
+      expect(starredClue1Data!.metaClueCells.has('2,0')).toBe(true);
+      expect(starredClue1Data!.metaClueCells.has('2,4')).toBe(true);
+
+      // When focusing on starred clue 2, should also have meta clue cells
+      const starredClue2Data = map.get('6-across');
+      expect(starredClue2Data).toBeDefined();
+      expect(starredClue2Data!.hasMetaClue).toBe(true);
+      expect(starredClue2Data!.metaClueCells.size).toBe(5);
+    });
+
+    it('should detect meta clue referencing multiple starred clues by number with "hint to"', () => {
+      // Common Universal crossword format: "hint to 17-, 23-, 39- and 53-Across"
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Theme answer one', 0, 0, 5),
+          createClue(6, 'across', '*Theme answer two', 1, 0, 5),
+          createClue(11, 'across', 'Revealer ... or a hint to 1- and 6-Across', 2, 0, 5),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // Both starred clues should recognize 11-Across as their meta clue
+      const starredClue1Data = map.get('1-across');
+      expect(starredClue1Data!.hasMetaClue).toBe(true);
+
+      const starredClue2Data = map.get('6-across');
+      expect(starredClue2Data!.hasMetaClue).toBe(true);
+    });
+
+    it('should not mark clue as meta if it references non-starred clues', () => {
+      // If a clue references regular (non-starred) clues, it should NOT be a meta clue
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue', 0, 0, 5),
+          createClue(6, 'across', 'Regular clue', 1, 0, 5),
+          createClue(11, 'across', 'See 6-Across', 2, 0, 5), // References non-starred clue
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // 11-Across references a non-starred clue, so starred clue shouldn't link to it
+      const starredClueData = map.get('1-across');
+      expect(starredClueData).toBeDefined();
+      expect(starredClueData!.hasMetaClue).toBe(false);
+      expect(starredClueData!.metaClueCells.size).toBe(0);
+    });
+
+    it('should handle meta clue that references mix of starred and non-starred clues', () => {
+      // If a clue references mostly starred clues, it should still be considered a meta clue
+      const puzzle = createTestPuzzle({
+        across: [
+          createClue(1, 'across', '*Starred clue one', 0, 0, 5),
+          createClue(6, 'across', '*Starred clue two', 1, 0, 5),
+          createClue(11, 'across', 'Regular clue', 2, 0, 5),
+          createClue(16, 'across', 'A hint to 1-, 6-, and 11-Across', 3, 0, 5),
+        ],
+        down: [],
+      });
+
+      const map = buildClueReferenceMap(puzzle);
+
+      // 16-Across references 2 starred clues and 1 non-starred, majority are starred
+      // Starred clues should recognize it as a meta clue
+      const starredClue1Data = map.get('1-across');
+      expect(starredClue1Data!.hasMetaClue).toBe(true);
     });
   });
 });

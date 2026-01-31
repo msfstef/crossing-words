@@ -289,6 +289,11 @@ function findStarredClueCells(puzzle: Puzzle): Set<string> {
  * - When a clue references starred clues, it becomes a "meta clue"
  * - When focusing on a starred clue, we also highlight the meta clue
  *
+ * Meta clues are detected in two ways:
+ * 1. Explicit "starred" references: "hint to the starred clues' answers"
+ * 2. Numeric references to starred clues: "hint to 17-, 23-, and 39-Across"
+ *    where those numbered clues are starred
+ *
  * @param puzzle - The puzzle to build the reference map for
  * @returns Map from clue ID to pre-computed reference data
  */
@@ -301,18 +306,61 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
   // Track which clues are starred (for reverse lookup)
   const starredClueIds = new Set<string>();
 
-  // Track meta clues (clues that reference starred clues) and their cells
-  const metaClueData: { clueId: string; cells: Set<string> }[] = [];
+  // Build lookup of starred clue numbers for numeric reference detection
+  const starredClueNumbers = new Map<string, Set<number>>(); // direction -> set of numbers
+  starredClueNumbers.set('across', new Set());
+  starredClueNumbers.set('down', new Set());
 
-  // First pass: parse all clues and identify meta clues
+  // First, identify all starred clues
+  for (const clue of puzzle.clues.across) {
+    if (isStarredClue(clue.text)) {
+      starredClueIds.add(`${clue.number}-across`);
+      starredClueNumbers.get('across')!.add(clue.number);
+    }
+  }
+  for (const clue of puzzle.clues.down) {
+    if (isStarredClue(clue.text)) {
+      starredClueIds.add(`${clue.number}-down`);
+      starredClueNumbers.get('down')!.add(clue.number);
+    }
+  }
+
+  // Track meta clues (clues that reference starred clues) and their cells
+  const metaClueData: { clueId: string; cells: Set<string>; targetStarredClueIds: Set<string> }[] = [];
+
+  // Helper to check if explicit references point to starred clues
+  const checkReferencesAreStarred = (
+    references: ClueReference[]
+  ): { isMetaClue: boolean; targetIds: Set<string> } => {
+    if (references.length === 0) {
+      return { isMetaClue: false, targetIds: new Set() };
+    }
+
+    const targetIds = new Set<string>();
+    let starredCount = 0;
+
+    for (const ref of references) {
+      const refClueId = `${ref.clueNumber}-${ref.direction}`;
+      if (starredClueIds.has(refClueId)) {
+        starredCount++;
+        targetIds.add(refClueId);
+      }
+    }
+
+    // Consider it a meta clue if majority of references are to starred clues
+    // and there's at least 2 starred references (or all references are starred)
+    const majorityAreStarred = starredCount > references.length / 2;
+    const hasMultipleStarredRefs = starredCount >= 2;
+    const allAreStarred = starredCount === references.length;
+
+    const isMetaClue = (majorityAreStarred && hasMultipleStarredRefs) || allAreStarred;
+    return { isMetaClue, targetIds };
+  };
+
+  // Second pass: parse all clues and identify meta clues
   const processCluesFirstPass = (clues: Clue[], direction: 'across' | 'down') => {
     for (const clue of clues) {
       const clueId = `${clue.number}-${direction}`;
-
-      // Track starred clues for reverse lookup
-      if (isStarredClue(clue.text)) {
-        starredClueIds.add(clueId);
-      }
 
       // Parse references from clue text with extended results
       const parsed = parseClueReferencesExtended(clue.text, clue.number, direction);
@@ -321,17 +369,27 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
       const highlights = resolveReferencesToCells(parsed.references, puzzle);
 
       // Check if this clue REFERENCES starred clues (not just IS starred)
-      // A meta clue matches patterns like 'starred-reference' or 'hint-to-starred'
-      // (as opposed to 'starred-clue' which identifies clues that ARE starred)
-      const referencesStarredClues = parsed.matchedPatternIds.some(
+      // Method 1: Explicit "starred" references via pattern matching
+      const explicitStarredReference = parsed.matchedPatternIds.some(
         (id) => id === 'starred-reference' || id === 'hint-to-starred'
       );
+
+      // Method 2: Numeric references to starred clues (e.g., "hint to 17- and 23-Across")
+      const { isMetaClue: numericStarredReference, targetIds } = checkReferencesAreStarred(
+        parsed.references
+      );
+
+      const referencesStarredClues = explicitStarredReference || numericStarredReference;
 
       // If this clue references starred clues, add all starred clue cells
       // and track this as a meta clue for reverse lookup
       if (referencesStarredClues && starredClueCells.size > 0) {
-        for (const cell of starredClueCells) {
-          highlights.referencedClueCells.add(cell);
+        // For explicit starred references, add ALL starred clue cells
+        // For numeric references, the cells are already added via resolveReferencesToCells
+        if (explicitStarredReference) {
+          for (const cell of starredClueCells) {
+            highlights.referencedClueCells.add(cell);
+          }
         }
 
         // Calculate this meta clue's cells for reverse lookup
@@ -339,6 +397,10 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
         metaClueData.push({
           clueId,
           cells: new Set(metaCells),
+          // For explicit references, target all starred clues; for numeric, target specific ones
+          targetStarredClueIds: explicitStarredReference
+            ? new Set(starredClueIds)
+            : targetIds,
         });
       }
 
@@ -361,18 +423,21 @@ export function buildClueReferenceMap(puzzle: Puzzle): ClueReferenceMap {
   processCluesFirstPass(puzzle.clues.across, 'across');
   processCluesFirstPass(puzzle.clues.down, 'down');
 
-  // Second pass: for starred clues, add meta clue cells for reverse highlighting
-  // This allows starring a starred clue to also highlight the revealer/meta clue
+  // Third pass: for starred clues, add meta clue cells for reverse highlighting
+  // This allows focusing on a starred clue to also highlight the revealer/meta clue
   if (metaClueData.length > 0) {
     for (const starredClueId of starredClueIds) {
       const clueData = map.get(starredClueId);
       if (clueData) {
-        // Add all meta clue cells to this starred clue
+        // Add meta clue cells only if this starred clue is targeted by the meta clue
         for (const metaClue of metaClueData) {
           // Don't add self-reference
           if (metaClue.clueId !== starredClueId) {
-            for (const cell of metaClue.cells) {
-              clueData.metaClueCells.add(cell);
+            // Only add if this meta clue targets this specific starred clue
+            if (metaClue.targetStarredClueIds.has(starredClueId)) {
+              for (const cell of metaClue.cells) {
+                clueData.metaClueCells.add(cell);
+              }
             }
           }
         }
