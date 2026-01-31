@@ -281,6 +281,17 @@ describe('Starred Clue Patterns', () => {
       expect(result.hasStarredMarker).toBe(true);
     });
 
+    it('should detect "each starred clue\'s answer" reference (singular possessive)', () => {
+      // Regression test: January 30 Universal crossword format
+      const result = parseClueReferencesExtended(
+        '"Just listen to what I have to say," and a hint to a sound you must ignore when reading each starred clue\'s answer',
+        1,
+        'across'
+      );
+      expect(result.hasStarredMarker).toBe(true);
+      expect(result.matchedPatternIds).toContain('starred-reference');
+    });
+
     it('should not detect starred reference in unrelated clues', () => {
       const result = parseClueReferencesExtended('Ocean liner', 1, 'across');
       expect(result.hasStarredMarker).toBe(false);

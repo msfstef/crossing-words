@@ -54,9 +54,10 @@ export const starredReferencePattern: PatternMatcher = createPatternMatcher({
   category: 'theme-marker',
   highlightType: 'starred',
   priority: 20,
-  // Match: [the/each/every/all] starred [clue's/clues'/clue] [answer/answers/entry/entries]
+  // Match: [the/each/every/all] starred [clue's/clues'/clue/clues] [answer/answers/entry/entries]
   // Also matches: starred answers, starred entries (without "clue")
-  regex: /\b(?:the\s+|each\s+(?:of\s+(?:the\s+)?)?|every\s+|all\s+)?starred\s+(?:clues?['']?\s*)?(?:answers?|entr(?:y|ies))\b/gi,
+  // clue(?:s(?:[''])?|['']s)? matches: clue, clues, clues', clue's
+  regex: /\b(?:the\s+|each\s+(?:of\s+(?:the\s+)?)?|every\s+|all\s+)?starred\s+(?:clue(?:s(?:[''])?|['']s)?\s*)?(?:answers?|entr(?:y|ies))\b/gi,
   extractReferences: () => {
     // This pattern identifies that the clue references starred answers
     // but doesn't provide specific clue numbers (they are resolved dynamically)
